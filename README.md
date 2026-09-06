@@ -32,3 +32,18 @@ There are no setup or execution commands yet. Do not infer a working runtime fro
 For documentation changes, check relative links and anchors, preserve the exact direction source, inspect the diff for scope, and run `git diff --check`. The [documentation validation notes](docs/status.md#documentation-validation) describe the handoff checks and their limits.
 
 The preserved direction describes the eventual product, including a possible interface and connected services. It is not permission to add those capabilities in this documentation foundation.
+
+## Generic agent startup prompt
+
+Instruction discovery varies between coding tools. If your tool does not load the repository guidance automatically, paste this prompt and name the assigned task:
+
+```text
+Read AGENTS.md, README.md, docs/status.md and docs/direction.md first, then
+docs/tasks/README.md and the assigned task brief. Inspect the current branch
+and existing changes; preserve unrelated work. Explain the task scope and
+dependencies before editing. Work only on the assigned task, follow its
+acceptance criteria, and report checks actually run, evidence and limitations.
+Update docs/status.md only for demonstrated results. Do not start later tasks.
+For the first implementation handoff, use docs/tasks/01-technical-plan.md;
+that task produces a plan, not runtime code.
+```

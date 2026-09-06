@@ -19,6 +19,7 @@ The [documentation foundation](../../README.md), [architecture](../architecture.
 - A written technical plan makes the deferred selections explicitly, explains practical trade-offs, and identifies any unresolved blocker before downstream code begins.
 - Contracts cover task/run identity, requirement provenance, visible tool versions, calls/results/errors, supplied context, application state, candidate diffs, rejected attempts, verification and publication/rollback history.
 - The plan identifies fixed executor and evaluator artifacts, editable repair surfaces, authority boundaries, and how restrictions will be enforced outside candidate code. Attempt, time and cost limits and stop conditions are explicit.
+- Secure candidate-code isolation is designed separately from simulated service state. A local fake service or reset fixture is not filesystem/network containment; specify how denied access will be tested from candidate execution.
 - Replay design covers equivalent isolated starting state, partial success and uncertain effects. Live continuation remains deferred and cannot inherit a safety claim from simulation.
 - Tool generation requires an authorized resource and rejects missing/ambiguous identity; context repair preserves historical retrieval and original documents.
 - Verification distinguishes documentation, component doubles, simulation, actual Hermes execution, and live provider evidence. The implementation sequence still prioritizes one complete loop before breadth.

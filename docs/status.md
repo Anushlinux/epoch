@@ -2,7 +2,9 @@
 
 As of September 6, 2026, Epoch is a documentation-only repository. **All product runtime capabilities are unimplemented.** The approved direction is a target, not a result.
 
-## Delivered foundation
+## Implemented facts
+
+Only the documentation below exists. No product code or runtime tests have been implemented or executed.
 
 - [README](../README.md): product summary, current state, and reading order.
 - [Direction](direction.md): unchanged source document.
@@ -10,6 +12,18 @@ As of September 6, 2026, Epoch is a documentation-only repository. **All product
 - [Architecture](architecture.md): intended boundaries and evidence flow.
 - [Integration checklist](integrations.md): verification required before compatibility claims.
 - [Seven ordered task briefs](tasks/README.md): future scope, dependencies, acceptance criteria, required evidence, and prompts.
+
+## Approved decisions
+
+Use Python for future implementation, build a CLI before UI, and start with local simulated services. Keep the approved direction unchanged. Choose libraries, concrete schemas, storage, transport and layout in Task 01; those choices have not been made.
+
+## Requirements awaiting implementation
+
+Keep Hermes fixed during runtime repair, protect trusted evaluation, enforce bounded permissions and repair budgets, prevent duplicate replay effects, and publish only verified persistent environment changes. Preserve rejected attempts, missing evidence and historical sources. These are requirements for future work, not controls already enforced by this repository.
+
+## Unverified assumptions
+
+Hermes discovery behavior, Neatlogs capture coverage, Workshop replay, and interoperability remain unverified against installed versions. The local simulations have not been built, and their proposed fidelity to business-service contracts is untested. Simulation alone would establish neither secure execution of generated code nor live-service compatibility. Model-provider choice and data routing are also unresolved. See the [integration checklist](integrations.md) for the evidence needed.
 
 ## Runtime capability inventory
 
@@ -21,6 +35,8 @@ As of September 6, 2026, Epoch is a documentation-only repository. **All product
 | Permission-scoped tool registry and version lifecycle | Unimplemented | Tasks 02 and 04 |
 | Hermes integration and dynamic tool discovery | Unimplemented; compatibility unverified | Task 03 |
 | Trace capture, retrieval capture and trusted outcome evaluation | Unimplemented | Task 03 |
+| Runtime tests, evaluator protection tests and regression suite | Unimplemented | Tasks 02–07 |
+| Debugger agent and complete repair loop | Unimplemented | Task 04 onward |
 | Automatic failure triggers and bounded investigation | Unimplemented | Task 04 |
 | Existing-tool repair, isolated verification, publication and rollback | Unimplemented | Task 04 |
 | Generated missing-tool repair | Unimplemented | Task 05 |

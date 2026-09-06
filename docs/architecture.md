@@ -26,6 +26,17 @@ For example, Hermes can submit valid release data to a tool whose adapter serial
 
 Neatlogs is intended for tracing; Raindrop Workshop is intended for local inspection and replay where verified. Their adapters must preserve these boundaries. Neither is assumed to provide repair decisions, complete instrumentation, interoperable traces, or ready-to-use replay. See the [integration checklist](integrations.md).
 
+## Information needs
+
+These are information requirements, not executable schemas or selected storage formats. Task 01 makes those implementation choices.
+
+| Record | Information it must make available |
+| --- | --- |
+| Tool contract | Capability and description, inputs and outputs, validation and error behavior, required permissions, side effects, version, and retry/duplicate-effect behavior |
+| Run | Request and relevant conversation, task/run identity, executor baseline, visible tools and versions, supplied context and sources, calls/results/errors, final response, state observations, and missing evidence |
+| Success condition | Expected outcome, source and whether explicit or inferred, relevant scope, observable check, result and supporting evidence or unresolved ambiguity |
+| Repair record | Trigger and failed condition, evidence references, diagnosis and uncertainty, actual changed artifact, permitted scope, attempts and limits, trusted verification results, rejection/publication decision, active/prior versions and rollback history |
+
 ## Execution and repair flow
 
 ```text
@@ -73,6 +84,8 @@ User request / correction
 
 The first implementation operates only against labeled local simulated services. Each baseline and candidate test needs its own restorable starting state. A rerun must not accidentally benefit from a checklist or message created by the previous run. Include a partial-success case: the ticket exists when checklist creation fails.
 
+Simulated business services do not securely isolate generated code. A candidate could still access host files or the network unless a separate execution boundary prevents it. Task 01 must select that boundary, and later implementation must test denied access from inside candidate execution. Resettable service state establishes replay conditions, not filesystem or network containment, and neither establishes live-service compatibility.
+
 A future authorized live recovery has different requirements. It must inspect existing side effects and resume or reconcile completed steps before issuing writes. An uncertain timeout cannot be treated as proof that nothing happened. If duplicate effects cannot be prevented or detected within granted access, stop and report the uncertainty. Local reset tests do not prove live replay safety.
 
 ## Fixed and editable surfaces
@@ -82,6 +95,8 @@ Before each repair experiment, record the executor implementation, system prompt
 The permitted repair surface consists of authorized tool implementations and descriptions/contracts, bounded tool-side behavior, registered capabilities, context selection rules, and repair records. A generated missing tool needs a real authorized underlying resource. A context repair must retain access to an older runbook for a historical question.
 
 The implementation must enforce these restrictions, not merely ask the debugger to obey them. Task 01 chooses the enforcement mechanism. A fixed executor also requires controlling unrelated executor memory or skill updates when comparing baseline and repaired runs.
+
+Future developers may improve tests and evaluators through normal reviewed changes. That engineering work establishes a new reviewed baseline where needed; it is distinct from a runtime debugger weakening the evaluator to approve its own candidate. Preserve earlier results and identify the checks used for each experiment.
 
 ## Evidence required to support a repair claim
 

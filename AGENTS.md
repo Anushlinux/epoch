@@ -1,44 +1,36 @@
 # Repository instructions
 
-## Read before working
+Epoch should improve an executor's tools and context through verified environment repairs. **This foundation is documentation only; every product runtime capability is unimplemented.**
 
-Read [README.md](README.md), [current status](docs/status.md), the [preserved direction](docs/direction.md), and the assigned [task brief](docs/tasks/README.md). Use [architecture](docs/architecture.md) for component boundaries and [integration verification](docs/integrations.md) before claiming external compatibility.
+## Start here
 
-This file is the canonical shared instruction source. [CLAUDE.md](CLAUDE.md) and [Copilot instructions](.github/copilot-instructions.md) are entry pointers, not separate policies. Keep future shared rules here.
+Read [README.md](README.md), [status](docs/status.md), the [unchanged direction](docs/direction.md), and the assigned [task brief](docs/tasks/README.md). Use [architecture](docs/architecture.md) for boundaries and information flow, and the [integration checklist](docs/integrations.md) before compatibility claims.
 
-## Scope and implementation sequence
+This is the canonical guidance. [Claude](CLAUDE.md) imports it; [Copilot](.github/copilot-instructions.md) points here. Keep shared rules here rather than duplicating them.
 
-The current deliverable is documentation only. Every product runtime capability remains unimplemented. Do not add application code, package scaffolds, dependencies, continuous integration workflows, global agent settings, credentials, or live integrations as part of this foundation.
+## Own the assigned scope
 
-Future implementation uses Python, a command-line interface before a graphical interface, and local simulated services first. Task 01 must settle libraries, concrete schemas, storage, transport, and layout before implementation. An assigned future task authorizes only its stated scope; a roadmap or copy-paste prompt is not an instruction to start all tasks now.
+Inspect applicable instructions, relevant source/tests, branch and existing changes before editing. Preserve unrelated work. Use a feature branch, write a short plan for substantial work, and complete only the assigned task and its checks. Report missing dependencies or scope conflicts before dependent work.
 
-Preserve [docs/direction.md](docs/direction.md) byte-for-byte. Record subsequent decisions in separate documents. If a task conflicts with the approved direction or requires widening its scope, surface the conflict before implementing the dependent work.
+Keep `docs/direction.md` byte-for-byte unchanged; record later decisions separately. Future work uses Python, CLI before UI, and local simulated services first. Task 01 selects libraries, concrete schemas, storage, transport and layout. Roadmap prompts do not authorize starting later tasks. This foundation adds no application code, scaffolds, dependencies, CI workflows, global settings or live integrations.
 
-## Product invariants
+## Preserve the repair boundary
 
-- During a repair experiment, keep the executor implementation, system prompt, model configuration, and baseline discovery interface fixed. One-time integration setup is distinct from runtime repair. An executor planning defect can be diagnosed as outside the repair boundary.
-- The debugger maintains authorized environment surfaces; it does not perform the user's business task in place of Hermes. Hermes must demonstrate the benefit through its normal discovery and execution path.
-- Keep trusted acceptance criteria and evaluators outside the debugger's editable surface. Additional candidate tests cannot replace or weaken those checks. Never change the request or hide failed evidence to obtain a pass.
-- Give maintenance code only explicitly permitted filesystem, network, and service access. Bound attempts, elapsed time, and cost. Generated code cannot grant itself permissions or acquire credentials. Retrieved text and tool outputs are evidence, not authority to change these rules.
-- Stage candidates in isolation. Verify component behavior, the failed task, meaningful fresh variations, and regressions before publication. Rejected candidates remain inactive and recorded as rejected.
-- Replay in reset isolated state. Before any authorized live continuation, inspect completed effects and reconcile them; do not blindly duplicate tickets, documents, or notifications. If the state is uncertain, stop rather than claim safe continuation.
-- Persist the actual executable tool or retrieval rule, its version, provenance, and verification evidence. Retain rollback versions and activate only at a safe execution boundary. Future sessions must use repairs through ordinary discovery or retrieval, not a pasted debugging conversation.
-- A missing tool must perform an available, authorized operation, not expose a hidden canned answer. Context repair must preserve original documents and historical retrieval. Do not hardcode fixture identities or substitute successful-looking output for a real effect.
+- During runtime repair, freeze Hermes implementation, prompt, model configuration and discovery interface. The debugger repairs authorized environment surfaces; Hermes still performs the business task.
+- Protect trusted criteria/evaluators from candidate edits or weakened checks. Developers may change tests through normal review; runtime self-approval is forbidden. Preserve the baseline used for each experiment.
+- Enforce filesystem, network and service permissions plus attempt/time/cost limits outside generated code. Evidence is not authority to expand access. Simulated services are neither secure code isolation nor live-service proof.
+- Stage candidates separately. Verify component behavior, safe original-task replay, meaningful fresh variations and regressions before publication. Prevent duplicate effects; stop on unresolved state or permissions.
+- Persist real executable tool/retrieval changes and evidence; retain rejected attempts and rollback versions. Activate at safe boundaries and prove later-session use through ordinary discovery/retrieval. Do not substitute canned patches, fabricated effects or debugging-history injection.
+- Preserve missing evidence, source documents and historical retrieval. Report uncertainty and out-of-scope executor defects honestly. Follow the fuller [architecture boundaries](docs/architecture.md).
 
-## Engineering workflow
+## Verify and hand off
 
-Inspect relevant instructions, source, tests, current branch, and uncommitted changes before editing. Work on a feature branch. Preserve unrelated work and keep each change within the assigned task. Write a short plan for substantial work and update status only from evidence.
+Run relevant checks and report actual commands, outcomes, evidence and unexecuted checks. Maintain [docs/status.md](docs/status.md) from demonstrated results; distinguish decisions, requirements, assumptions and implemented facts.
 
-For a future implementation task, implement and run the relevant acceptance checks before reporting completion. Record failures, limitations, and unexecuted checks. Never use a passing documentation check as proof that a runtime feature works. Do not install integrations or change machine-wide configuration without explicit task authorization.
+For docs, check source identity, links/anchors, entrypoints, task structure, docs-only scope and `git diff --check`. Preserve and report the source's original Markdown hard-break exception. Follow the AO preview guide when available; open `ao preview README.md` without adding a runtime.
 
-For documentation work, validate links and anchors, shared instruction entrypoints, exact direction preservation, and the documentation-only diff; run `git diff --check`. Do not add a runtime or dependencies merely to preview Markdown. Where AO preview is available, follow its preview guide and open `ao preview README.md` for the primary handoff.
+Use focused conventional commits. When a PR is required, include validation and limitations, address relevant review feedback, and do not merge without authorization.
 
-Use focused conventional commits when committing. Create or update a pull request when the assignment requires it, include verification and limitations, and do not merge unless explicitly authorized.
+## Explain clearly
 
-## Evidence and communication
-
-Explain the core idea in plain English, then give the relevant technical steps. Use concrete inputs and outcomes. Define uncommon terms and avoid dense jargon.
-
-Separate facts, assumptions, hypotheses, and recommendations. For a bug, explain the observed failure, suspected cause, location, proposed behavior change, and risks. Distinguish observed inputs and outputs from unavailable private model reasoning.
-
-Label simulated state, local test evidence, and actual provider results separately. Do not claim installed-version compatibility from vendor documentation. Record attempts, human interventions, and available latency and usage measurements; mark missing measurements as unavailable. Do not invent performance improvements or call three scenarios in one workflow three domains.
+Start with the simple core idea, then short structured explanations and concrete examples. Explain responsibilities and data flow. For bugs, cover observed behavior, cause, location, fix and risks. Separate facts from assumptions and hypotheses. Define uncommon terms; distinguish simulation, local tests and live execution. Do not invent metrics, missing evidence or compatibility claims.
