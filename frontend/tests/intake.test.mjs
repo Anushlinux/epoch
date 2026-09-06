@@ -120,3 +120,29 @@ test('failed acknowledgement validation is uncertain and never becomes task succ
   await w.connect(); await w.submit('text', 'demo');
   assert.equal(w.state.submission, 'unknown'); assert.equal(w.state.task, null); assert.ok(w.state.pending);
 });
+test('missing selected task does not block a healthy reconnect; old detail stays explicitly unavailable until read again', async () => {
+  const { workspace: w, api, calls } = setup();
+  await w.connect(); await w.read(model('Task').id);
+  const old = structuredClone(w.state.task);
+  api.detail = async () => { throw new IntakeError('Task not found', 404); };
+  await w.read(old.id);
+  assert.equal(w.state.taskUnavailable, true);
+  await w.connect();
+  assert.equal(w.state.connected, true);
+  assert.deepEqual(w.state.task, old);
+  assert.equal(w.state.taskUnavailable, true);
+  assert.match(w.state.error, /404/);
+  assert.equal(calls.length, 0);
+  api.detail = async () => old;
+  await w.read(old.id);
+  assert.equal(w.state.taskUnavailable, false);
+});
+test('changing API origin clears the previous servers saved notice and selected receipt', async () => {
+  const { workspace: w } = setup(); await w.connect(); await w.submit('Saved on first server', 'demo');
+  assert.match(w.state.notice, /Request saved/);
+  await w.connect('http://localhost:8999');
+  assert.equal(w.state.connected, true);
+  assert.equal(w.state.task, null);
+  assert.equal(w.state.notice, '');
+  assert.equal(w.state.submission, 'idle');
+});

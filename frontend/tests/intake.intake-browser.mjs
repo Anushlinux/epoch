@@ -147,3 +147,29 @@ test('actual server 422 after a deliberately fault-mutated body is displayed wit
   await expect(page.getByRole('heading', { name: 'Saved request detail', exact: true })).toHaveCount(0);
   expect(await total()).toBe(before);
 });
+
+test('a missing-detail response marks the retained receipt unavailable without blocking health/list reconnect', async ({ page }) => {
+  const saved = await post(payload('Retain this receipt if the detail becomes unavailable'));
+  await open(page); await connect(page);
+  await page.locator(`[data-task="${saved.task.id}"]`).click();
+  await page.route(`${api}/api/tasks/${saved.task.id}`, async (route) => {
+    // Deliberately substitute a real server 404; no stored task is deleted.
+    const response = await route.fetch({ url: `${api}/api/tasks/${crypto.randomUUID()}` });
+    expect(response.status()).toBe(404); await route.fulfill({ response });
+  });
+  const before = await total();
+  await page.getByRole('button', { name: 'Reload detail' }).click();
+  await expect(page.getByText('Unavailable · last loaded record', { exact: true })).toBeVisible();
+  await expect(page.locator('.intake-detail')).toContainText('not a current stored record');
+  await page.locator('.intake-connection > summary').click();
+  await page.getByRole('button', { name: 'Refresh connection' }).click();
+  await expect(page.getByText('Connected · local API', { exact: true })).toBeVisible();
+  await expect(page.getByText('Unavailable · last loaded record', { exact: true })).toBeVisible();
+  await expect(page.getByRole('alert')).toContainText('HTTP 404');
+  await expect(page.getByRole('button', { name: 'Save request', exact: true })).toBeEnabled();
+  expect(await total()).toBe(before);
+  await page.unroute(`${api}/api/tasks/${saved.task.id}`);
+  await page.getByRole('button', { name: 'Reload detail' }).click();
+  await expect(page.getByText('Unavailable · last loaded record', { exact: true })).toHaveCount(0);
+  await expect(page.locator('.intake-detail')).toContainText('Pending · no execution');
+});

@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-09-06T13:35:24.802Z",
+  "verified_at": "2026-09-06T13:51:01.225Z",
   "category": "actual-local-phase-1-http",
   "backend_base": "0a062dde6fcf5f10f792cf77813fe8adbaf117e3",
   "isolated_temporary_database": true,
@@ -11,15 +11,15 @@
   },
   "task": {
     "schema_version": 1,
-    "id": "e84ee901-359f-4570-9370-d51dcae926ac",
+    "id": "0f74669a-7fff-434b-bceb-c2147b3c830e",
     "request": {
-      "client_request_id": "f5f8bc2d-cb63-4fed-9f3c-06e40d9056a5",
+      "client_request_id": "bfa42786-6c2b-4e05-84fb-89922794e7db",
       "message": "Persisted HTTP intake proof · no execution",
       "project_id": "integration-proof"
     },
     "status": "pending",
-    "created_at": "2026-09-06T13:35:17.163111Z",
-    "updated_at": "2026-09-06T13:35:17.163111Z"
+    "created_at": "2026-09-06T13:50:51.797613Z",
+    "updated_at": "2026-09-06T13:50:51.797613Z"
   },
   "checks": {
     "create": 201,

@@ -18,7 +18,7 @@ Before POST, the UI freezes the `client_request_id`, message, project label and 
 
 An unknown acknowledgement means the task may already be saved. Reload retains a recoverable pending payload; reconnect performs health/list/detail reads only. **Retry exact submission** deliberately sends that same ID/content, using Phase 1's documented 200 identical-retry behavior. It never silently creates a replacement ID. A 409/422/403 rejection retains the frozen content until the user explicitly returns it to the draft. An unreadable recovery identity blocks submissions and permits read-only inspection. Closing a tab, clearing its storage or losing the browser session cannot provide durable client recovery; inspect the backend's saved tasks before making another submission. There is no client-request-ID lookup endpoint.
 
-List/detail reads reject unrelated task IDs, malformed records and unsupported phases/statuses. Late reads cannot overwrite a newer selection. Reconnect retains the last loaded records while unavailable and revalidates them before claiming a connection. There is no polling, SSE, feedback or repair request from this page.
+List/detail reads reject unrelated task IDs, malformed records and unsupported phases/statuses. Late reads cannot overwrite a newer selection. Reconnect retains the last loaded records while unavailable and revalidates them before claiming a connection. A missing selected task does not block a healthy reconnect: its previous receipt is marked unavailable until the API returns it again. Switching servers clears the previous server’s receipt and save notice. There is no polling, SSE, feedback or repair request from this page.
 
 ## Future workflow fixtures
 

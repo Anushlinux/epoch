@@ -26,3 +26,7 @@ Authorized after the rebase onto `0a062dd`. Keep backend files unchanged.
 4. Update boundary mapping and evidence/status, then commit, push, update PR #2 and report to epoch-2. Future event/feedback/repair questions remain review requests; actual supervised repair stays blocked.
 
 Phase 1 integration completed locally: primary intake/list/detail UI, frozen recoverable submission payloads and explicit retry, separate future fixtures, 35 state tests, 26 fixture browser tests and 10 real-backend browser checks pass. Actual HTTP restart persistence and response semantics passed. AO preview is visible but API connection is blocked by the backend CORS origin validator; reported to epoch-2 without backend changes. Evidence and PR handoff follow.
+
+Final completion pass: finish reconnect handling for a missing selected task, mark its retained receipt unavailable, and clear old-server save notices when switching origins. Add focused state/browser coverage; push the final fix to existing PR #2. Backend CORS and later execution remain separate blockers.
+
+Final pass complete: missing-detail reconnect and server-scope notices fixed; 37 state tests, 26 fixture browser tests and 12 actual-backend browser checks passed. HTTP/restart proof and screenshots refreshed; only the documented AO CORS restriction and future execution phases remain blocked. All completed frontend work is included in PR #2.

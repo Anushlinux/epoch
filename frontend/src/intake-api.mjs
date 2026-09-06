@@ -88,7 +88,7 @@ export class IntakeAPI {
 export class IntakeWorkspace {
   constructor({ storage, apiFactory = (origin) => new IntakeAPI(origin), onChange = () => {} }) {
     this.storage = storage; this.apiFactory = apiFactory; this.onChange = onChange; this.generation = 0;
-    this.state = { origin: 'http://127.0.0.1:8000', connected: false, busy: false, pending: null, recovery: false, submission: 'idle', error: '', notice: '', list: null, task: null, offset: 0 };
+    this.state = { origin: 'http://127.0.0.1:8000', connected: false, busy: false, pending: null, recovery: false, submission: 'idle', error: '', notice: '', list: null, task: null, taskUnavailable: false, offset: 0 };
     try {
       const saved = storage.getItem(ORIGIN_KEY);
       if (saved) this.state.origin = apiOrigin(saved);
@@ -116,14 +116,23 @@ export class IntakeWorkspace {
     const changed = origin !== this.state.origin;
     const generation = ++this.generation;
     Object.assign(this.state, { origin, busy: true, connected: false, error: '' });
-    if (changed) Object.assign(this.state, { task: null, list: null, offset: 0 });
+    if (changed) Object.assign(this.state, { task: null, taskUnavailable: false, list: null, offset: 0, notice: '', submission: 'idle' });
     this.api = this.apiFactory(origin); this.emit();
     try {
       await this.api.health();
       const list = await this.api.list(this.state.offset);
-      const task = this.state.task ? await this.api.detail(this.state.task.id) : null;
+      let task = this.state.task;
+      let taskUnavailable = false;
+      if (task) {
+        try { task = await this.api.detail(task.id); }
+        catch (error) {
+          if (error.status !== 404) throw error;
+          taskUnavailable = true;
+          this.state.error = `${error.message} HTTP 404. The last loaded detail is retained as unavailable.`;
+        }
+      }
       if (generation !== this.generation) return;
-      Object.assign(this.state, { connected: true, list, task });
+      Object.assign(this.state, { connected: true, list, task, taskUnavailable });
       try { this.storage.setItem(ORIGIN_KEY, origin); } catch { /* POST still requires durable pending storage. */ }
     } catch (error) { if (generation === this.generation) this.state.error = error.message; }
     finally { if (generation === this.generation) { this.state.busy = false; this.emit(); } }
@@ -135,11 +144,12 @@ export class IntakeWorkspace {
     try {
       const result = id ? await this.api.detail(id) : await this.api.list(offset);
       if (generation !== this.generation) return;
-      if (id) this.state.task = result;
+      if (id) Object.assign(this.state, { task: result, taskUnavailable: false });
       else Object.assign(this.state, { list: result, offset });
     } catch (error) {
       if (generation !== this.generation) return;
       this.state.error = error.message;
+      if (error.status === 404 && this.state.task?.id === id) this.state.taskUnavailable = true;
       if (!error.status || error.status >= 500) this.state.connected = false;
     } finally { if (generation === this.generation) { this.state.busy = false; this.emit(); } }
   }
@@ -162,7 +172,7 @@ export class IntakeWorkspace {
     this.state.busy = true; this.state.submission = 'sending'; this.state.error = ''; this.state.notice = ''; this.emit();
     try {
       const { task, status } = await this.api.create(pending.payload);
-      this.state.task = task;
+      this.state.task = task; this.state.taskUnavailable = false;
       // If cleanup fails, retaining this identity permits only another identical retry.
       this.storage.removeItem(PENDING_KEY);
       this.state.pending = null; this.state.submission = 'saved';
