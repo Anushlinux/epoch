@@ -1,6 +1,33 @@
 # Frontend verification evidence
 
-## Current Phase 1 intake integration
+## Chat and debugger redesign — September 6, 2026
+
+Implemented from refreshed `origin/main` at `4bfb841` on `codex/epoch-chat-debugger`. All initial UI changes were completed before test execution, as requested. The earlier records below describe previous layouts; the named intake screenshots and HTTP artifact now contain the latest verification run.
+
+| Check | Actual result |
+| --- | --- |
+| `npm test --prefix frontend` | 41 state tests passed |
+| `npm run test:browser --prefix frontend -- --workers=1` | 34 checks passed: 17 cases each on desktop and mobile Chromium |
+| `EPOCH_FRONTEND_PORT=5175 npm run test:integration --prefix frontend` | Real HTTP checks and 14 intake browser checks passed |
+
+The demo checks cover both page routes, browser Back/Forward, independent request and feedback drafts, disclosure and scroll restoration, direct task links, missing sessions, clarification, rejected repair attempts, verification versus publication, publication versus task completion, partial results, revision history, source inspection, JSON downloads, keyboard controls, reduced motion, and long content. Unknown acknowledgements remain frozen; lookup reconciles without replay. Disconnected or unrecoverable sessions cannot submit. Later checkpoint changes cannot inherit an old delivered label.
+
+The integration runner used the real frontend server at port 5175, an unchanged local Phase 1 backend, and a temporary SQLite database. It verified saving and rereading original requests, persistence across backend restart, exact retries, rejected content recovery, unavailable detail, offline reads, independent drafts, direct debugger links, and an unstarted real pipeline. Read-only navigation sent no POST requests. The generated [HTTP evidence](intake-http.json) preserves exact status results. Both test servers and their database were removed by the runner.
+
+The final screenshots were visually inspected. The review fixed a mobile grid placement issue, preserved drafts through history navigation, kept pipeline explanations visible, prevented the skip link from scrolling the fixed shell, and reduced the mobile header's debugger link to a labeled icon. A final focused desktop/mobile layout pass refreshed the screenshots after that header adjustment.
+
+- Empty chat: [desktop](empty-chat-desktop.png) and [mobile](empty-chat-mobile.png).
+- Atlas conversation: [desktop](chat-desktop.png) and [mobile](chat-mobile.png).
+- Rejected repair pipeline: [desktop](debugger-desktop.png) and [mobile](debugger-mobile.png).
+- Actual saved intake: [desktop](intake-desktop.png) and [mobile](intake-mobile.png).
+
+The normal in-app preview runs at `http://127.0.0.1:5174/chat`, with an isolated backend at `http://127.0.0.1:8001`. Its only configured browser origin is `http://127.0.0.1:5174`. The existing servers at 5173 and 8000 were left untouched. Connection was confirmed through the actual page controls. Reloading still requires an explicit Connect / reconnect; the interface never auto-submits. The demo is at `/demo/chat` and `/demo/debugger` on the same frontend host.
+
+The backend, HTTP adapter, fixture adapter, evidence guards, and `docs/direction.md` are unchanged. Route and asset allowlist checks passed, including demo `connect-src 'none'` and blocked backend/dotfile access. Font assets are bundled locally with their license. The first browser launch required the approved sandbox escalation; a later run exhausted temporary disk space and was repeated successfully after cleaning this task's generated cache. These were environment failures, not reported as application passes.
+
+This proves frontend behavior and local request storage. All demo execution, tool activity, repair code, verification results and artifacts remain authored fixtures. No execution, feedback, conversation, or repair endpoint was added. Physical devices, Mobile Safari, screen-reader output, and a live executor were not tested. User visual feedback remains the next review input.
+
+## Earlier Phase 1 intake integration
 
 The primary `frontend/index.html` uses real health/create/list/detail endpoints. The separate `frontend/fixtures.html` workspace contains only authored execution/repair records. Verified against unchanged backend Phase 1 at `0a062dd` on September 6, 2026.
 

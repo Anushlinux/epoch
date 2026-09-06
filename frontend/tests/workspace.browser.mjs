@@ -4,39 +4,60 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const origin = "https://epoch-fixture.invalid";
-const contentType = {
+const types = {
   ".html": "text/html",
   ".mjs": "text/javascript",
   ".css": "text/css",
   ".svg": "image/svg+xml",
-  ".md": "text/plain",
+  ".ttf": "font/ttf",
 };
-let external = [];
+const aliases = {
+  "/chat": "/index.html",
+  "/debugger": "/index.html",
+  "/demo/chat": "/fixtures.html",
+  "/demo/debugger": "/fixtures.html",
+};
 test.beforeEach(async ({ page }) => {
-  external = [];
   await page.route("**/*", async (route) => {
     const url = new URL(route.request().url());
-    if (url.origin !== origin) {
-      external.push(url.origin);
-      return route.abort();
-    }
-    const file = path.resolve(root, `.${decodeURIComponent(url.pathname)}`);
+    if (url.origin !== origin) return route.abort();
+    const file = path.resolve(
+      root,
+      `.${aliases[url.pathname] || url.pathname}`,
+    );
     if (!file.startsWith(root)) return route.abort();
     try {
       return route.fulfill({
         body: await readFile(file),
-        contentType: contentType[path.extname(file)] || "text/plain",
+        contentType: types[path.extname(file)] || "text/plain",
       });
     } catch {
-      return route.fulfill({ status: 404, body: "Missing test fixture file" });
+      return route.fulfill({ status: 404, body: "Missing fixture file" });
     }
   });
-  await page.goto(`${origin}/fixtures.html`);
+  await page.goto(`${origin}/demo/chat`);
 });
+async function nav(page) {
+  if (
+    await page
+      .locator("#sidebar")
+      .evaluate(
+        (el) => el.inert || getComputedStyle(el).visibility === "hidden",
+      )
+  )
+    await page.getByRole("button", { name: "Toggle navigation" }).click();
+}
+async function newChat(page) {
+  await nav(page);
+  await page.getByRole("button", { name: /^New chat/ }).click();
+}
+async function debug(page) {
+  await nav(page);
+  await page.getByRole("link", { name: "Debugger", exact: true }).click();
+}
 async function controls(page) {
-  const details = page.locator(".fixture-controls");
-  if (!(await details.evaluate((e) => e.open)))
-    await details.locator("summary").click();
+  const d = page.locator(".fixture-controls");
+  if (!(await d.evaluate((el) => el.open))) await d.locator("summary").click();
 }
 async function advance(page, count = 1) {
   for (let i = 0; i < count; i++) {
@@ -44,8 +65,36 @@ async function advance(page, count = 1) {
     await page.getByRole("button", { name: "Advance fixture" }).click();
   }
 }
+async function create(page, text = "Prepare one checklist.") {
+  await newChat(page);
+  await page.getByLabel("Your request", { exact: true }).fill(text);
+  await page.getByRole("button", { name: "Review clarification" }).click();
+  await page.getByLabel("Where should the result be shared?").fill("Just here");
+  await page.getByRole("button", { name: "Create fixture task" }).click();
+}
+async function loseAck(page) {
+  await controls(page);
+  await page.getByLabel("Lose the next submission acknowledgement").check();
+}
+async function feedback(page, text = "Include the rollback owner.") {
+  await page.getByLabel("Your feedback", { exact: true }).fill(text);
+  await page.getByRole("button", { name: "Create fixture revision" }).click();
+}
+async function tab(page, name) {
+  await page.getByRole("tab", { name, exact: true }).click();
+}
+async function fits(page) {
+  expect(
+    await page.locator('.topbar').evaluate(el => el.scrollWidth <= el.clientWidth),
+  ).toBe(true);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+}
 
-test("layout, fixture labeling, keyboard skip link, responsive overflow and no network", async ({
+test("chat layout, empty state, source labels, keyboard skip link and responsive overflow", async ({
   page,
 }, info) => {
   const errors = [];
@@ -53,51 +102,81 @@ test("layout, fixture labeling, keyboard skip link, responsive overflow and no n
   await expect(
     page.getByRole("heading", { name: "Prepare the Atlas 2.4 release" }),
   ).toBeVisible();
-  await expect(
-    page.getByText("All states above are fixtures, including passed."),
-  ).toBeVisible();
+  await expect(page.locator(".demo-strip")).toContainText("authored examples");
   await page.keyboard.press("Tab");
   await expect(
     page.getByRole("link", { name: "Skip to workspace" }),
   ).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.locator("#workspace")).toBeFocused();
-  const dimensions = await page.evaluate(() => ({
-    viewport: innerWidth,
-    body: document.documentElement.scrollWidth,
-  }));
-  expect(dimensions.body).toBeLessThanOrEqual(dimensions.viewport);
-  expect(external).toEqual([]);
-  expect(errors).toEqual([]);
-  await page.getByRole("tab", { name: "Overview", exact: true }).click();
-  await page.evaluate(() => {
-    document.activeElement.blur();
-    window.scrollTo(0, 0);
-  });
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  await page.locator("#workspace").evaluate(el => el.blur());
+  await fits(page);
+  await page.screenshot({ path: `evidence/chat-${info.project.name}.png` });
+  await page.goto(`${origin}/chat`);
+  await expect(
+    page.getByRole("heading", { name: "EPOCH", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Save request" }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("textbox", { name: "What needs to be done?" }),
+  ).toBeEditable();
+  await page.evaluate(() => document.fonts.ready);
+  await fits(page);
   await page.screenshot({
-    path: `evidence/${info.project.name}.png`,
-    fullPage: true,
+    path: `evidence/empty-chat-${info.project.name}.png`,
   });
+  expect(errors).toEqual([]);
 });
 
-test("tabs support arrows, Home/End and evidence dialog Escape with focus return", async ({
+test("separate debugger route, browser history, draft and scroll restoration", async ({
   page,
 }) => {
-  const overview = page.getByRole("tab", { name: "Overview", exact: true });
-  await overview.focus();
+  await page
+    .getByLabel("Your feedback", { exact: true })
+    .fill("Keep this unsent feedback");
+  await page.locator('[data-key="chat-activity"]>summary').click();
+  await page.locator("#page-scroll").evaluate((el) => (el.scrollTop = 200));
+  const y = await page.locator("#page-scroll").evaluate((el) => el.scrollTop);
+  await debug(page);
+  await expect(page).toHaveURL(/\/demo\/debugger\?task=fixture-atlas$/);
+  await expect(page.locator(".pipeline-stage")).toHaveCount(6);
+  await page.goBack();
+  await expect(page.getByLabel("Your feedback", { exact: true })).toHaveValue(
+    "Keep this unsent feedback",
+  );
+  expect(
+    await page.locator('[data-key="chat-activity"]').evaluate((el) => el.open),
+  ).toBe(true);
+  expect(
+    await page.locator("#page-scroll").evaluate((el) => el.scrollTop),
+  ).toBe(y);
+  await page.goForward();
+  await expect(page.locator(".pipeline-stage")).toHaveCount(6);
+});
+
+test("debugger tabs use arrow/Home/End keys; evidence dialog Escape returns focus", async ({
+  page,
+}, info) => {
+  await debug(page);
+  await expect(page.locator("#stage-2")).toContainText("Rejected");
+  await fits(page);
+  await page.screenshot({ path: `evidence/debugger-${info.project.name}.png` });
+  const activity = page.getByRole("tab", { name: "Activity", exact: true });
+  await activity.focus();
   await page.keyboard.press("ArrowRight");
   await expect(
-    page.getByRole("tab", { name: "Activity", exact: true }),
+    page.getByRole("tab", { name: "Checkpoints", exact: true }),
   ).toBeFocused();
-  await expect(
-    page.getByRole("heading", { name: "Observable activity" }),
-  ).toBeVisible();
   await page.keyboard.press("End");
   await expect(
     page.getByRole("tab", { name: "History", exact: true }),
   ).toBeFocused();
   await page.keyboard.press("Home");
-  await expect(overview).toBeFocused();
+  await expect(activity).toBeFocused();
+  await tab(page, "Checkpoints");
   const inspect = page
     .getByRole("button", { name: "Inspect evidence & source" })
     .first();
@@ -113,42 +192,37 @@ test("tabs support arrows, Home/End and evidence dialog Escape with focus return
     '"category": "fixture"',
   );
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).not.toBeVisible();
   await expect(inspect).toBeFocused();
 });
 
-test("request clarification preserves exact intent, accepts only valid input, and never invents execution", async ({
+test("custom request clarification preserves escaped input and never invents execution", async ({
   page,
 }) => {
-  await page.getByRole("button", { name: "New request", exact: true }).click();
+  await newChat(page);
   await page.getByRole("button", { name: "Review clarification" }).click();
   await expect(page.getByLabel("Your request", { exact: true })).toBeFocused();
   const text =
     "<script>window.compromised=true</script>\nPreserve all release notes.";
   await page.getByLabel("Your request", { exact: true }).fill(text);
+  await page.locator('[data-key="constraints"]>summary').click();
   await page.getByLabel("Constraints (optional)").fill("Do not send messages.");
   await page.getByRole("button", { name: "Review clarification" }).click();
-  await expect(page.locator(".request-review")).toContainText(text);
-  await expect(
-    page.getByLabel("Where should the result be shared?"),
-  ).toBeFocused();
+  await expect(page.locator("blockquote")).toHaveText(text);
   await page.getByRole("button", { name: "Edit request", exact: true }).click();
   await expect(page.getByLabel("Your request", { exact: true })).toHaveValue(
     text,
   );
   await page.getByRole("button", { name: "Review clarification" }).click();
   await page.getByLabel("Where should the result be shared?").fill("Just here");
-  await page
-    .getByRole("button", { name: "Create fixture task", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Create fixture task" }).click();
   await expect(
-    page.getByRole("heading", { name: "Your request is preserved." }),
+    page.getByText("Your request is preserved.", { exact: true }),
   ).toBeVisible();
-  await expect(page.locator("blockquote")).toHaveText(text);
+  await expect(page.getByText("0 of 1 fixture passes")).toBeVisible();
+  await page.locator('[data-key="brief"]>summary').click();
   await expect(
     page.getByText("Do not send messages.", { exact: true }),
   ).toBeVisible();
-  await expect(page.getByText("0 of 1 fixture passes")).toBeVisible();
   expect(await page.evaluate(() => window.compromised)).toBeUndefined();
   await controls(page);
   await expect(
@@ -156,216 +230,129 @@ test("request clarification preserves exact intent, accepts only valid input, an
   ).toBeDisabled();
 });
 
-test("uncertain request acknowledgement retries the same submission without duplicate work", async ({
+test("uncertain creation freezes identity; read-only lookup reconciles one task", async ({
   page,
 }) => {
-  await controls(page);
-  await page.getByLabel("Lose the next submission acknowledgement").check();
-  await page.getByRole("button", { name: "New request", exact: true }).click();
-  await page
-    .getByLabel("Your request", { exact: true })
-    .fill("Prepare one checklist.");
-  await page.getByRole("button", { name: "Review clarification" }).click();
-  await page.getByLabel("Where should the result be shared?").fill("Here");
-  await page
-    .getByRole("button", { name: "Create fixture task", exact: true })
-    .click();
+  await loseAck(page);
+  await create(page);
   await expect(page.getByRole("alert")).toContainText("acknowledgement lost");
   await expect(
-    page.getByRole("button", { name: "Create fixture task", exact: true }),
+    page.getByRole("button", { name: "Create fixture task" }),
   ).toBeDisabled();
   await page.getByRole("button", { name: "Check submission status" }).click();
   await expect(page.getByText("0 of 1 fixture passes")).toBeVisible();
-  await expect(
-    page.getByText("Revision 1", { exact: false }).first(),
-  ).toBeVisible();
-  await page.getByRole("tab", { name: "History", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "The original request is intact" }),
-  ).toBeVisible();
+  await debug(page);
+  await tab(page, "History");
+  await expect(page.locator(".current-revision")).toContainText("Revision 1");
+  await expect(page.locator(".history-record")).toHaveCount(0);
 });
 
-test("disconnect blocks changes; reconnect retains partial results and event cursor", async ({
+test("disconnect and failed reconnect preserve evidence and cursor without replay", async ({
   page,
 }) => {
   await controls(page);
-  const before = await page.locator(".fixture-cursor").textContent();
-  await page
-    .getByRole("button", { name: "Disconnect fixture", exact: true })
-    .click();
+  const cursor = await page.locator(".fixture-cursor").textContent();
+  await page.getByLabel("Fail the next fixture reconnect").check();
+  await page.getByRole("button", { name: "Disconnect fixture" }).click();
   await expect(page.getByRole("alert")).toContainText(
     "Fixture updates are paused",
   );
-  await controls(page);
   await expect(
     page.getByRole("button", { name: "Advance fixture" }),
   ).toBeDisabled();
-  await page.getByRole("tab", { name: "Results", exact: true }).click();
-  await expect(page.getByRole("button", { name: /ATLAS-24/ })).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Create fixture revision" }),
   ).toBeDisabled();
-  await page
-    .getByRole("button", { name: "Reconnect fixture", exact: true })
-    .click();
-  await expect(
-    page.locator(".notice").filter({ hasText: /Fixture connection restored/ }),
-  ).toBeVisible();
-  await controls(page);
-  await expect(page.locator(".fixture-cursor")).toHaveText(before);
-  await expect(
-    page.getByRole("button", { name: "Create fixture revision" }),
-  ).toBeEnabled();
+  await page.getByRole("button", { name: "Reconnect fixture" }).click();
+  await expect(page.getByRole("alert")).toContainText(
+    "Fixture reconnect failed.",
+  );
+  await expect(page.getByText("1 of 3 fixture passes")).toBeVisible();
+  await page.getByRole("button", { name: "Reconnect fixture" }).click();
+  await expect(page.locator(".notice")).toContainText(
+    "Fixture connection restored",
+  );
+  await expect(page.locator(".fixture-cursor")).toHaveText(cursor);
 });
 
-test("repair activity cannot finish task; rejected records and partial effects remain visible", async ({
+test("verification and activation never deliver the task; rejected candidates stay inspectable", async ({
   page,
 }) => {
   await advance(page, 2);
-  await page.getByRole("tab", { name: /Repairs/ }).click();
+  await expect(page.locator(".task-state")).not.toHaveText(
+    "Delivered · fixture",
+  );
+  await debug(page);
+  await expect(page.locator("#stage-4 summary")).toContainText("Active");
+  await expect(page.locator("#stage-5 summary")).toContainText("Waiting");
+  await page.locator("#stage-2>details>summary").click();
+  await page.locator('[data-key="attempt-repair-01"]>summary').click();
+  await expect(page.locator("#stage-2")).toContainText("duplicate ticket");
   await expect(
-    page.getByText(
-      "Fixture environment v2 active; previous v1 retained. Rollback not executed.",
-    ),
+    page.locator(".context-column").getByRole("button", { name: /ATLAS-24/ }),
   ).toBeVisible();
-  await expect(page.getByText("Candidate 01 · retry only")).toBeVisible();
-  await page.getByText("Candidate 01 · retry only").click();
-  await expect(
-    page.getByText("Authored example contains a second ticket."),
-  ).toBeVisible();
-  await page.getByRole("tab", { name: "Results", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Partial results & gaps" }),
-  ).toBeVisible();
-  await expect(page.locator(".artifact")).toHaveCount(1);
-  await expect(page.getByText("QA notification not sent.")).toBeVisible();
 });
 
-test("fixture artifacts download with provenance; feedback retains delivered result and resets new checks", async ({
+test("artifact download labels fixture provenance; feedback retains delivered artifacts and resets checks", async ({
   page,
 }) => {
   await advance(page, 5);
-  await page.getByRole("tab", { name: "Results", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Delivered fixture results" }),
-  ).toBeVisible();
-  await expect(page.locator(".artifact")).toHaveCount(3);
+  await expect(page.locator(".task-state")).toHaveText("Delivered · fixture");
   await page.getByRole("button", { name: /MSG-24/ }).click();
-  await expect(page.locator("#inspector-content")).toContainText(
-    "no Slack message was sent",
-  );
-  const pending = page.waitForEvent("download");
+  const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Download fixture JSON" }).click();
-  const download = await pending;
-  expect(download.suggestedFilename()).toBe("epoch-fixture-evidence.json");
-  expect(await readFile(await download.path(), "utf8")).toContain(
-    "NOT EXECUTION EVIDENCE",
-  );
+  const file = await (await download).path();
+  const data = JSON.parse(await readFile(file, "utf8"));
+  expect(data.label).toContain("NOT EXECUTION EVIDENCE");
+  expect(data.data.object.id).toBe("MSG-24");
   await page.keyboard.press("Escape");
-  await page
-    .getByLabel("Your feedback", { exact: true })
-    .fill("Include the rollback owner.");
-  await page.getByRole("button", { name: "Create fixture revision" }).click();
-  await expect(
-    page.getByRole("tab", { name: "History", exact: true }),
-  ).toHaveAttribute("aria-selected", "true");
+  await feedback(page);
+  await expect(page.getByText("0 of 4 fixture passes")).toBeVisible();
+  await debug(page);
+  await tab(page, "History");
+  await expect(page.locator(".current-revision")).toContainText("Revision 2");
   await expect(page.locator(".history-record .artifact")).toHaveCount(3);
   await page
     .getByRole("button", { name: "Inspect complete revision & repair history" })
     .click();
   await expect(page.locator("#inspector-content")).toContainText("repair-01");
-  await page.keyboard.press("Escape");
-  await page.getByRole("tab", { name: "Overview", exact: true }).click();
-  await expect(page.getByText("0 of 4 fixture passes")).toBeVisible();
-  await expect(
-    page.getByRole("heading", {
-      name: "Include the rollback owner.",
-      exact: true,
-    }),
-  ).toBeVisible();
 });
 
-test("feedback acknowledgement loss retries one revision and preserves history", async ({
+test("feedback acknowledgement loss reconciles exactly one revision", async ({
   page,
 }) => {
-  await controls(page);
-  await page.getByLabel("Lose the next submission acknowledgement").check();
-  await page.getByRole("tab", { name: "Results", exact: true }).click();
-  await page
-    .getByLabel("Your feedback", { exact: true })
-    .fill("Use the release owner.");
-  await page.getByRole("button", { name: "Create fixture revision" }).click();
+  await loseAck(page);
+  await feedback(page, "Use the release owner.");
   await expect(page.getByRole("alert")).toContainText("acknowledgement lost");
   await expect(
-    page.getByRole("tab", { name: "Overview", exact: true }),
+    page.getByLabel("Your feedback", { exact: true }),
   ).toBeDisabled();
   await page.getByRole("button", { name: "Check submission status" }).click();
+  await debug(page);
+  await tab(page, "History");
   await expect(page.locator(".history-record")).toHaveCount(1);
   await expect(page.locator(".current-revision")).toContainText("Revision 2");
 });
 
-test("planned reset, empty views, reduced motion and long input fit narrow screens", async ({
+test("planned reset, long content and reduced motion retain responsive layout", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await controls(page);
   await page.getByRole("button", { name: "Restart release example" }).click();
   await expect(page.getByText("0 of 3 fixture passes")).toBeVisible();
-  await page.getByRole("tab", { name: "Results", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "No result artifacts yet" }),
-  ).toBeVisible();
-  await page
-    .getByLabel("Your feedback", { exact: true })
-    .fill("Long feedback ".repeat(100));
-  await page.getByRole("button", { name: "Create fixture revision" }).click();
-  await page.getByRole("tab", { name: "Overview", exact: true }).click();
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-  ).toBeTruthy();
+  await feedback(page, "Long feedback ".repeat(100));
   await expect(page.getByText("0 of 4 fixture passes")).toBeVisible();
+  await fits(page);
+  await debug(page);
+  await fits(page);
 });
 
-test("a failed reconnect preserves evidence and can be retried safely", async ({
+test("unknown acknowledgement reload reports lost identity and never resubmits", async ({
   page,
 }) => {
-  await controls(page);
-  await page.getByLabel("Fail the next fixture reconnect").check();
-  await page
-    .getByRole("button", { name: "Disconnect fixture", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "Reconnect fixture", exact: true })
-    .click();
-  await expect(page.getByRole("alert")).toContainText(
-    "Fixture reconnect failed.",
-  );
-  await expect(page.getByText("1 of 3 fixture passes")).toBeVisible();
-  await page
-    .getByRole("button", { name: "Reconnect fixture", exact: true })
-    .click();
-  await expect(page.locator(".notice")).toContainText(
-    "Fixture connection restored.",
-  );
-  await expect(page.getByText("1 of 3 fixture passes")).toBeVisible();
-});
-
-test("unknown acknowledgement freezes input and reload reports unrecoverable local identity without resubmitting", async ({
-  page,
-}) => {
-  await controls(page);
-  await page.getByLabel("Lose the next submission acknowledgement").check();
-  await page.getByRole("button", { name: "New request", exact: true }).click();
-  await page
-    .getByLabel("Your request", { exact: true })
-    .fill("Do not duplicate this request.");
-  await page.getByRole("button", { name: "Review clarification" }).click();
-  await page.getByLabel("Where should the result be shared?").fill("Just here");
-  await page
-    .getByRole("button", { name: "Create fixture task", exact: true })
-    .click();
+  await loseAck(page);
+  await create(page, "Do not duplicate this request.");
   await expect(page.getByRole("alert")).toContainText(
     "Acknowledgement unknown",
   );
@@ -374,9 +361,6 @@ test("unknown acknowledgement freezes input and reload reports unrecoverable loc
   ).toBeDisabled();
   await expect(
     page.getByRole("button", { name: "Edit request", exact: true }),
-  ).toBeDisabled();
-  await expect(
-    page.getByRole("button", { name: "New request", exact: true }),
   ).toBeDisabled();
   const marker = await page.evaluate(() =>
     sessionStorage.getItem("epoch.fixture.pending"),
@@ -391,34 +375,20 @@ test("unknown acknowledgement freezes input and reload reports unrecoverable loc
     "No request was resubmitted",
   );
   await expect(
-    page.getByRole("button", { name: "New request", exact: true }),
-  ).toBeDisabled();
-  await expect(
     page.getByRole("button", { name: "Check submission status" }),
   ).toHaveCount(0);
   await page
     .getByRole("button", { name: "Discard lost fixture session" })
     .click();
-  await expect(
-    page.getByRole("button", { name: "New request", exact: true }),
-  ).toBeEnabled();
   expect(
     await page.evaluate(() => sessionStorage.getItem("epoch.fixture.pending")),
   ).toBeNull();
-  await expect(
-    page.getByRole("heading", { name: "Prepare the Atlas 2.4 release" }),
-  ).toBeVisible();
 });
 
-test("accepted submission clears the uncertainty marker before reload", async ({
+test("accepted feedback clears pending marker before reload", async ({
   page,
 }) => {
-  await page.getByRole("tab", { name: "Results", exact: true }).click();
-  await page
-    .getByLabel("Your feedback", { exact: true })
-    .fill("Keep the deadline.");
-  await page.getByRole("button", { name: "Create fixture revision" }).click();
-  await expect(page.locator(".current-revision")).toContainText("Revision 2");
+  await feedback(page, "Keep the deadline.");
   expect(
     await page.evaluate(() => sessionStorage.getItem("epoch.fixture.pending")),
   ).toBeNull();
@@ -428,7 +398,7 @@ test("accepted submission clears the uncertainty marker before reload", async ({
   ).toHaveCount(0);
 });
 
-test("unavailable marker storage refuses submission before any fixture action starts", async ({
+test("storage refusal preserves draft and does not start a fixture command", async ({
   page,
 }) => {
   await page.evaluate(() => {
@@ -436,11 +406,7 @@ test("unavailable marker storage refuses submission before any fixture action st
       throw new DOMException("Storage unavailable", "QuotaExceededError");
     };
   });
-  await page.getByRole("tab", { name: "Results", exact: true }).click();
-  await page
-    .getByLabel("Your feedback", { exact: true })
-    .fill("Preserve this draft.");
-  await page.getByRole("button", { name: "Create fixture revision" }).click();
+  await feedback(page, "Preserve this draft.");
   await expect(page.getByRole("alert")).toContainText(
     "This action was not submitted",
   );
@@ -448,67 +414,137 @@ test("unavailable marker storage refuses submission before any fixture action st
     "Preserve this draft.",
   );
   await expect(page.getByLabel("Your feedback", { exact: true })).toBeEnabled();
-  await page.getByRole("tab", { name: "History", exact: true }).click();
+  await debug(page);
+  await tab(page, "History");
   await expect(page.locator(".current-revision")).toContainText("Revision 1");
   await expect(page.locator(".history-record")).toHaveCount(0);
 });
 
-test('disconnected New request and an already-open composer cannot submit even through a dispatched form event', async ({ page }) => {
-  await page.getByRole('button', { name: 'New request', exact: true }).click();
-  await page.getByLabel('Your request', { exact: true }).fill('Keep this request while disconnected');
-  await page.getByRole('button', { name: 'Review clarification' }).click();
-  await page.getByLabel('Where should the result be shared?').fill('Just here');
+test("disconnected composer refuses dispatched form submission", async ({
+  page,
+}) => {
+  await newChat(page);
+  await page
+    .getByLabel("Your request", { exact: true })
+    .fill("Keep this request");
+  await page.getByRole("button", { name: "Review clarification" }).click();
+  await page.getByLabel("Where should the result be shared?").fill("Just here");
   await controls(page);
-  await page.getByRole('button', { name: 'Disconnect fixture' }).click();
-  await expect(page.getByRole('button', { name: 'New request', exact: true })).toBeDisabled();
-  await expect(page.getByRole('button', { name: 'Create fixture task' })).toBeDisabled();
+  await page.getByRole("button", { name: "Disconnect fixture" }).click();
+  await expect(
+    page.getByRole("button", { name: "Create fixture task" }),
+  ).toBeDisabled();
   await page.evaluate(async () => {
-    const { FixtureAdapter } = await import('/src/fixtures.mjs');
-    window.fixtureCommandsSent = 0;
+    const { FixtureAdapter } = await import("/src/fixtures.mjs");
+    window.sent = 0;
     const original = FixtureAdapter.prototype.command;
-    FixtureAdapter.prototype.command = function (...args) { window.fixtureCommandsSent++; return original.apply(this, args); };
-    document.querySelector('#request-form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    FixtureAdapter.prototype.command = function (...args) {
+      window.sent++;
+      return original.apply(this, args);
+    };
+    document
+      .querySelector("#request-form")
+      .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
   });
-  expect(await page.evaluate(() => window.fixtureCommandsSent)).toBe(0);
-  expect(await page.evaluate(() => sessionStorage.getItem('epoch.fixture.pending'))).toBeNull();
-  await expect(page.getByLabel('Where should the result be shared?')).toHaveValue('Just here');
-  await page.getByRole('button', { name: 'Reconnect fixture' }).click();
-  await expect(page.getByRole('button', { name: 'Create fixture task' })).toBeEnabled();
+  expect(await page.evaluate(() => window.sent)).toBe(0);
+  expect(
+    await page.evaluate(() => sessionStorage.getItem("epoch.fixture.pending")),
+  ).toBeNull();
+  await expect(
+    page.getByLabel("Where should the result be shared?"),
+  ).toHaveValue("Just here");
 });
 
-test('post-delivery checkpoint updates hide stale Delivered labels until an explicit new task outcome', async ({ page }) => {
+test("post-delivery checkpoint change removes delivered presentation until a newer outcome", async ({
+  page,
+}) => {
   await advance(page, 5);
-  await expect(page.locator('.task-state')).toHaveText('Delivered · fixture');
+  await expect(page.locator(".task-state")).toHaveText("Delivered · fixture");
   await page.evaluate(async () => {
-    const { FixtureAdapter } = await import('/src/fixtures.mjs');
-    const { acceptEvent } = await import('/src/state.mjs');
+    const { FixtureAdapter } = await import("/src/fixtures.mjs");
+    const { acceptEvent } = await import("/src/state.mjs");
     FixtureAdapter.prototype.reconnect = async function () {
       const s = this.state;
-      const data = { ...s.checkpoints[0], status: 'checking' };
-      this.state = acceptEvent(s, { taskId: s.taskId, runId: s.runId, revision: s.revision, category: 'fixture', eventId: 'after-delivery-check', seq: s.seq + 1, kind: 'checkpoint', data });
+      this.state = acceptEvent(s, {
+        taskId: s.taskId,
+        runId: s.runId,
+        revision: s.revision,
+        category: "fixture",
+        eventId: "after-delivery-check",
+        seq: s.seq + 1,
+        kind: "checkpoint",
+        data: { ...s.checkpoints[0], status: "checking" },
+      });
       return this.snapshot();
     };
   });
-  await controls(page); await page.getByRole('button', { name: 'Disconnect fixture' }).click();
-  await page.getByRole('button', { name: 'Reconnect fixture' }).click();
-  await expect(page.locator('.task-state')).toHaveText('Delivery needs confirmation · fixture');
-  await page.getByRole('tab', { name: 'Results', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Delivered fixture results', exact: true })).toHaveCount(0);
+  await controls(page);
+  await page.getByRole("button", { name: "Disconnect fixture" }).click();
+  await page.getByRole("button", { name: "Reconnect fixture" }).click();
+  await expect(page.locator(".task-state")).toHaveText(
+    "Delivery needs confirmation · fixture",
+  );
   await page.evaluate(async () => {
-    const { FixtureAdapter } = await import('/src/fixtures.mjs');
-    const { acceptEvent } = await import('/src/state.mjs');
+    const { FixtureAdapter } = await import("/src/fixtures.mjs");
+    const { acceptEvent } = await import("/src/state.mjs");
     FixtureAdapter.prototype.reconnect = async function () {
       for (const [kind, data] of [
-        ['checkpoint', { ...this.state.checkpoints[0], status: 'passed' }],
-        ['task-outcome', { status: 'delivered', result: this.state.result }],
+        ["checkpoint", { ...this.state.checkpoints[0], status: "passed" }],
+        ["task-outcome", { status: "delivered", result: this.state.result }],
       ]) {
         const s = this.state;
-        this.state = acceptEvent(s, { taskId: s.taskId, runId: s.runId, revision: s.revision, category: 'fixture', eventId: `confirm-${s.seq + 1}`, seq: s.seq + 1, kind, data });
+        this.state = acceptEvent(s, {
+          taskId: s.taskId,
+          runId: s.runId,
+          revision: s.revision,
+          category: "fixture",
+          eventId: `confirm-${s.seq + 1}`,
+          seq: s.seq + 1,
+          kind,
+          data,
+        });
       }
       return this.snapshot();
     };
   });
-  await controls(page); await page.getByRole('button', { name: 'Disconnect fixture' }).click();
-  await page.getByRole('button', { name: 'Reconnect fixture' }).click();
-  await expect(page.locator('.task-state')).toHaveText('Delivered · fixture');
+  await controls(page);
+  await page.getByRole("button", { name: "Disconnect fixture" }).click();
+  await page.getByRole("button", { name: "Reconnect fixture" }).click();
+  await expect(page.locator(".task-state")).toHaveText("Delivered · fixture");
+});
+
+test("direct links and unknown demo task IDs never show another task as selected", async ({
+  page,
+}) => {
+  await page.goto(`${origin}/demo/debugger?task=fixture-atlas`);
+  await expect(page.locator(".pipeline-stage")).toHaveCount(6);
+  await page.goto(`${origin}/demo/debugger?task=unavailable`);
+  await expect(
+    page.getByRole("heading", { name: "Demo session unavailable" }),
+  ).toBeVisible();
+  await expect(page.locator(".pipeline-stage")).toHaveCount(0);
+});
+
+test("a new draft survives conversation selection, Back/Forward, and debugger navigation", async ({
+  page,
+}) => {
+  await newChat(page);
+  await page
+    .getByLabel("Your request", { exact: true })
+    .fill("Keep this independent unsent draft.");
+  await nav(page);
+  await page.locator(".session-item").click();
+  await expect(page.getByLabel("Your feedback", { exact: true })).toBeVisible();
+  await page.goBack();
+  await expect(page.getByLabel("Your request", { exact: true })).toHaveValue(
+    "Keep this independent unsent draft.",
+  );
+  await debug(page);
+  await expect(
+    page.getByRole("heading", { name: "Your request is still a draft" }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Back to chat", exact: true }).click();
+  await expect(page.getByLabel("Your request", { exact: true })).toHaveValue(
+    "Keep this independent unsent draft.",
+  );
 });

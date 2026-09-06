@@ -10,6 +10,10 @@ web
 
 Provisional plain HTML, CSS and browser JavaScript modules. Node's built-in test runner verifies local state behavior. No production frontend stack selected; joint frontend agreement with Rajdeep remains pending. Backend Phase 1 selections are recorded separately in `backend/DECISIONS.md`. The user authorized minimal provisional tooling, fixture UI and a later Phase 1 intake integration against the published handoff.
 
+## Experience
+
+Hermes-inspired dark chat and a separate vertical debugger pipeline. Real intake is the default; the existing Atlas release demonstration stays isolated and labeled. UI naming is Epoch; Hermes remains the executor in captured technical records. No additional repair scenarios or unsupported controls are included.
+
 ## Users
 
 People requesting a task and reviewing its checkpoints, observable execution, artifacts and unresolved requirements.

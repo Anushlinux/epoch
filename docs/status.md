@@ -121,3 +121,11 @@ Against the unchanged Phase 1 backend at `0a062dd`, the frontend verified actual
 The frontend now has `npm run dev --prefix frontend`, a minimal Node HTTP host at `http://127.0.0.1:5173`, already supported by backend CORS. Actual normal-page browser tests and AO intake use this origin without backend changes, a proxy, source interception or special browser permissions. The older generated-origin static-file preview remains unsuitable for API integration. No SSE, checkpoints, execution, feedback or repair endpoint was added or claimed. Actual supervised repair remains blocked on later phases.
 
 Final fixture remediation rejects duplicate/dropped checkpoint identities and unsourced failed/needs-input snapshots, blocks disconnected request dispatch, and hides stale delivery labels after checkpoint updates without rewriting the supplied task verdict. The new state and desktop/mobile regressions pass.
+
+### Epoch chat and debugger redesign
+
+The frontend now presents Phase 1 intake as a Hermes-inspired dark chat and exposes a separate Debugger page. The existing Atlas example uses isolated demo routes with manual playback, checkpoint and activity disclosures, candidate diffs, verification, publication, artifacts and feedback history. Shared navigation retains in-memory state. The HTTP adapter, fixture evidence guards and backend are unchanged.
+
+This UI implementation does not add executor, streaming, supervisor, repair, feedback, or conversation endpoints. Existing runtime capability boundaries above still apply. Verification for the redesigned UI is recorded separately in the frontend evidence record; previous screenshots establish only the earlier layout.
+
+The redesign's checks passed after the complete UI implementation: 41 state tests, 34 demo browser checks, and 14 real-intake browser checks, plus the existing HTTP persistence/retry proof. A final focused layout pass covers the compact mobile header. Desktop/mobile screenshots and limitations are in the [current verification record](../frontend/evidence/README.md). The user-review preview is at port 5174 with a separate local backend at 8001; previous servers and worktrees were left untouched. All demo repair/execution data remains authored, and real requests remain pending.

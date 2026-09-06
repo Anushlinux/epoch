@@ -7,63 +7,47 @@ import {
   freezeSubmission,
   isDeliveryCurrent,
 } from "./state.mjs";
-
-const $ = (selector) => document.querySelector(selector);
-const escape = (value) =>
-  String(value ?? "").replace(
-    /[&<>"']/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-        c
-      ],
-  );
-const paths = {
-  plus: "M12 5v14M5 12h14",
-  layers: "m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5",
-  arrow: "M5 12h14m-5-5 5 5-5 5",
-  arrowLeft: "M19 12H5m5-5-5 5 5 5",
-  chevron: "m9 5 7 7-7 7",
-  file: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6ZM14 2v6h6M8 13h8M8 17h6",
-  activity: "M3 12h4l3-8 4 16 3-8h4",
-  wrench:
-    "m14 6 4 4M21 3l-5 5M21 3a6 6 0 0 1-8 8L5 19a2 2 0 0 1-3-3l8-8a6 6 0 0 1 8-8",
-  info: "M12 11v6M12 7h.01M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0",
-  history: "M3 11a9 9 0 1 1 2 7M3 4v7h7M12 7v5l3 2",
-  box: "m12 3 9 5v9l-9 5-9-5V8l9-5Zm0 10v9M3 8l9 5 9-5M8 5l9 5",
-  alert: "m12 3 10 18H2L12 3ZM12 9v5M12 17h.01",
-  link: "m10 13 4-4M8 15l-1 1a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0M16 9l1-1a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0",
-};
-const icon = (name) =>
-  `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${(
-    paths[name] || paths.file
-  )
-    .split("ZZ")
-    .map((d) => `<path d="${d}"/>`)
-    .join("")}</svg>`;
-const pendingMarker = "epoch.fixture.pending";
-const markPending = (command) => {
+import {
+  $,
+  escape,
+  icon,
+  badge,
+  empty,
+  welcome,
+  shell,
+  pipeline,
+  currentPage,
+  urlFor,
+  routeLink,
+  View,
+  installNavigation,
+  installInspector,
+} from "./ui.mjs";
+const root = $("#app");
+const view = new View(root);
+const inspect = installInspector();
+const marker = "epoch.fixture.pending";
+function markPending(command) {
   try {
     if (command)
-      sessionStorage.setItem(pendingMarker, JSON.stringify({ id: command.id }));
-    else sessionStorage.removeItem(pendingMarker);
+      sessionStorage.setItem(marker, JSON.stringify({ id: command.id }));
+    else sessionStorage.removeItem(marker);
     return true;
   } catch {
-    /* No task content is stored; reload fallback below stays conservative. */
     return false;
   }
-};
-const hasLostSubmission = () => {
+}
+function lostSubmission() {
   try {
-    return sessionStorage.getItem(pendingMarker) !== null;
+    return sessionStorage.getItem(marker) !== null;
   } catch {
     return performance.getEntriesByType("navigation")[0]?.type === "reload";
   }
-};
+}
 let adapter = new FixtureAdapter();
 let state = adapter.snapshot();
-let ui = {
-  tab: "overview",
-  composer: false,
+const ui = {
+  composing: false,
   stage: "request",
   draft: { request: "", constraints: "", destination: "" },
   draftId: crypto.randomUUID(),
@@ -71,108 +55,61 @@ let ui = {
   feedbackKind: "new-preference",
   pending: null,
   submissionStatus: "idle",
-  recoveryUnknown: hasLostSubmission(),
+  recoveryUnknown: lostSubmission(),
   busy: false,
   error: "",
+  tab: "activity",
 };
-let inspection = null;
 const tabs = [
-  ["overview", "Overview"],
   ["activity", "Activity"],
-  ["repairs", "Repairs"],
-  ["results", "Results"],
+  ["checkpoints", "Checkpoints"],
   ["history", "History"],
 ];
 const announce = (text) => {
   $("#announcement").textContent = text;
 };
-const badge = (status) =>
-  `<span class="badge ${escape(status)}"><span class="state-dot" aria-hidden="true"></span>${escape(status === "needs-input" ? "Needs input" : status[0].toUpperCase() + status.slice(1))}</span>`;
-const taskLabel = () =>
-  isDeliveryCurrent(state)
+const locked = () =>
+  ui.busy ||
+  !!ui.pending ||
+  ui.recoveryUnknown ||
+  state.connection !== "connected";
+const delivered = () => isDeliveryCurrent(state);
+function label(s = state) {
+  return isDeliveryCurrent(s)
     ? "Delivered · fixture"
-    : state.status === "delivered"
+    : s.status === "delivered"
       ? "Delivery needs confirmation · fixture"
-    : state.checkpoints.some((c) => c.status === "failed")
-      ? "Needs attention · fixture"
-      : state.checkpoints.some((c) => c.status === "needs-input")
-        ? "Needs input · fixture"
-        : state.checkpoints.some((c) =>
-              ["running", "checking"].includes(c.status),
-            )
-          ? "In progress · fixture"
-          : state.status === "planned"
-            ? "Planned · fixture"
-            : "Incomplete · fixture";
-function header() {
-  return `<div class="demo-banner"><span>${icon("info")}<strong>Fixture workspace</strong><span class="banner-description">All progress, tests and artifacts are authored examples. No task is executing.</span></span><a href="./CONTRACT-PROPOSAL.md" target="_blank" rel="noopener">Integration pending ${icon("arrow")}</a></div>
-  <header class="topbar"><div class="breadcrumb">Workspace ${icon("chevron")} <strong>Release preparation</strong></div><div class="connection"><span class="connection-dot ${state.connection === "connected" ? "" : "offline"}"></span>${state.connection === "connected" ? "Local fixtures" : "Updates paused"}</div></header>`;
+      : s.checkpoints.some((c) => c.status === "failed")
+        ? "Needs attention · fixture"
+        : s.checkpoints.some((c) => c.status === "needs-input")
+          ? "Needs input · fixture"
+          : s.checkpoints.some((c) =>
+                ["running", "checking"].includes(c.status),
+              )
+            ? "In progress · fixture"
+            : s.revision > 1
+              ? "Revision pending · fixture"
+              : "Planned · fixture";
 }
-function sidebar() {
-  return `<aside class="sidebar"><a class="brand" href="./index.html" aria-label="Epoch saved tasks"><img src="./mark.svg" alt="" width="32" height="32">epoch<span>preview</span></a>
-    <button class="new-task" data-action="new" ${state.connection !== "connected" || ui.pending || ui.recoveryUnknown ? "disabled" : ""}>${icon("plus")} New request</button>
-    <nav aria-label="Workspace"><a href="./index.html">Saved tasks · real API</a><p class="nav-label">Fixture workspace</p><button class="nav-item selected" data-action="task">${icon("layers")} Task workspace <span class="nav-count">1</span></button></nav>
-    <div class="task-nav"><p class="nav-label">Current task</p><button data-action="task" class="current-task"><span class="task-bullet"></span><span>${escape(state.title)}<small>${taskLabel()}</small></span></button></div>
-    <div class="sidebar-bottom"><div class="local-label">${icon("box")} Development space</div><p>Session memory only.<br>Reloading restores the example.</p><a href="./README.md" target="_blank" rel="noopener">Frontend handoff ${icon("arrow")}</a></div>
-  </aside>`;
+function matchedTask() {
+  const id = new URLSearchParams(location.search).get("task");
+  return !id || id === state.taskId;
 }
-function sources() {
-  return `<aside class="context-column"><section><h2>Task brief</h2><div class="source-label">${icon("file")} Original request · revision 1</div><blockquote>${escape(state.intent.original)}</blockquote><button class="text-button" data-action="inspect-intent">Inspect full intent ${icon("arrow")}</button></section>
-    <section><h3>Constraints</h3><p>${escape(state.intent.constraints || "No additional constraints supplied.")}</p><span class="source-tag">Explicit · user input</span></section>
-    <section><h3>Clarification</h3><p>${escape(state.intent.clarifications[0].question)}</p><div class="answer">${escape(state.intent.clarifications[0].answer)}</div><span class="source-tag">Explicit · clarification answer</span></section>
-    <section><h3>Inferred default</h3><p>${escape(state.intent.defaults[0])}</p><span class="source-tag">Inferred · fixture brief, open to revision</span></section>
-    ${state.intent.feedback.length ? `<section><h3>Latest revision</h3><p>${escape(state.intent.feedback.at(-1).text)}</p><button class="text-button" data-tab="history">View retained history ${icon("arrow")}</button></section>` : ""}
-    <div class="boundary-note">${icon("info")}<p>Requirements stay attached to their source. A repair never changes what “done” means.</p></div></aside>`;
+installNavigation(root, routeChanged, newChat);
+function navigation() {
+  return `<a class="session-item" href="${urlFor(true, "chat", state.taskId)}" data-route ${!ui.composing && matchedTask() ? 'aria-current="page"' : ""}>${icon("chat")}<span><strong>${escape(state.title)}</strong><small>${escape(label())}</small></span></a>`;
 }
 function checkpointRows() {
-  return state.checkpoints
-    .map(
-      (cp, i) =>
-        `<article class="checkpoint"><div class="checkpoint-index ${escape(cp.status)}">${i + 1}</div><div class="checkpoint-body"><div class="checkpoint-heading"><h3>${escape(cp.text)}</h3>${badge(cp.status)}</div><p class="checkpoint-source">${escape(cp.source.kind)} · ${escape(cp.source.label)}<span>Criterion v${cp.criterionVersion}</span></p><p class="checkpoint-detail">${escape(checkpointEvidence(state, cp).at(-1)?.observed || (cp.dependencies.length ? `Depends on ${cp.dependencies.join(" + ")}. No outcome evidence yet.` : "Waiting for an outcome record."))}</p><button class="text-button small" data-action="inspect-checkpoint" data-id="${escape(cp.id)}">${icon("link")} ${cp.evidenceIds.length ? "Inspect evidence & source" : "Inspect requirement source"}</button></div></article>`,
-    )
-    .join("");
-}
-function overview() {
-  const failed = state.checkpoints.find((c) => c.status === "failed");
-  const needsInput = state.checkpoints.find((c) => c.status === "needs-input");
-  return `<div class="overview-grid"><div class="main-column">
-    ${failed ? `<div class="attention"><span class="attention-icon">${icon("alert")}</span><div><h2>The checklist needs attention</h2><p>The fixture ticket is retained. Checklist creation failed, so QA has not been notified.</p><button class="text-button" data-tab="repairs">Review repair evidence ${icon("arrow")}</button></div></div>` : needsInput ? `<div class="attention"><span>${icon("info")}</span><div><h2>A clarification is needed</h2><p>${escape(checkpointEvidence(state, needsInput).at(-1)?.observed)}</p><button class="text-button" data-tab="results">Record a clarification as feedback ${icon("arrow")}</button></div></div>` : isDeliveryCurrent(state) ? `<div class="delivery-note"><h2>Fixture results are ready to inspect</h2><p>The authored sequence has ended. These results do not establish actual execution.</p><button class="text-button" data-tab="results">Inspect fixture artifacts ${icon("arrow")}</button></div>` : `<div class="quiet-note"><h2>${state.revision > 1 ? "Revision recorded. Execution is pending." : state.example ? "Follow the work, one checkpoint at a time." : "Your request is preserved."}</h2><p>${state.example && state.revision === 1 ? "Use the fixture controls to explore the interface. Progress advances only when you request it." : "Backend interpretation is unavailable. The original request is shown verbatim; the fixture does not invent an executable plan."}</p></div>`}
-    <section class="checkpoint-section"><div class="section-heading"><h2>Checkpoints</h2><span>${state.checkpoints.filter((c) => c.status === "passed").length} of ${state.checkpoints.length} fixture passes</span></div><p class="section-description">Each outcome is tied to its original requirement and evidence.</p><div class="checkpoint-list">${checkpointRows()}</div><p class="evidence-caption">${icon("info")} All states above are fixtures, including passed. No real checks have run.</p></section>
-    <section class="activity-preview"><div class="section-heading"><h2>Latest activity</h2><button class="text-button" data-tab="activity">View all ${icon("arrow")}</button></div>${state.activity.length ? activityList(state.activity.slice(-2)) : empty("activity", "No activity captured", "This request has not executed. Future captured tool calls and explicit progress summaries will appear here.")}</section>
-  </div>${sources()}</div>`;
-}
-function empty(glyph, title, description) {
-  return `<div class="empty-state">${icon(glyph)}<h3>${title}</h3><p>${description}</p></div>`;
+  return `<div class="checkpoint-list">${state.checkpoints.map((cp) => `<article class="checkpoint">${badge(cp.status)}<div><h3>${escape(cp.text)}</h3><p>${escape(checkpointEvidence(state, cp).at(-1)?.observed || "No outcome evidence yet.")}</p><button class="text-button" data-action="inspect-checkpoint" data-id="${escape(cp.id)}">${icon("link")} ${cp.evidenceIds.length ? "Inspect evidence & source" : "Inspect requirement source"}</button></div></article>`).join("")}</div>`;
 }
 function activityList(items) {
-  return `<ol class="activity-list">${items.map((a) => `<li><span class="activity-mark">${icon(a.type === "supervisor" ? "arrow" : a.type === "context" ? "file" : "activity")}</span><div><div class="activity-title"><h3>${escape(a.title)}</h3><span>${escape(a.time)}</span></div><p>${escape(a.detail)}</p><span class="source-tag">Fixture · ${escape(a.type)}</span></div></li>`).join("")}</ol>`;
-}
-function activity() {
-  return `<div class="panel-heading"><h2>Observable activity</h2><p>Captured calls, results, context and explicit supervisor messages. Every entry here is an authored fixture.</p></div>${state.activity.length ? activityList(state.activity) : empty("activity", "No captured activity", "Nothing has executed for this revision. Missing activity is not proof that a business step happened or failed.")}`;
-}
-function repairs() {
-  return `<div class="panel-heading"><h2>Repair evidence</h2><p>Environment changes have their own verification history. An active repair does not complete the user’s task.</p></div>${
-    state.repairs.length
-      ? state.repairs
-          .map(
-            (r, index) =>
-              `<details class="repair-record" ${index === state.repairs.length - 1 ? "open" : ""}><summary><span>${icon("wrench")}<strong>${escape(r.title)}</strong></span>${badge(r.status)}</summary><div class="repair-content"><p class="fixture-note">Authored fixture diagnosis, diff and test records · nothing executed</p><h3>Diagnosis</h3><p>${escape(r.diagnosis)}</p><p class="muted">${escape(r.uncertainty)}</p><dl class="repair-meta"><div><dt>Trigger evidence</dt><dd><button class="text-button" data-action="inspect-evidence" data-id="${escape(r.trigger)}">${escape(r.trigger)} ${icon("arrow")}</button></dd></div><div><dt>Permitted surface</dt><dd>${escape(r.scope)}</dd></div></dl><h3>Candidate diff</h3><pre class="diff" tabindex="0" aria-label="Illustrative candidate diff">${r.diff
-                .split("\n")
-                .map(
-                  (line) =>
-                    `<span class="${line.startsWith("+") ? "addition" : line.startsWith("-") ? "deletion" : ""}">${escape(line)}</span>`,
-                )
-                .join(
-                  "\n",
-                )}</pre><h3>Verification records <span class="subtle">· fixtures</span></h3><div class="test-table" role="table" aria-label="Fixture verification records"><div class="test-row test-head" role="row"><span role="columnheader">Check</span><span role="columnheader">Recorded result</span></div>${r.tests.map((t) => `<div class="test-row" role="row"><div role="cell"><strong>${escape(t.name)}</strong><p>${escape(t.detail)}</p></div><span role="cell">${badge(t.status)}</span></div>`).join("")}</div><p class="repair-reason">${escape(r.reason)}</p><p class="muted">${escape(r.versions)}</p><p class="muted">${escape(r.limits)}</p><button class="text-button" data-action="inspect-repair" data-id="${escape(r.id)}">Inspect full fixture record ${icon("arrow")}</button></div></details>`,
-          )
-          .join("")
-      : empty(
-          "wrench",
-          "No repair records for this revision",
-          "A request or user preference does not automatically trigger an environment repair.",
-        )
-  }`;
+  return items.length
+    ? `<ol class="activity-list">${items.map((a) => `<li>${icon(a.type === "context" ? "file" : a.type === "supervisor" ? "arrow" : "activity")}<div><h3>${escape(a.title)}</h3><p>${escape(a.detail)}</p><small>${escape(a.time)} · ${escape(a.type)} · fixture</small></div></li>`).join("")}</ol>`
+    : empty(
+        "No activity recorded",
+        "This request has not executed.",
+        "activity",
+      );
 }
 function artifacts(owner = state) {
   const records =
@@ -180,78 +117,306 @@ function artifacts(owner = state) {
       .map((id) => owner.evidence.find((e) => e.id === id))
       .filter(Boolean) || [];
   return records.length
-    ? `<div class="artifact-list">${records.map((e) => `<button class="artifact" data-action="inspect-evidence" data-id="${escape(e.id)}" data-revision="${owner.revision}" data-run="${escape(owner.runId)}"><span class="artifact-icon">${icon(e.object?.type === "message" ? "activity" : "file")}</span><span><strong>${escape(e.object?.id || e.id)}</strong><small>${escape(e.object?.type || "record")} · fixture JSON · revision ${owner.revision}</small></span>${icon("arrow")}</button>`).join("")}</div>`
-    : empty(
-        "box",
-        "No result artifacts yet",
-        "Results appear only when an explicit outcome includes inspectable evidence. Repair status alone cannot produce a result.",
-      );
+    ? `<div class="artifact-list">${records.map((e) => `<button class="artifact" data-action="inspect-evidence" data-id="${escape(e.id)}" data-run="${escape(owner.runId)}" data-revision="${owner.revision}">${icon(e.object?.type === "message" ? "chat" : "file")}<span>${escape(e.object?.id || e.id)}<small>${escape(e.object?.type || "record")} · fixture JSON</small></span></button>`).join("")}</div>`
+    : '<p class="muted">No result artifacts available.</p>';
 }
-function results() {
-  return `<div class="results-grid"><section><div class="panel-heading"><h2>${isDeliveryCurrent(state) ? "Delivered fixture results" : "Partial results & gaps"}</h2><p>${isDeliveryCurrent(state) ? "Inspect the authored objects behind each fixture outcome." : "Completed partial effects remain inspectable while other requirements are unresolved."}</p></div>${artifacts()}<div class="limitations"><h3>Limitations</h3><ul>${(state.result?.limitations || ["No task has executed for this revision.", "Backend contracts and integration remain pending."]).map((l) => `<li>${escape(l)}</li>`).join("")}</ul></div></section>
-    <section class="feedback-section"><h2>What needs to change?</h2><p>Record feedback as a new intent revision. Keep this request, its evidence and its results in history.</p><form id="feedback-form"><fieldset ${ui.busy || ui.pending || ui.recoveryUnknown || state.connection !== "connected" ? "disabled" : ""}><label for="feedback-kind">Reason for revision</label><select id="feedback-kind" name="kind"><option value="new-preference" ${ui.feedbackKind === "new-preference" ? "selected" : ""}>New preference</option><option value="missed-requirement" ${ui.feedbackKind === "missed-requirement" ? "selected" : ""}>Missed requirement or clarification</option><option value="evaluation-concern" ${ui.feedbackKind === "evaluation-concern" ? "selected" : ""}>A check may be wrong</option></select><label for="feedback-text">Your feedback</label><textarea id="feedback-text" name="feedback" required maxlength="4000" rows="5" placeholder="For example, include the rollback owner in the checklist.">${escape(ui.feedback)}</textarea><p class="field-hint">Your exact feedback is retained. This does not authorize a shared-tool repair.</p><button class="primary" type="submit">${ui.busy ? "Recording…" : "Create fixture revision"} ${icon("arrow")}</button></fieldset></form><p class="fixture-note">Saved in this page session only. No backend execution starts.</p></section></div>`;
+function diff(record) {
+  return `<pre class="diff" tabindex="0" aria-label="Illustrative candidate diff">${record.diff
+    .split("\n")
+    .map(
+      (line) =>
+        `<span class="${line.startsWith("+") ? "addition" : line.startsWith("-") ? "deletion" : ""}">${escape(line) || " "}</span>`,
+    )
+    .join("")}</pre>`;
 }
-function history() {
-  return `<div class="panel-heading"><h2>Intent & result history</h2><p>Previous requirements, clarifications, checkpoints, artifacts and rejected attempts remain attached to their revision.</p></div><div class="current-revision"><strong>Revision ${state.revision} · current</strong><p>${escape(state.intent.feedback.at(-1)?.text || state.intent.original)}</p></div>${
+function tests(record) {
+  return `<table class="test-table"><caption class="sr-only">Fixture verification records</caption><thead><tr><th>Check</th><th>Recorded result</th></tr></thead><tbody>${record.tests.map((t) => `<tr><td>${escape(t.name)}<p>${escape(t.detail)}</p></td><td>${badge(t.status)}</td></tr>`).join("")}</tbody></table>`;
+}
+function repairDetails(record, full = false) {
+  return `<p>${escape(record.reason)}</p>${full ? `<h3>Diagnosis</h3><p>${escape(record.diagnosis)}</p><p>${escape(record.uncertainty)}</p>` : ""}<h3>Candidate diff</h3>${diff(record)}${full ? `<h3>Verification records · fixtures</h3>${tests(record)}` : ""}<p>${escape(record.versions)}</p><button class="text-button" data-action="inspect-repair" data-id="${escape(record.id)}">Inspect full fixture record ${icon("arrow")}</button>`;
+}
+function historyContent() {
+  return `<div class="current-revision"><h2>Revision ${state.revision} · current</h2><p class="muted">${escape(state.intent.feedback.at(-1)?.text || state.intent.original)}</p></div>${
     state.history.length
       ? [...state.history]
           .reverse()
           .map(
             (previous) =>
-              `<details class="history-record" open><summary><strong>Revision ${previous.revision}</strong><span>${escape(previous.status === "delivered" && !isDeliveryCurrent(previous) ? "delivery needs confirmation" : previous.status)} · fixture</span></summary><div><h3>Original request</h3><p>${escape(previous.intent.original)}</p><h3>Constraints</h3><p>${escape(previous.intent.constraints || "None supplied.")}</p>${previous.intent.feedback.map((f) => `<p>Revision feedback: ${escape(f.text)}</p>`).join("")}<h3>Checkpoints at revision boundary</h3><ul>${previous.checkpoints.map((cp) => `<li>${escape(cp.text)} · ${escape(cp.status)} · criterion v${cp.criterionVersion}</li>`).join("")}</ul>${artifacts(previous)}<button class="text-button" data-action="inspect-history" data-revision="${previous.revision}" data-run="${escape(previous.runId)}">Inspect complete revision & repair history ${icon("arrow")}</button></div></details>`,
+              `<details class="history-record" data-key="history-${previous.runId}" open><summary><strong>Revision ${previous.revision}</strong><span>${escape(label(previous))}</span></summary><p>${escape(previous.intent.original)}</p><p>${escape(previous.intent.constraints || "No additional constraints.")}</p>${previous.intent.feedback.map((f) => `<p>${escape(f.text)}</p>`).join("")}<ul>${previous.checkpoints.map((cp) => `<li>${escape(cp.text)} · ${escape(cp.status)} · criterion v${cp.criterionVersion}</li>`).join("")}</ul>${artifacts(previous)}<button class="text-button" data-action="inspect-history" data-run="${escape(previous.runId)}" data-revision="${previous.revision}">Inspect complete revision & repair history ${icon("arrow")}</button></details>`,
           )
           .join("")
       : empty(
-          "history",
           "The original request is intact",
-          "Submit feedback from Results to create a revision. Previous outcomes and requirements will be retained here.",
+          "Feedback creates a new revision while retaining earlier requirements and evidence.",
+          "history",
         )
   }`;
 }
-function commandError() {
-  if (ui.recoveryUnknown)
-    return `<div class="form-error" role="alert"><strong>Previous submission status is unknown</strong><p>The prior fixture adapter and submitted payload were lost on reload. This is a fresh example, not the previous task. No request was resubmitted. Recovery cannot be verified locally.</p><button data-action="reset-lost-fixture" type="button">Discard lost fixture session</button><p>Clears only this local fixture warning; never repeats or cancels backend work.</p></div>`;
-  return ui.error
-    ? `<div class="form-error" role="alert"><strong>${ui.submissionStatus === "acknowledgement-unknown" ? "Acknowledgement unknown" : "Submission rejected"}</strong><p>${escape(ui.error)}</p>${ui.pending && !ui.busy ? '<button data-action="retry" type="button">Check submission status</button>' : ""}</div>`
-    : "";
+function context() {
+  return `<aside class="context-column"><h2>Original request</h2><blockquote>${escape(state.intent.original)}</blockquote><button class="text-button" data-action="inspect-intent">Inspect full intent ${icon("arrow")}</button><h3>Constraints</h3><p>${escape(state.intent.constraints || "No additional constraints supplied.")}</p><h3>Clarification</h3>${state.intent.clarifications.map((c) => `<p>${escape(c.question)}</p><p>${escape(c.answer)}</p>`).join("")}<h3>Inferred default</h3>${state.intent.defaults.map((d) => `<p>${escape(d)}</p>`).join("")}<h3>Partial effects & artifacts</h3>${artifacts()}<h3>Evidence boundary</h3><p>Authored UI fixtures. No tool, test, or repair has executed.</p></aside>`;
+}
+function stageData() {
+  const failure = state.evidence.find((e) => e.verdict === "failed");
+  const latest = state.repairs.at(-1);
+  const active = state.repairs.find((r) => r.status === "active");
+  const rejected = state.repairs.filter((r) => r.status === "rejected");
+  const stage = (
+    status,
+    summary,
+    body = "",
+    tone = "pending",
+    open = false,
+  ) => ({ status, summary, body, tone, open });
+  const resumed =
+    state.activity.some((a) => a.id === "a7") ||
+    state.checkpoints.some(
+      (c) => c.id === "checklist" && c.status === "passed",
+    );
+  return [
+    stage(
+      failure ? "Recorded" : "Not recorded",
+      failure
+        ? "Checklist creation failed after the release ticket was created."
+        : "No failed outcome has been recorded.",
+      failure
+        ? `<h3>Expected</h3><p>${escape(failure.expected)}</p><h3>Observed</h3><p>${escape(failure.observed)}</p><h3>Completed work retained</h3>${artifacts()}<button class="text-button" data-action="inspect-evidence" data-id="${escape(failure.id)}">Inspect failure evidence ${icon("arrow")}</button>`
+        : "",
+      failure ? "warning" : "pending",
+      !!failure && !latest,
+    ),
+    stage(
+      latest ? "Hypothesis recorded" : "Waiting",
+      latest
+        ? "The checklist adapter may be sending the title in the wrong format."
+        : "A diagnosis will appear when supporting evidence is available.",
+      latest
+        ? `<p>${escape(latest.diagnosis)}</p><h3>Uncertainty</h3><p>${escape(latest.uncertainty)}</p><h3>Permitted surface</h3><p>${escape(latest.scope)}</p><button class="text-button" data-action="inspect-evidence" data-id="${escape(latest.trigger)}">Inspect trigger evidence ${icon("arrow")}</button>`
+        : "",
+      latest ? "warning" : "pending",
+    ),
+    stage(
+      latest
+        ? latest.status === "rejected"
+          ? "Rejected"
+          : "Candidate recorded"
+        : "Waiting",
+      latest ? latest.title : "No candidate change has been recorded.",
+      latest
+        ? `${repairDetails(latest)}${rejected
+            .filter((r) => r.id !== latest.id)
+            .map(
+              (r) =>
+                `<details class="attempt" data-key="attempt-${r.id}"><summary>${escape(r.title)} ${badge(r.status)}</summary>${repairDetails(r, true)}</details>`,
+            )
+            .join("")}`
+        : "",
+      latest?.status === "rejected"
+        ? "rejected"
+        : latest
+          ? "verifying"
+          : "pending",
+      latest?.status === "rejected",
+    ),
+    stage(
+      latest
+        ? latest.status === "rejected"
+          ? "Failed"
+          : latest.status === "active"
+            ? "Results recorded"
+            : "Verifying"
+        : "Waiting",
+      latest
+        ? "Inspect the recorded checks for this exact candidate."
+        : "Component, replay, fresh-task, and regression checks have not been recorded.",
+      latest
+        ? `${tests(latest)}<p>${escape(latest.limits)}</p><p>These are authored test records. No tests run from this interface.</p>`
+        : "",
+      latest?.status === "rejected"
+        ? "rejected"
+        : latest?.status === "verifying"
+          ? "verifying"
+          : latest
+            ? "passed"
+            : "pending",
+      latest?.status === "verifying",
+    ),
+    stage(
+      active
+        ? "Active"
+        : latest?.status === "rejected"
+          ? "Not published"
+          : "Waiting",
+      active
+        ? "The demo records environment v2 as active. The user task has its own outcome."
+        : "The current environment remains unchanged until an explicit publication record.",
+      active
+        ? `<p>${escape(active.versions)}</p><p>Activation is a fixture event. No repair executed or persisted.</p><button class="text-button" data-action="inspect-repair" data-id="${escape(active.id)}">Inspect publication record ${icon("arrow")}</button>`
+        : "",
+      active ? "active" : "pending",
+      !!active && !resumed,
+    ),
+    stage(
+      delivered()
+        ? "Delivered"
+        : state.status === "delivered"
+          ? "Needs confirmation"
+          : resumed
+            ? "In progress"
+            : "Waiting",
+      delivered()
+        ? "All current checkpoints have matching fixture evidence and an explicit delivery record."
+        : resumed
+          ? "The executor resumed work. Delivery still requires an explicit task outcome."
+          : "Executor continuation and task results appear here independently of repair publication.",
+      `${activityList(state.activity.filter((a) => a.type === "supervisor" || a.id === "a7"))}${state.result ? `<h3>Task result</h3>${artifacts()}<p>${escape(state.result.limitations.join(" "))}</p>` : ""}`,
+      delivered() ? "passed" : resumed ? "verifying" : "pending",
+      resumed,
+    ),
+  ];
+}
+function debuggerPage() {
+  return `<div class="debugger"><header class="debug-heading"><p class="eyebrow">Epoch / debugger / release preparation</p><h1>${escape(state.title)}</h1><p>${delivered() ? "The release example is delivered. Inspect the repair and the evidence behind each outcome." : !state.evidence.length ? "No execution recorded. This request is preserved, and its pipeline is waiting for evidence." : "Follow the recorded failure, repair decision, and separate task outcome."}</p><div class="debug-meta"><span class="task-state">${escape(label())}</span><span>Revision ${state.revision}</span><span>Fixture environment ${state.repairs.some((r) => r.status === "active") ? "v2" : "v1"}</span></div></header><div class="debug-layout"><div>${pipeline(stageData())}</div>${context()}</div><div class="debug-tabs" role="tablist" aria-label="Evidence sections">${tabs.map(([id, name]) => `<button id="tab-${id}" role="tab" aria-selected="${ui.tab === id}" tabindex="${ui.tab === id ? 0 : -1}" aria-controls="evidence-panel" data-tab="${id}">${name}</button>`).join("")}</div><section id="evidence-panel" class="debug-tab-panel" role="tabpanel" aria-labelledby="tab-${ui.tab}" tabindex="0">${ui.tab === "activity" ? `<h2>Observable activity</h2>${activityList(state.activity)}` : ui.tab === "checkpoints" ? `<h2>Checkpoints</h2><p class="muted">${state.checkpoints.filter((c) => c.status === "passed").length} of ${state.checkpoints.length} fixture passes</p>${checkpointRows()}` : historyContent()}</section></div>`;
+}
+function assistant(body, name = "Epoch") {
+  return `<div class="message assistant"><div class="speaker"><span class="brand-mark">E</span>${name}<small>demo</small></div><div class="message-body">${body}</div></div>`;
+}
+function chat() {
+  if (ui.composing) {
+    if (ui.stage === "request")
+      return `${welcome()}${ui.error || ui.recoveryUnknown ? `<div class="conversation">${commandError()}</div>` : ""}`;
+    return `<div class="conversation"><div class="message user"><div class="message-body"><blockquote>${escape(ui.draft.request)}</blockquote>${ui.draft.constraints ? `<p>${escape(ui.draft.constraints)}</p>` : ""}</div></div>${assistant(`<div class="clarification"><h2>One detail before the brief</h2><p>Where should the result be shared?</p><p class="muted">A fixed demo question. “Just here” is a valid answer.</p></div>`)}${commandError()}</div>`;
+  }
+  const failure = state.checkpoints.find((c) => c.status === "failed");
+  const needsInput = state.checkpoints.find((c) => c.status === "needs-input");
+  return `<div class="conversation"><h1>${escape(state.title)}</h1><div class="message user"><div class="message-body"><blockquote>${escape(state.intent.original)}</blockquote></div></div>${assistant(`<p>${!state.example ? "Your request is preserved." : state.revision > 1 ? "Your feedback is recorded as a new revision." : delivered() ? "The release example is ready to inspect." : failure ? "The release ticket is in place. The checklist could not be created, so QA has not been notified." : needsInput ? "The checklist is ready. The QA destination needs confirmation before the notification." : state.activity.length ? "The release example has recorded progress. Inspect the checkpoints below." : "The release request is recorded. Its checkpoints have not started."}</p>${!state.example || state.revision > 1 ? "<p>Execution is pending. Your words are retained without generating an invented plan.</p>" : ""}<details class="disclosure" data-key="brief"><summary>${icon("file")} Task brief & clarification ${icon("down")}</summary><div class="disclosure-body"><p>${escape(state.intent.constraints || "No additional constraints supplied.")}</p>${state.intent.clarifications.map((c) => `<p><strong>${escape(c.question)}</strong><br>${escape(c.answer)}</p>`).join("")}<p class="muted">Inferred: ${escape(state.intent.defaults.join(" "))}</p><button class="text-button" data-action="inspect-intent">Inspect full intent ${icon("arrow")}</button></div></details><details class="disclosure" data-key="chat-checkpoints" open><summary>${icon("check")} Checkpoints <span class="badge">${state.checkpoints.filter((c) => c.status === "passed").length} of ${state.checkpoints.length} fixture passes</span>${icon("down")}</summary><div class="disclosure-body">${checkpointRows()}</div></details>${state.repairs.length ? `<a class="repair-notice" data-route href="${urlFor(true, "debugger", state.taskId, "stage-2")}">${icon("pipeline")}<span><strong>${state.repairs.some((r) => r.status === "active") ? "Repair active · task outcome tracked separately" : "The debugger is investigating"}</strong><small>${state.repairs.at(-1).status === "rejected" ? "First candidate rejected. Review the recorded failure." : "Inspect the candidate, checks, and publication record."}</small></span>${icon("arrow")}</a>` : ""}<details class="disclosure" data-key="chat-activity"><summary>${icon("activity")} Observable activity <span class="badge">${state.activity.length} records</span>${icon("down")}</summary><div class="disclosure-body">${activityList(state.activity)}</div></details>${state.result ? `<h3>${delivered() ? "Delivered fixture results" : "Partial results & gaps"}</h3>${artifacts()}<p class="muted">${escape(state.result.limitations.join(" "))}</p>` : ""}`)}${state.intent.feedback.map((f) => `<div class="message user"><div class="message-body"><p>${escape(f.text)}</p></div></div>`).join("")}${state.history.length ? assistant(`<p>Earlier requirements and results are retained.</p>${routeLink(true, "debugger", state.taskId, "View intent & result history", "history", 'class="back-link"')}`) : ""}<p class="eyebrow task-state">${escape(label())}</p>${commandError()}</div>`;
 }
 function composer() {
-  return `<div class="composer"><button class="text-button" data-action="back" ${ui.pending || ui.recoveryUnknown ? "disabled" : ""}>${icon("arrowLeft")} Back to task</button><h1>${ui.stage === "request" ? "What should get done?" : "One detail before the brief"}</h1><p class="composer-intro">Describe the result you want. Your original words and constraints stay with the task.</p><form id="request-form"><fieldset ${state.connection !== "connected" || ui.busy || ui.pending || ui.recoveryUnknown ? "disabled" : ""}>${ui.stage === "request" ? `<label for="request-text">Your request</label><textarea id="request-text" name="request" rows="5" required maxlength="6000" placeholder="Prepare a release, collect the evidence, and share the result…">${escape(ui.draft.request)}</textarea><label for="constraints-text">Constraints <span class="subtle">(optional)</span></label><textarea id="constraints-text" name="constraints" rows="3" maxlength="3000" placeholder="What must be kept, avoided, or checked?">${escape(ui.draft.constraints)}</textarea><p class="field-hint">Do not include credentials or secrets. This is a local UI fixture.</p><button class="primary" type="submit">Review clarification ${icon("arrow")}</button>` : `<div class="request-review"><h2>Your request · unchanged</h2><p>${escape(ui.draft.request)}</p><h3>Constraints</h3><p>${escape(ui.draft.constraints || "None supplied.")}</p></div><label for="destination-text">Where should the result be shared?</label><input id="destination-text" name="destination" required maxlength="200" value="${escape(ui.draft.destination)}" placeholder="A team channel, or just here"><p class="field-hint">A fixed fixture question, not a backend-generated clarification. “Just here” is a valid answer.</p><div class="button-row"><button type="button" data-action="edit-request">Edit request</button><button class="primary" type="submit">${ui.busy ? "Recording…" : "Create fixture task"} ${icon("arrow")}</button></div>`}</fieldset></form><div class="boundary-note">${icon("info")}<p>Backend interpretation is pending. Custom requests remain verbatim and do not receive invented execution progress.</p></div></div>`;
+  const formId = ui.composing ? "request-form" : "feedback-form";
+  const clarification = ui.composing && ui.stage === "clarification";
+  const id = ui.composing
+    ? clarification
+      ? "destination-text"
+      : "request-text"
+    : "feedback-text";
+  const value = ui.composing
+    ? clarification
+      ? ui.draft.destination
+      : ui.draft.request
+    : ui.feedback;
+  const title = ui.composing
+    ? clarification
+      ? "Where should the result be shared?"
+      : "Your request"
+    : "Your feedback";
+  const sendLabel = ui.composing
+    ? clarification
+      ? "Create fixture task"
+      : "Review clarification"
+    : "Create fixture revision";
+  return `<div class="composer-dock"><form class="composer-box" id="${formId}"><label class="sr-only" for="${id}">${title}</label><textarea id="${id}" data-autogrow data-submit required rows="1" maxlength="${ui.composing ? (clarification ? 200 : 6000) : 4000}" placeholder="${ui.composing ? (clarification ? "A team channel, or just here" : "What should we work on?") : "What would you like to change?"}" ${locked() ? "disabled" : ""}>${escape(value)}</textarea><div class="composer-tools"><div class="composer-tools-left">${
+    ui.composing
+      ? clarification
+        ? `<button class="text-button" data-action="edit-request" ${locked() ? "disabled" : ""}>${icon("back")} Edit request</button>`
+        : `<details class="project-menu" data-key="constraints"><summary>${icon("plus")} Constraints ${icon("down")}</summary><div class="popover"><label for="constraints-text">Constraints (optional)</label><textarea id="constraints-text" maxlength="3000" rows="3" ${locked() ? "disabled" : ""}>${escape(ui.draft.constraints)}</textarea></div></details>`
+      : `<label class="sr-only" for="feedback-kind">Reason for revision</label><select id="feedback-kind" class="feedback-kind" ${locked() ? "disabled" : ""}>${[
+          ["new-preference", "New preference"],
+          ["missed-requirement", "Missed requirement or clarification"],
+          ["evaluation-concern", "A check may be wrong"],
+        ]
+          .map(
+            ([value, text]) =>
+              `<option value="${value}" ${ui.feedbackKind === value ? "selected" : ""}>${text}</option>`,
+          )
+          .join("")}</select>`
+  }</div><div class="composer-tools-right"><span class="composer-hint">${ui.busy ? "Recording…" : "Enter to send · Shift Enter for a new line"}</span><button class="send-button" aria-label="${sendLabel}" ${locked() ? "disabled" : ""}>${icon("send")}</button></div></div></form><p class="composer-caption">${ui.composing ? "Demo request · kept in this page session only" : "Feedback creates a demo revision. Earlier results are kept."}</p></div>`;
 }
-function fixtureControls() {
-  return `<details class="fixture-controls"><summary>${icon("box")} Fixture controls <span>Manual playback · no execution</span></summary><div class="fixture-controls-body"><p>Explore authored states and connection failures. Advancing never runs a tool or test. A reload resets this session.</p><div class="button-row"><button id="advance-fixture" data-action="advance" ${state.connection !== "connected" || !state.example || state.revision !== 1 || adapter.frame >= 8 || ui.pending || ui.busy || ui.recoveryUnknown ? "disabled" : ""}>Advance fixture ${icon("arrow")}</button><button data-action="disconnect" ${state.connection !== "connected" || ui.pending || ui.busy || ui.recoveryUnknown ? "disabled" : ""}>Disconnect fixture</button><button data-action="load-example" ${ui.pending || ui.busy || ui.recoveryUnknown ? "disabled" : ""}>Restart release example</button></div><label class="checkbox-label"><input type="checkbox" id="lose-ack" ${adapter.loseNextAcknowledgement ? "checked" : ""} ${ui.pending || ui.busy || ui.recoveryUnknown ? "disabled" : ""}> Lose the next submission acknowledgement</label><label class="checkbox-label"><input type="checkbox" id="fail-reconnect" ${adapter.failNextReconnect ? "checked" : ""}> Fail the next fixture reconnect</label><p class="fixture-cursor">${escape(state.runId)} · revision ${state.revision} · event ${state.seq}</p></div></details>`;
+function commandError() {
+  if (ui.recoveryUnknown)
+    return `<div class="alert" role="alert"><strong>Previous submission status is unknown</strong><p>The earlier fixture payload was lost on reload. This is a fresh example. No request was resubmitted.</p><button data-action="reset-lost-fixture">Discard lost fixture session</button></div>`;
+  return ui.error
+    ? `<div class="alert" role="alert"><strong>${ui.submissionStatus === "acknowledgement-unknown" ? "Acknowledgement unknown" : "Submission rejected"}</strong><p>${escape(ui.error)}</p>${ui.pending && !ui.busy ? '<button data-action="retry">Check submission status</button>' : ""}</div>`
+    : "";
 }
-function render(focusId) {
-  $("#app").innerHTML =
-    `${sidebar()}<div class="shell">${header()}<main id="workspace" tabindex="-1">${state.connection !== "connected" ? `<div class="reconnect-banner" role="alert"><div><strong>Fixture updates are paused</strong><p>${escape(state.notice || "Connection interrupted. Existing evidence is retained. Reconnect retrieves state without repeating work.")}</p></div><button data-action="reconnect" ${ui.busy ? "disabled" : ""}>${ui.busy ? "Reconnecting…" : "Reconnect fixture"}</button></div>` : state.notice ? `<div class="notice" role="status">${escape(state.notice)}</div>` : ""}${commandError()}${ui.composer ? composer() : `<div class="task-heading"><div><p class="task-identity">${icon("layers")} Task workspace <span>/</span> Revision ${state.revision}</p><h1>${escape(state.title)}</h1><div class="task-meta"><span class="task-state">${taskLabel()}</span><span>Environment: fixture ${state.repairs.some((r) => r.status === "active") ? "v2" : "v1"}</span></div></div><button data-action="revise" ${ui.pending || ui.recoveryUnknown ? "disabled" : ""}>Revise request ${icon("arrow")}</button></div><div class="tabs" role="tablist" aria-label="Task sections">${tabs.map(([id, label]) => `<button id="tab-${id}" role="tab" ${ui.pending || ui.recoveryUnknown ? "disabled" : ""} aria-selected="${ui.tab === id}" tabindex="${ui.tab === id ? 0 : -1}" aria-controls="task-panel" data-tab="${id}">${label}${id === "repairs" && state.repairs.length ? `<span class="tab-count">${state.repairs.length}</span>` : ""}</button>`).join("")}</div><div id="task-panel" role="tabpanel" aria-labelledby="tab-${ui.tab}" tabindex="0">${{ overview, activity, repairs, results, history }[ui.tab]()}</div>`}${fixtureControls()}<footer>Epoch frontend preview <span>PROPOSED contract · integration blocked</span></footer></main></div>`;
-  if (focusId) document.getElementById(focusId)?.focus();
+function controls() {
+  return `<details class="fixture-controls" data-key="controls"><summary>${icon("box")} Demo controls <span>Manual playback · no execution</span>${icon("down")}</summary><div class="fixture-controls-body"><p>Advance through authored records. No tool or test runs. Reload resets the demo.</p><div class="button-row"><button id="advance-fixture" data-action="advance" ${locked() || !state.example || state.revision !== 1 || adapter.frame >= 8 ? "disabled" : ""}>Advance fixture ${icon("arrow")}</button><button data-action="disconnect" ${locked() ? "disabled" : ""}>Disconnect fixture</button><button data-action="load-example" ${ui.pending || ui.busy || ui.recoveryUnknown ? "disabled" : ""}>Restart release example</button></div><label class="checkbox-label"><input type="checkbox" id="lose-ack" ${adapter.loseNextAcknowledgement ? "checked" : ""} ${ui.pending || ui.busy || ui.recoveryUnknown ? "disabled" : ""}>Lose the next submission acknowledgement</label><label class="checkbox-label"><input type="checkbox" id="fail-reconnect" ${adapter.failNextReconnect ? "checked" : ""}>Fail the next fixture reconnect</label><p class="fixture-cursor">${escape(state.runId)} · revision ${state.revision} · event ${state.seq}</p></div></details>`;
 }
-function inspect(title, data) {
-  inspection = data;
-  $("#inspector-title").textContent = title;
-  $("#inspector-content").replaceChildren();
-  const pre = document.createElement("pre");
-  pre.tabIndex = 0;
-  pre.textContent = JSON.stringify(data, null, 2);
-  $("#inspector-content").append(pre);
-  $("#inspector").showModal();
-  $("#close-inspector").focus();
+function render(options = {}) {
+  const page = currentPage();
+  const valid = matchedTask();
+  const notice =
+    state.connection !== "connected"
+      ? `<div class="banner-stack"><div class="alert" role="alert"><strong>Fixture updates are paused</strong><p>${escape(state.notice || "Existing evidence is retained. Reconnect reads state without repeating work.")}</p><button data-action="reconnect" ${ui.busy ? "disabled" : ""}>${ui.busy ? "Reconnecting…" : "Reconnect fixture"}</button></div></div>`
+      : state.notice
+        ? `<div class="banner-stack"><p class="notice">${escape(state.notice)}</p></div>`
+        : "";
+  const content = valid
+    ? `${notice}${page === "debugger" ? (ui.composing ? empty("Your request is still a draft", "Return to chat to finish the request. No execution has been recorded.", "pipeline") : debuggerPage()) : chat()}${page === "debugger" ? commandError() : ""}${controls()}`
+    : `${commandError()}${empty("Demo session unavailable", "Reload resets the demo session. Choose the current release example from the sidebar.")}`;
+  view.render(
+    shell({
+      demo: true,
+      page,
+      task: ui.composing ? "" : state.taskId,
+      title: ui.composing ? "New chat" : state.title,
+      nav: navigation(),
+      content,
+      locked: locked(),
+      composer: page === "chat" && valid ? composer() : "",
+      actions:
+        page === "chat" && !ui.composing
+          ? routeLink(
+              true,
+              "debugger",
+              state.taskId,
+              "Open debugger",
+              "pipeline",
+              'class="back-link"',
+            )
+          : "",
+    }),
+    `${page}:${ui.composing ? "new" : state.taskId}:${state.revision}`,
+    options,
+  );
 }
-function switchTab(tab, focus = false) {
-  ui.tab = tab;
-  ui.composer = false;
-  render(focus ? `tab-${tab}` : undefined);
+function newChat() {
+  if (locked()) return;
+  ui.composing = true;
+  ui.error = "";
+  history.pushState({ epochDraft: true }, "", urlFor(true, "chat"));
+  document.body.classList.remove("nav-open");
+  render({
+    focus: ui.stage === "request" ? "request-text" : "destination-text",
+  });
+}
+function routeChanged({ fromLink = false } = {}) {
+  // /demo/chat without a task is the current draft; task links restore the conversation.
+  const id = new URLSearchParams(location.search).get("task");
+  ui.composing =
+    !id && (history.state?.epochDraft === true || (fromLink && ui.composing));
+  if (ui.composing)
+    history.replaceState({ epochDraft: true }, "", location.href);
+  render();
+  if (location.hash) {
+    const el = document.getElementById(
+      decodeURIComponent(location.hash.slice(1)),
+    );
+    if (el) {
+      const details = el.querySelector("details");
+      if (details) details.open = true;
+      el.scrollIntoView({ block: "start" });
+    }
+  }
 }
 async function sendCommand(command = ui.pending) {
   if (state.connection !== "connected" || ui.busy || ui.recoveryUnknown) return;
-  const reconciling = Boolean(ui.pending);
+  const reconciling = !!ui.pending;
   if (!ui.pending) ui.pending = freezeSubmission(command);
   command = ui.pending;
   if (!reconciling && !markPending(command)) {
     ui.pending = null;
     ui.submissionStatus = "rejected";
     ui.error =
-      "The fixture recovery marker could not be saved. This action was not submitted; your draft is retained.";
+      "The recovery marker could not be saved. This action was not submitted; your draft is retained.";
     render();
     return;
   }
@@ -259,11 +424,6 @@ async function sendCommand(command = ui.pending) {
   ui.busy = true;
   ui.error = "";
   render();
-  announce(
-    reconciling
-      ? "Checking fixture submission status; no work is being replayed."
-      : "Recording fixture submission.",
-  );
   try {
     let snapshot;
     if (reconciling) {
@@ -282,13 +442,13 @@ async function sendCommand(command = ui.pending) {
     ui.pending = null;
     ui.submissionStatus = "accepted";
     markPending(null);
-    ui.composer = false;
-    ui.tab = command.kind === "feedback" ? "history" : "overview";
+    ui.composing = false;
     ui.feedback = "";
     ui.draft = { request: "", constraints: "", destination: "" };
     ui.draftId = crypto.randomUUID();
     ui.stage = "request";
-    announce("Fixture submission recorded. No task execution started.");
+    history.replaceState(null, "", urlFor(true, "chat", state.taskId));
+    announce("Fixture submission recorded. No execution started.");
   } catch (error) {
     ui.error = error.message;
     if (error.code === "rejected") {
@@ -299,11 +459,11 @@ async function sendCommand(command = ui.pending) {
     announce(error.message);
   } finally {
     ui.busy = false;
-    render(ui.error ? undefined : `tab-${ui.tab}`);
+    render({ bottom: !ui.error });
   }
 }
-$("#app").addEventListener("input", (event) => {
-  const { id, value, checked } = event.target;
+root.addEventListener("input", (e) => {
+  const { id, value, checked } = e.target;
   if (id === "request-text") ui.draft.request = value;
   if (id === "constraints-text") ui.draft.constraints = value;
   if (id === "destination-text") ui.draft.destination = value;
@@ -312,31 +472,31 @@ $("#app").addEventListener("input", (event) => {
   if (id === "lose-ack") adapter.loseNextAcknowledgement = checked;
   if (id === "fail-reconnect") adapter.failNextReconnect = checked;
 });
-$("#app").addEventListener("submit", (event) => {
-  event.preventDefault();
-  if (state.connection !== "connected" || ui.busy || ui.pending || ui.recoveryUnknown) return;
-  if (event.target.id === "request-form") {
+root.addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (locked()) return;
+  if (e.target.id === "request-form") {
     if (!ui.draft.request.trim()) {
-      ui.error = "Describe the result you want before continuing.";
-      render("request-text");
+      ui.error = "Describe the result you want.";
+      render({ focus: "request-text" });
       return;
     }
     ui.error = "";
     if (ui.stage === "request") {
       ui.stage = "clarification";
-      render("destination-text");
+      render({ focus: "destination-text" });
       return;
     }
     if (!ui.draft.destination.trim()) {
       ui.error = "Specify a destination, or enter “just here”.";
-      render("destination-text");
+      render({ focus: "destination-text" });
       return;
     }
     sendCommand({ id: ui.draftId, kind: "create", payload: { ...ui.draft } });
-  } else if (event.target.id === "feedback-form") {
+  } else if (e.target.id === "feedback-form") {
     if (!ui.feedback.trim()) {
       ui.error = "Describe the change you want.";
-      render("feedback-text");
+      render({ focus: "feedback-text" });
       return;
     }
     sendCommand({
@@ -348,80 +508,52 @@ $("#app").addEventListener("submit", (event) => {
     });
   }
 });
-$("#app").addEventListener("click", async (event) => {
-  const button = event.target.closest("button");
-  if (!button || button.disabled) return;
-  if (ui.recoveryUnknown && button.dataset.action === "reset-lost-fixture") {
-    markPending(null);
-    ui.recoveryUnknown = false;
-    ui.submissionStatus = "idle";
-    render();
-    announce("Lost local fixture session discarded. No action was replayed.");
+root.addEventListener("click", async (e) => {
+  const b = e.target.closest("button");
+  if (!b || b.disabled) return;
+  if (b.dataset.tab) {
+    ui.tab = b.dataset.tab;
+    render({ focus: `tab-${ui.tab}` });
     return;
   }
+  const action = b.dataset.action;
   if (
     ui.recoveryUnknown &&
-    [
-      "new",
-      "edit-request",
-      "revise",
-      "retry",
-      "advance",
-      "load-example",
-    ].includes(button.dataset.action)
+    ["new", "edit-request", "retry", "advance", "load-example"].includes(action)
   )
     return;
-  if (button.dataset.tab) {
-    switchTab(button.dataset.tab, true);
-    return;
-  }
-  const id = button.dataset.id;
   const owner =
-    button.dataset.run && button.dataset.run !== state.runId
+    b.dataset.run && b.dataset.run !== state.runId
       ? state.history.find(
           (s) =>
-            s.runId === button.dataset.run &&
-            s.revision === Number(button.dataset.revision),
+            s.runId === b.dataset.run &&
+            s.revision === Number(b.dataset.revision),
         )
       : state;
-  switch (button.dataset.action) {
+  switch (action) {
     case "new":
-      if (state.connection !== "connected") return;
-      ui.composer = true;
-      ui.error = "";
-      render("request-text");
-      break;
-    case "task":
-    case "back":
-      if (ui.pending) return;
-      ui.composer = false;
-      render("tab-overview");
+      newChat();
       break;
     case "edit-request":
+      if (locked()) return;
       ui.stage = "request";
-      render("request-text");
-      break;
-    case "revise":
-      ui.tab = "results";
-      ui.composer = false;
-      render("feedback-text");
+      render({ focus: "request-text" });
       break;
     case "retry":
       await sendCommand();
       break;
     case "advance": {
+      if (locked()) return;
       const frame = adapter.next();
       for (const update of frame.events) state = acceptEvent(state, update);
-      announce(`Fixture: ${frame.label}. No real execution.`);
       render();
-      document.querySelector(".fixture-controls").open = true;
-      document.getElementById("advance-fixture").focus();
+      announce(`Fixture: ${frame.label}. No real execution.`);
       break;
     }
     case "disconnect":
       state = { ...state, connection: "disconnected", notice: "" };
       render();
-      announce("Fixture disconnected. Current evidence retained.");
+      announce("Fixture disconnected. Evidence retained.");
       break;
     case "reconnect": {
       ui.busy = true;
@@ -445,81 +577,82 @@ $("#app").addEventListener("click", async (event) => {
     case "load-example":
       adapter = new FixtureAdapter({ startAtFailure: false });
       state = adapter.snapshot();
-      ui.composer = false;
-      ui.tab = "overview";
+      ui.composing = false;
       ui.error = "";
-      render("tab-overview");
+      ui.tab = "activity";
+      history.replaceState(null, "", urlFor(true, currentPage(), state.taskId));
+      render();
       announce(
-        "Release example reset to planned. Previous fixture session was cleared.",
+        "Release example reset to planned. Previous fixture session cleared.",
       );
       break;
+    case "reset-lost-fixture":
+      if (!markPending(null)) {
+        ui.error = "Browser storage remains unavailable.";
+        render();
+        return;
+      }
+      ui.recoveryUnknown = false;
+      ui.submissionStatus = "idle";
+      render();
+      break;
     case "inspect-intent":
-      inspect(`Intent · revision ${state.revision} · fixture`, state.intent);
+      inspect(
+        `Intent · revision ${state.revision} · fixture`,
+        state.intent,
+        true,
+      );
       break;
     case "inspect-checkpoint": {
-      const cp = state.checkpoints.find((c) => c.id === id);
-      inspect("Checkpoint source & fixture evidence", {
-        ...cp,
-        evidence: checkpointEvidence(state, cp),
-      });
+      const cp = state.checkpoints.find((c) => c.id === b.dataset.id);
+      inspect(
+        "Checkpoint source & fixture evidence",
+        { ...cp, evidence: checkpointEvidence(state, cp) },
+        true,
+      );
       break;
     }
     case "inspect-evidence":
       inspect(
         "Inspectable fixture artifact / evidence",
-        owner?.evidence.find((e) => e.id === id) || {
+        owner?.evidence.find((e) => e.id === b.dataset.id) || {
           missing: "Evidence unavailable. This is not proof of success.",
         },
+        true,
       );
       break;
     case "inspect-repair":
       inspect(
         "Repair record · fixture",
-        state.repairs.find((r) => r.id === id),
+        state.repairs.find((r) => r.id === b.dataset.id),
+        true,
       );
       break;
     case "inspect-history":
-      inspect(`Revision ${owner.revision} · retained fixture history`, owner);
+      inspect(
+        `Revision ${owner?.revision} · retained fixture history`,
+        owner,
+        true,
+      );
       break;
   }
 });
-$("#app").addEventListener("keydown", (event) => {
+root.addEventListener("keydown", (e) => {
   if (
-    event.target.getAttribute("role") !== "tab" ||
-    !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)
+    e.target.getAttribute("role") !== "tab" ||
+    !["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)
   )
     return;
-  event.preventDefault();
-  const index = tabs.findIndex(([id]) => id === ui.tab);
-  const next =
-    event.key === "Home"
-      ? 0
-      : event.key === "End"
-        ? tabs.length - 1
-        : (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) %
-          tabs.length;
-  switchTab(tabs[next][0], true);
-});
-$("#close-inspector").addEventListener("click", () => $("#inspector").close());
-$("#download-artifact").addEventListener("click", () => {
-  const blob = new Blob(
-    [
-      JSON.stringify(
-        {
-          label: "AUTHORED UI FIXTURE — NOT EXECUTION EVIDENCE",
-          data: inspection,
-        },
-        null,
-        2,
-      ),
-    ],
-    { type: "application/json" },
-  );
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "epoch-fixture-evidence.json";
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  e.preventDefault();
+  const i = tabs.findIndex(([id]) => id === ui.tab);
+  ui.tab =
+    tabs[
+      e.key === "Home"
+        ? 0
+        : e.key === "End"
+          ? tabs.length - 1
+          : (i + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length
+    ][0];
+  render({ focus: `tab-${ui.tab}` });
 });
 render();
