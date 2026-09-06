@@ -27,6 +27,9 @@ def main(argv: list[str] | None = None) -> int:
     from epoch_backend.workflow_cli import add_commands
 
     add_commands(subparsers)
+    from epoch_backend.incident_cli import add_incident_arguments
+
+    add_incident_arguments(subparsers)
     args = parser.parse_args(argv)
 
     try:
@@ -47,6 +50,18 @@ def main(argv: list[str] | None = None) -> int:
         print(settings.model_dump_json(indent=2))
         return 0
     try:
+        if args.command in {
+            "incidents",
+            "incident",
+            "evidence",
+            "import-evidence",
+            "analyze-incident",
+            "ask-incident",
+            "telemetry-info",
+        }:
+            from epoch_backend.incident_cli import handle_incident_command
+
+            return handle_incident_command(args, settings)
         if args.command in {
             "hermes-info",
             "debugger-info",

@@ -22,6 +22,32 @@ def test_missing_installation_is_reported(monkeypatch):
     assert result["error"]["code"] == "hermes_unavailable"
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX virtualenv interpreter symlinks")
+def test_discovery_preserves_virtualenv_interpreter_symlink(tmp_path, monkeypatch):
+    home = tmp_path / "hermes"
+    checkout = home / "hermes-agent"
+    python = checkout / "venv" / "bin" / "python"
+    python.parent.mkdir(parents=True)
+    python.symlink_to(sys.executable)
+    (checkout / "run_agent.py").write_text("# installation marker\n")
+    monkeypatch.setenv("EPOCH_HERMES_HOME", str(home))
+    monkeypatch.delenv("EPOCH_HERMES_CHECKOUT", raising=False)
+    assert bridge._installation_paths() == (home, checkout, python)
+    calls = []
+
+    def inspect(command, **kwargs):
+        calls.append(command)
+        return SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps({"model": "configured-model", "provider": "openai-codex"}),
+        )
+
+    monkeypatch.setattr(bridge.subprocess, "run", inspect)
+    assert bridge.detect_installation()["available"]
+    assert calls[0][0] == str(python)
+    assert calls[0][0] != str(python.resolve())
+
+
 def test_precancelled_does_not_probe_installation(monkeypatch):
     def unexpected():
         pytest.fail("A cancelled execution must not start Hermes")

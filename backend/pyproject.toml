@@ -15,13 +15,14 @@ dependencies = [
     "uvicorn>=0.34,<1",
     "mcp>=1.28,<2",
     "jsonschema>=4.25,<5",
+    "opentelemetry-proto>=1.40,<2",
 ]
 
 [project.scripts]
 epoch-backend = "epoch_backend.cli:main"
 
 [dependency-groups]
-dev = ["httpx>=0.28,<1", "pytest>=8.3,<9", "ruff>=0.11,<1"]
+dev = ["httpx>=0.28,<1", "pytest>=8.3,<9", "ruff>=0.11,<1", "neatlogs>=1.4.21,<2"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/epoch_backend"]

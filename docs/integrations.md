@@ -2,7 +2,7 @@
 
 **Local sandbox services, MCP, actual Hermes and opt-in OpenAI Luna supervision are implemented.** Installed Hermes has executed both the healthy release workflow and the deliberately broken checklist workflow. Trusted checks inspect simulated application state independently of Hermes's completion message. The [status record](status.md) records final acceptance, run identifiers and remaining limitations; checked items below describe only demonstrated scope.
 
-Neatlogs, Raindrop Workshop and live Jira/Notion/Slack connections remain unimplemented and unverified. Phase 5 generated checklist repair uses the local Linux Docker runner; see [repair setup](../backend/docs/REPAIR_SETUP.md) and [validation](status.md). Anushrut owns the separate UI. Backend setup, simulation commands and execution entrypoints are in the [backend README](../backend/README.md); provider isolation and installed-source verification are in [Hermes setup](../backend/docs/HERMES_SETUP.md).
+Neatlogs local ingestion and opt-in structural cloud forwarding are implemented in the current integration; actual validation is recorded in [status](status.md). Authenticated cloud delivery remains unverified. Raindrop Workshop and live Jira/Notion/Slack connections remain unimplemented. Phase 5 generated checklist repair uses the local Linux Docker runner; see [repair setup](../backend/docs/REPAIR_SETUP.md) and [validation](status.md). Anushrut owns the separate UI. Backend setup, simulation commands and execution entrypoints are in the [backend README](../backend/README.md); provider isolation and installed-source verification are in [Hermes setup](../backend/docs/HERMES_SETUP.md).
 
 ## Dated official references from the direction
 

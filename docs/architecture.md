@@ -1,6 +1,6 @@
 # Intended architecture and data flow
 
-**The broader architecture below remains the design; Phases 1–5 now implement its release/checklist path.** The backend includes sourced Luna planning, fixed Hermes execution, scoped MCP simulations, trusted checks, additive feedback and opt-in generated serializer repair. Phase 5 stages Python in restricted Linux Docker, verifies component/original/fresh/regression behavior, and persists project versions with rollback. Actual acceptance and remaining gaps are in [status](status.md); setup and limits are in [repair setup](../backend/docs/REPAIR_SETUP.md). Missing-tool/context repairs and vendor trace integrations remain later work. The original direction stays unchanged.
+**The broader architecture below remains the design; Phases 1–5 now implement its release/checklist path.** The backend includes sourced Luna planning, fixed Hermes execution, scoped MCP simulations, trusted checks, additive feedback and opt-in generated serializer repair. Phase 5 stages Python in restricted Linux Docker, verifies component/original/fresh/regression behavior, and persists project versions with rollback. Actual acceptance and remaining gaps are in [status](status.md); setup and limits are in [repair setup](../backend/docs/REPAIR_SETUP.md). Missing-tool/context code is implemented with acceptance pending. The additive incident/Neatlogs integration is described below. The original direction stays unchanged.
 
 ## Core idea
 
@@ -148,3 +148,19 @@ are visible through the unchanged generic MCP facade. Historical documents remai
 stored and addressable by explicit version. The debugger receives structural
 failure facts while raw context remains local. See the [development handoff](../backend/docs/PHASES_6_7_HANDOFF.md).
 No runtime acceptance was performed for this extension at the user's request.
+
+## Incident and telemetry integration
+
+Saved execution events feed a separate incident projection. It groups supported
+failures and retrieves related evidence, while preserving the original event store
+and source references. Slack/support JSON reports and authenticated local OTLP
+traces enter as untrusted evidence. Only explicit Analyze/question actions call
+Luna, with cited bounded context and one request per action.
+
+Incidents link to existing repairs without replacing trigger eligibility, budgets,
+Docker verification or publication. Published repairs enter monitoring; original
+recovery, isolated verification and independent later outcomes remain separate.
+Epoch-owned event spans can be exported to Neatlogs using a structural allowlist.
+Hermes is not wrapped or changed. Local projection and cloud-delivery failures are
+reported independently of task success. See [setup](../backend/docs/INCIDENTS_SETUP.md)
+and [current validation](status.md).

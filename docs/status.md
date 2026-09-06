@@ -1,9 +1,10 @@
 # Current implementation status
 
-**Current code includes Phases 6 and 7 development, explicitly untested at the user's request.**
-Their runtime gates are implemented but have not been exercised. Earlier Phase 5
-results below do not validate these changes. API health/runtime now report phase 7.
-See [the handoff](../backend/docs/PHASES_6_7_HANDOFF.md).
+**Current integration connects the frontend to Phase 7 and adds incidents plus Neatlogs.**
+Focused integration checks are recorded below. Full Phase 6/7 live repair acceptance
+remains pending; earlier Phase 5 results do not validate those paths. API health/runtime
+still report phase 7. See [incident setup](../backend/docs/INCIDENTS_SETUP.md) and the
+[Phase 6/7 handoff](../backend/docs/PHASES_6_7_HANDOFF.md).
 
 
 As of September 6, 2026, **backend Phases 1–5 are implemented and verified**. The release supervisor uses OpenAI `gpt-5.6-luna` for sourced plans and corrective instructions. Existing Hermes performs the business work through local MCP simulations. Opt-in Phase 5 repairs the checklist serializer through actual Luna generation, Docker isolation, trusted verification and durable project versions.
@@ -29,7 +30,7 @@ The user's Phase 4 assignment selected OpenAI `gpt-5.6-luna`, a maximum of 20 ag
 
 ## Requirements awaiting implementation
 
-Missing-tool and context code awaits acceptance; Neatlogs/Workshop and the supervision/repair UI remain later work. Phase 5 uses restricted Linux Docker for generated Python; ordinary simulated services alone are not a secure execution boundary. The saved adapter and later-session benefit below establish narrow persistent environment repair, not general-purpose learning.
+Missing-tool and context code awaits live acceptance. Supervision/repair UI, incident construction and Neatlogs local ingestion are integrated; authenticated cloud delivery and Workshop remain unverified/deferred respectively. Phase 5 uses restricted Linux Docker for generated Python; ordinary simulated services alone are not a secure execution boundary. The saved adapter and later-session benefit below establish narrow persistent environment repair, not general-purpose learning.
 
 ## Verified scope and remaining assumptions
 
@@ -48,11 +49,11 @@ The server has no authentication, multi-user isolation or distributed workers. N
 | Seeded checklist, lookup and context failure scenarios | Implemented in local sandbox | Repairs in Phases 5–7 |
 | Actual installed Hermes, explicit release briefs and correlated evidence | Implemented; control and defect executions recorded below | Phases 3–4 complete |
 | Run status/state/trace, SSE, cancellation and restart handling | Implemented and tested; consuming UI connected | New model-backed browser acceptance remains unexecuted |
-| Frontend intake, explicit release execution and future-workflow fixtures | Phase 3 HTTP/browser integration verified with real storage/checks and an explicit test executor | Anushrut must integrate current supervision/repair contracts |
+| Frontend intake, supervision/repair and incident views | Phase 7 HTTP/browser smoke with real storage/checks and explicit test actors | Full live-model and mobile workflow acceptance remains pending |
 | Automatic checkpoint planning, continuations and feedback revisions | Implemented; actual-model evidence retained | Phase 4 complete |
 | Debugger, isolated generated checklist repair, publication and rollback | Implemented; actual Docker/Luna/Hermes acceptance below | Phase 5 complete |
 | Generated missing tools and scoped context repairs | Development delivered, untested | Phases 6–7 acceptance pending |
-| Neatlogs/Workshop and complete supervised repair demo | Unimplemented; existing Phase 3 UI connected | Phase 8 |
+| Incidents and Neatlogs | Local collector, source inspection, grouping/imports, on-demand Luna and optional cloud export implemented | Actual SDK local smoke passed; live cloud/model incident acceptance pending; Workshop deferred |
 | Live business-service connections and production operation | Deferred | Separate future scope |
 
 The narrow checklist repair has saved executable and later-session evidence. No agent benchmark, broader learning result or current UI sign-off is claimed. A successful executor conversation is recorded separately from trusted task success.
@@ -390,3 +391,82 @@ only structural facts, digests, UUIDs and schemas are added to that debugger inp
 Frontend and original direction remain outside the edit scope. No new settings,
 credentials, dependencies or manual database migration are required. Anushrut owns
 phase-7 frontend compatibility and acceptance. Phase 8 remains unstarted.
+
+
+## Frontend, incidents and Neatlogs integration — September 6, 2026
+
+Implemented on `codex/frontend-incidents-neatlogs`, preserving pre-existing frontend
+and Hermes-bridge changes. The frontend accepts Phase 7, uses advertised repair
+capabilities and displays serializer/lookup/context repair evidence and effective
+artifact provenance. The new Incidents page supports JSON imports, source inspection,
+related runs, grouping explanations, recurrence and explicit cited Luna analysis.
+
+The incident projection stores original references and cursors separately from
+execution databases. Explicit/saved repair triggers support context/lookup incidents;
+ordinary intermediate unmet checkpoints do not become failures. Imported observations
+cannot start repairs. The original trigger, opt-in, budgets, protected checks and
+Docker publication gates remain in force. A published repair enters monitoring;
+original recovery, isolated verification and comparable later native runs are counted
+separately. Different rolled-back versions and insufficient observations are excluded.
+
+Neatlogs 1.4.21 SDK gzip/protobuf traces are accepted by the local token-protected
+collector. Original span sources remain locally inspectable. Stable native projections
+and incoming trace IDs deduplicate. Cloud export is disabled by default, uses a
+structural allowlist, batches up to 100 spans and bounds each span to three attempts.
+A cloud HTTP acceptance is distinguished from cloud readback verification. Failed
+normalization retains its raw source and does not block other evidence.
+
+### Checks actually run
+
+- Focused backend command: `backend/.venv/bin/pytest backend/tests/test_incidents.py
+  backend/tests/test_incident_integration.py backend/tests/test_telemetry.py
+  backend/tests/test_supervision.py::test_environment_contract_failure_is_blocked_without_any_repair
+  backend/tests/test_repairs.py::test_complete_repair_keeps_effects_and_later_discovery -q`.
+  **22 passed**, with two upstream deprecation warnings. Uses explicit
+  executor/model/container doubles; no live repair claim.
+- `node --test frontend/tests/execution.test.mjs frontend/tests/supervision-ui.test.mjs
+  frontend/tests/incidents.test.mjs`: **24 passed**.
+- `EPOCH_BROWSER_GREP='incident evidence|supervisor continuation'
+  EPOCH_BROWSER_PROJECT=desktop EPOCH_FRONTEND_PORT=5183
+  node frontend/tests/run-intake-integration.mjs --execution`: **2 passed**.
+  Actual local HTTP/SQLite/checks covered connection, supervision continuation,
+  feedback, import, cited analysis and lost-acknowledgement exact retries. Explicit
+  model doubles were used. Both screenshots were inspected; desktop overflow check
+  passed. Mobile browser acceptance was not run.
+- `backend/.venv/bin/python backend/scripts/smoke_neatlogs.py`: actual Neatlogs SDK
+  to loopback collector passed with **3 stored spans / 3 normalized records**
+  delivered to an explicit in-memory evidence sink; incident SQLite is checked
+  separately. Cloud
+  disabled and zero model calls. This proves SDK transport, not cloud delivery.
+- Ruff on every changed/new backend Python file passed. Exported contract check and
+  authored whitespace/link checks are recorded in the final handoff.
+
+The initial supervision browser attempt correctly blocked because its pre-existing
+fake executor used `missing_evidence` for a test-disclosure string. The harness now
+retains the disclosure in an explicit test-only field; production completeness checks
+were not weakened. The focused browser rerun passed. Existing Starlette/httpx/AnyIO
+deprecation warnings remain; dependencies were not changed to suppress them.
+
+Evidence: [HTTP record](../frontend/evidence/phase7-execution-http.json),
+[supervision record](../frontend/evidence/phase7-supervision-desktop.json),
+[supervision screenshot](../frontend/evidence/phase7-supervision-desktop.png), and
+[incidents screenshot](../frontend/evidence/phase7-incidents-desktop.png).
+
+### Setup and acceptance left to the user
+
+Run `uv sync --frozen` in backend after updating dependencies. Existing app settings
+remain valid. Optional new flags are `EPOCH_TELEMETRY_ENABLED=true` and
+`EPOCH_NEATLOGS_CLOUD_ENABLED=false`; local token `EPOCH_TELEMETRY_TOKEN` and cloud
+`NEATLOGS_API_KEY` are process-only secrets. No manual data migration/reset is needed;
+startup adds incident and telemetry databases. See [setup](../backend/docs/INCIDENTS_SETUP.md).
+
+Local read-only discovery found Hermes (`gpt-6-astra`) and Luna (`gpt-5.6-luna`)
+configured through the existing Codex route; no live inference call was made here.
+Docker was not found on this Mac. Full generated repair execution requires installing/
+starting Linux Docker and pulling the existing pinned image. Authenticated Neatlogs
+cloud delivery, live Luna incident analysis and full Phase 6/7 repair workflows remain
+unexecuted. No claim of live Jira/Notion/Slack delivery or production readiness is made.
+
+`docs/direction.md` retains SHA-256
+`791826322bab72f3198c862cad796e2c5298c1ed5801fb8db8bd70a6101e3df5`, including its original
+Markdown hard breaks. AO is unavailable on this host; no preview dependency was added.

@@ -1,4 +1,4 @@
-// Actual Phase 3 server with execution disabled + temporary SQLite data. No backend source edits.
+// Current server with temporary SQLite data; execution mode uses explicit test actors.
 import { spawn } from "node:child_process";
 import { mkdtemp, rm, mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -139,7 +139,7 @@ try {
   const health = await http("/api/health");
   assert.deepEqual(health.body, {
     status: "ok",
-    phase: 3,
+    phase: 7,
     storage: "ok",
     execution_enabled: executionMode,
   });
@@ -209,6 +209,8 @@ try {
         "test",
         "--config",
         executionMode ? "playwright.execution.config.mjs" : "playwright.intake.config.mjs",
+        ...(process.env.EPOCH_BROWSER_GREP ? ["--grep", process.env.EPOCH_BROWSER_GREP] : []),
+        ...(process.env.EPOCH_BROWSER_PROJECT ? ["--project", process.env.EPOCH_BROWSER_PROJECT] : []),
       ],
       {
         cwd: frontend,
@@ -226,12 +228,12 @@ try {
   assert.equal(result, 0, "Browser integration checks failed");
   await mkdir(path.join(frontend, "evidence"), { recursive: true });
   await writeFile(
-    path.join(frontend, executionMode ? "evidence/phase3-execution-http.json" : "evidence/phase3-intake-http.json"),
+    path.join(frontend, executionMode ? "evidence/phase7-execution-http.json" : "evidence/phase7-intake-http.json"),
     JSON.stringify(
       {
         verified_at: new Date().toISOString(),
-        category: executionMode ? "local-http-with-explicit-test-executor" : "actual-local-phase-3-http",
-        backend_source_changed: false,
+        category: executionMode ? "local-http-with-explicit-test-executor" : "actual-local-phase-7-http",
+        production_entrypoint_used: !executionMode,
         isolated_temporary_database: true,
         health: health.body,
         task: created.body,
@@ -251,8 +253,8 @@ try {
         actual_hermes_invoked: false,
         browser_origin: browserOrigin,
         limitations: [
-          executionMode ? "Real HTTP/storage/trusted checks with an explicit test executor; no Hermes/model or repair" : "Temporary local intake/storage only; no executor or repair",
-          `Actual frontend dev server at ${browserOrigin} and unchanged backend; no source interception or security bypass`,
+          executionMode ? "Real HTTP/storage/trusted checks with an explicit test executor; no actual Hermes/model or Docker" : "Temporary local intake/storage only; no executor or repair",
+          `Actual frontend dev server at ${browserOrigin} and current backend; no source interception or security bypass`,
           "Unknown acknowledgement and offline browser cases inject transport faults, not backend failures",
         ],
       },

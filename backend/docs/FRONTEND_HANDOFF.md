@@ -214,3 +214,18 @@ active seconds; overall repair is 60 requests/1,800 wall seconds and two candida
 Rollback changes new-run discovery only; existing runs remain pinned. Failed and
 interrupted candidates remain visible and inactive. No frontend integration or
 browser acceptance for these new controls is claimed by this backend handoff.
+
+
+## Incident integration handoff
+
+The frontend now consumes Phase 7 and all three repair targets. Additive incident
+routes and response fields are defined in [the shared contract](INCIDENT_IMPLEMENTATION.md).
+Setup and process-only telemetry credentials are documented in [incident setup](INCIDENTS_SETUP.md).
+Native evidence, imported reports, published artifacts and task completion remain
+separate. GET routes never call Luna. Analyze/questions reserve one explicit request
+identity, invoke at most one 60-second model call, and retain failed/interrupted
+outcomes. Local source links resolve against the configured backend origin.
+
+Telemetry runtime reports `cloud_export_accepted` separately from
+`cloud_readback_verified`; collector readiness and model availability do not prove
+cloud or live-model execution. See [status](../../docs/status.md) for actual checks.

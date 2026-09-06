@@ -126,7 +126,7 @@ test("actual intake/list/detail, form validation, saved text, keyboard and respo
     window.scrollTo(0, 0);
   });
   await page.screenshot({
-    path: `evidence/phase3-intake-${info.project.name}.png`,
+    path: `evidence/phase7-intake-${info.project.name}.png`,
     fullPage: true,
   });
   await page.reload();

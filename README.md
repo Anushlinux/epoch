@@ -1,12 +1,12 @@
 # Epoch
 
-**Latest development:** Phases 6 and 7 are implemented and pushed for integration, but untested at the user's request. Phase 5 evidence remains historical. The current API reports phase 7. See [the new handoff](backend/docs/PHASES_6_7_HANDOFF.md).
+**Current integration:** the frontend connects to the Phase 7 backend. Incident grouping, on-demand Luna investigation, JSON evidence imports and local Neatlogs ingestion with optional cloud export extend the existing repair flow. See [setup](backend/docs/INCIDENTS_SETUP.md) and [validation status](docs/status.md). Full Phase 6/7 model-backed repair acceptance remains pending; the API still reports phase 7.
 
 Epoch is a task supervisor with an environment-repair debugger. The user describes the desired result in the interface; Epoch turns that request into verifiable checkpoints, gives Hermes a structured task brief, monitors execution, and directs corrections until the checks pass or a clear limit is reached. Phase 5 verifies and publishes checklist-adapter repairs for later tasks; missing-tool and context repairs remain later phases.
 
 **Current state: backend Phases 1–5 are implemented and verified.** OpenAI `gpt-5.6-luna` plans sourced checkpoints and generates serializer corrections; the existing Hermes executor performs the work. Phase 5 adds opt-in Docker-isolated checks, original/fresh task verification, durable versions and rollback. Normal operations share 20 model requests/600 seconds; each repair verification gets its own 20/600 limit, with a 60-request/1,800-second overall repair ceiling and two candidate attempts. See [repair setup](backend/docs/REPAIR_SETUP.md) and [implementation status](docs/status.md).
 
-The [frontend workspace](frontend/README.md) has historical Phase 3 intake/execution integration and a separate fixture page. Its API guards require Phase 3 and automatic supervision/repair disabled, so they reject the current backend. Use the CLI/API for Phase 5; Anushrut owns updating the UI. This backend change preserves every frontend file.
+The [frontend workspace](frontend/README.md) connects intake, supervised execution, feedback, all three repair views and artifact provenance to the current backend. The Incidents view groups related evidence and exposes explicit investigation actions. Fixture pages remain separately labelled; UI checkmarks still come from trusted backend checks.
 
 ## Start here
 
@@ -21,7 +21,7 @@ The [frontend workspace](frontend/README.md) has historical Phase 3 intake/execu
 2. **Checkpoints:** Epoch creates a structured brief with deliverables, constraints, dependencies, and evidence required for completion. Explicit requirements and inferred defaults remain distinguishable.
 3. **Execution:** Hermes receives that brief, plans the operational steps, discovers tools, and performs the business work.
 4. **Monitoring:** Epoch observes tool calls, results, retrieved context, artifacts, and explicit progress summaries. It evaluates at meaningful execution events; it does not depend on private model reasoning or inspecting every token.
-5. **Recovery:** for an omitted or incorrect step, Epoch sends Hermes a targeted continuation instruction that identifies the unmet checkpoint and preserves completed work. For the supported checklist serializer defect, opt-in Phase 5 stages and verifies an executable repair before activation. Missing capabilities and context defects remain blockers.
+5. **Recovery:** for an omitted or incorrect step, Epoch sends Hermes a targeted continuation instruction that identifies the unmet checkpoint and preserves completed work. For the supported checklist serializer defect, opt-in Phase 5 stages and verifies an executable repair before activation. Missing-tool and context repair paths are implemented, with live acceptance still pending.
 6. **Delivery:** independent checks verify the actual result. Epoch reports completed deliverables, supporting links/artifacts, and any remaining limitations. Retry, time, and access limits can stop an unresolved task.
 7. **User feedback:** if the checks pass but the user is dissatisfied, their feedback identifies a missed requirement, evaluation mistake, or new preference. Epoch records the revised intent and directs Hermes to revise the work; it does not automatically treat every preference as a shared-tool defect.
 
@@ -74,7 +74,7 @@ From `backend/`, run `uv sync --frozen`, then `uv run --frozen epoch-backend ser
 
 For documentation changes, check relative links and anchors, preserve the exact direction source, inspect the diff for scope, and run `git diff --check`. The [documentation validation notes](docs/status.md#documentation-validation) describe the handoff checks and their limits.
 
-The preserved direction remains unchanged. The supervisor flow and named work split above record the user's later decision and supersede the earlier passive-debugger/CLI-only presentation. The implemented supervisor is limited to the release workflow and additive feedback. The implemented repair is limited to the checklist serializer; missing-tool and context repairs still require later phases.
+The preserved direction remains unchanged. The supervisor flow and named work split above record the user's later decision and supersede the earlier passive-debugger/CLI-only presentation. The implemented supervisor is limited to the release workflow and additive feedback. The repair controller supports the checklist serializer, missing lookup and context selector; the latter two still await live acceptance. Incident evidence does not expand its permissions or trigger rules.
 
 ## Generic agent startup prompt
 

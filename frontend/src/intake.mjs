@@ -1,3 +1,5 @@
+import { IncidentWorkspace } from './incident-api.mjs';
+import { incidentsView, incidentURL } from './incident-ui.mjs';
 import { ExecutionWorkspace } from "./execution-api.mjs";
 import { executionPanel } from "./execution-ui.mjs";
 import { IntakeWorkspace } from "./intake-api.mjs";
@@ -23,7 +25,12 @@ const inspect = installInspector();
 let draft = { message: "", project: "demo" };
 let settings = false;
 let originDraft = null;
-const releaseDraft = { release: "", scenario: "control", max_turns: 16, timeout_seconds: 180 };
+const releaseDraft = { release: "", scenario: "control", max_turns: 20, timeout_seconds: 600,
+  supervised: true, repair_enabled: false, demo_omit_notification: false };
+const feedbackDrafts = new Map();
+const incidentQuestions = new Map();
+let importDraft = "";
+let incidentProjectDraft = null;
 let lastSubmission = "idle";
 let selected = new URLSearchParams(location.search).get("task") || "";
 let storage;
@@ -44,6 +51,12 @@ const execution = new ExecutionWorkspace({ storage, onChange: () => render(), on
   }
   if (workspace.state.list) workspace.state.list.items = workspace.state.list.items.map((t) => t.id === updated.id ? updated : t);
 } });
+const incidents = new IncidentWorkspace({ storage, onChange: () => render() });
+if (incidents.state.pending && !workspace.state.pending && !execution.state.pending && !execution.state.operationPending) {
+  workspace.state.origin = incidents.state.pending.origin;
+  if (incidents.state.pending.kind === "import") importDraft = JSON.stringify(incidents.state.pending.payload.records, null, 2);
+  else if (incidents.state.pending.payload.question) incidentQuestions.set(incidents.state.pending.incidentId, incidents.state.pending.payload.question);
+}
 if (execution.state.pending) {
   Object.assign(releaseDraft, execution.state.pending.payload);
   if (!workspace.state.pending) workspace.state.origin = execution.state.pending.origin;
@@ -51,6 +64,15 @@ if (execution.state.pending) {
     selected = execution.state.pending.taskId;
     history.replaceState(null, "", urlFor(false, currentPage(), selected));
   }
+}
+if (execution.state.operationPending) {
+  const pending = execution.state.operationPending;
+  if (!workspace.state.pending && !execution.state.pending) workspace.state.origin = pending.origin;
+  if (!selected && pending.taskId) {
+    selected = pending.taskId;
+    history.replaceState(null, "", urlFor(false, currentPage(), selected));
+  }
+  if (pending.runId && pending.payload.message) feedbackDrafts.set(pending.runId, pending.payload.message);
 }
 if (workspace.state.pending)
   draft = {
@@ -67,7 +89,8 @@ const task = () =>
     ? workspace.state.task
     : null;
 const locked = () =>
-  workspace.state.busy || !!workspace.state.pending || workspace.state.recovery || execution.state.busy;
+  workspace.state.busy || !!workspace.state.pending || workspace.state.recovery || execution.state.busy || incidents.state.busy;
+const feedbackDraft = () => feedbackDrafts.get(execution.state.run?.id) || "";
 const navigate = installNavigation(root, routeChanged, newChat);
 
 function navigation(state) {
@@ -79,7 +102,7 @@ function navigation(state) {
     ? state.list.items
         .map(
           (t) =>
-            `<a data-route data-task="${escape(t.id)}" class="session-item" href="${urlFor(false, currentPage(), t.id)}" ${selected === t.id ? 'aria-current="page"' : ""}>${icon("chat")}<span><strong>${escape(t.request.message)}</strong><small>${escape(t.request.project_id)} · ${escape(t.status)}</small></span></a>`,
+            `<a data-route data-task="${escape(t.id)}" class="session-item" href="${urlFor(false, currentPage() === "incidents" ? "chat" : currentPage(), t.id)}" ${selected === t.id ? 'aria-current="page"' : ""}>${icon("chat")}<span><strong>${escape(t.request.message)}</strong><small>${escape(t.request.project_id)} · ${escape(t.status)}</small></span></a>`,
         )
         .join("")
     : `<div class="sidebar-empty">${icon("chat")}<p>${state.list ? "No chats yet" : "Connect to see your chats"}</p></div>`;
@@ -89,7 +112,7 @@ function navigation(state) {
 }
 function connection(state) {
   if (!settings) return "";
-  return `<section class="connection-panel" aria-labelledby="connection-heading"><div class="panel-heading"><h2 id="connection-heading">Local connection</h2><button class="icon-button" data-action="settings-close" aria-label="Close connection settings">${icon("close")}</button></div><form id="connection-form"><div><label for="api-origin">API origin</label><input id="api-origin" type="url" required value="${escape(originDraft ?? state.origin)}" ${state.busy || state.pending || execution.state.pending ? "disabled" : ""}></div><button id="connect" ${state.busy ? "disabled" : ""}>${state.busy ? "Connecting…" : state.connected ? "Refresh connection" : "Connect / reconnect"}</button></form><p>Connect to your local Epoch backend. Requests are saved as pending.</p><details class="disclosure" data-key="connection-details"><summary>Connection details ${icon("down")}</summary><p>The backend must allow <code>${escape(location.origin)}</code>. No credentials are used.</p><a class="text-button" href="/README.md" target="_blank" rel="noopener">Setup instructions ↗</a></details></section>`;
+  return `<section class="connection-panel" aria-labelledby="connection-heading"><div class="panel-heading"><h2 id="connection-heading">Local connection</h2><button class="icon-button" data-action="settings-close" aria-label="Close connection settings">${icon("close")}</button></div><form id="connection-form"><div><label for="api-origin">API origin</label><input id="api-origin" type="url" required value="${escape(originDraft ?? state.origin)}" ${state.busy || state.pending || execution.state.pending || execution.state.operationPending || incidents.state.pending ? "disabled" : ""}></div><button id="connect" ${state.busy ? "disabled" : ""}>${state.busy ? "Connecting…" : state.connected ? "Refresh connection" : "Connect / reconnect"}</button></form><p>Connect to your local Epoch backend. Requests are saved as pending.</p><details class="disclosure" data-key="connection-details"><summary>Connection details ${icon("down")}</summary><p>The backend must allow <code>${escape(location.origin)}</code>. No credentials are used.</p><a class="text-button" href="/README.md" target="_blank" rel="noopener">Setup instructions ↗</a></details></section>`;
 }
 function notices(state) {
   if (!state.error && !state.notice && !state.recovery) return "";
@@ -114,11 +137,11 @@ function chat(state) {
       );
     return `${welcome()}${state.pending ? `<div class="conversation pending-conversation">${pending(state)}</div>` : ""}`;
   }
-  return `<div class="conversation"><div class="message user"><div class="message-body"><blockquote>${escape(t.request.message)}</blockquote></div></div><div class="system-receipt">${icon("info")}<div><strong>System receipt</strong><p>${state.taskUnavailable ? "The previously saved request is currently unavailable." : t.status === "pending" ? "Request saved. Start a release run below when ready." : `Request saved. Current task status: ${escape(t.status)}.`}</p></div></div><details class="disclosure" data-key="receipt" open><summary>Request details ${icon("down")}</summary><div class="disclosure-body">${receipt(t, state)}</div></details>${executionPanel(execution.state, releaseDraft, { unavailable: state.taskUnavailable })}${routeLink(false, "debugger", selected, "Open debugger", "pipeline", 'class="back-link"')}${pending(state)}</div>`;
+  return `<div class="conversation"><div class="message user"><div class="message-body"><blockquote>${escape(t.request.message)}</blockquote></div></div><div class="system-receipt">${icon("info")}<div><strong>System receipt</strong><p>${state.taskUnavailable ? "The previously saved request is currently unavailable." : t.status === "pending" ? "Request saved. Start a release run below when ready." : `Request saved. Current task status: ${escape(t.status)}.`}</p></div></div><details class="disclosure" data-key="receipt" open><summary>Request details ${icon("down")}</summary><div class="disclosure-body">${receipt(t, state)}</div></details>${executionPanel(execution.state, releaseDraft, { unavailable: state.taskUnavailable, feedbackDraft: feedbackDraft() })}${routeLink(false, "debugger", selected, "Open debugger", "pipeline", 'class="back-link"')}${pending(state)}</div>`;
 }
 function debuggerPage(state) {
   const t = task();
-  return `<div class="debugger"><header class="debug-heading"><p class="eyebrow">Epoch / debugger</p><h1>${execution.state.run ? "Release execution evidence" : "No execution recorded"}</h1><p>Inspect the recorded run, trusted checkpoints and partial simulated effects.</p></header><div class="debug-layout"><div>${t ? executionPanel(execution.state, releaseDraft, { debuggerView: true, unavailable: state.taskUnavailable }) : "Select a saved chat to inspect its execution."}</div><aside class="context-column"><h2>Original request</h2>${t ? `<blockquote>${escape(t.request.message)}</blockquote><p>Saving a request does not start execution.</p>${badge(t.status, t.status)}<dl class="metadata"><dt>Project</dt><dd>${escape(t.request.project_id)}</dd><dt>Task ID</dt><dd>${escape(t.id)}</dd></dl><button class="text-button" data-action="inspect-record">Inspect saved record</button>` : "<p>No chat selected.</p>"}</aside></div>${pending(state)}</div>`;
+  return `<div class="debugger"><header class="debug-heading"><p class="eyebrow">Epoch / debugger</p><h1>${execution.state.run ? "Release execution evidence" : "No execution recorded"}</h1><p>Inspect Hermes and Luna activity, trusted evaluations, repair evidence and simulated effects.</p></header><div class="debug-layout"><div>${t ? executionPanel(execution.state, releaseDraft, { debuggerView: true, unavailable: state.taskUnavailable, feedbackDraft: feedbackDraft() }) : "Select a saved chat to inspect its execution."}</div><aside class="context-column"><h2>Original request</h2>${t ? `<blockquote>${escape(t.request.message)}</blockquote><p>Saving a request does not start execution.</p>${badge(t.status, t.status)}<dl class="metadata"><dt>Project</dt><dd>${escape(t.request.project_id)}</dd><dt>Task ID</dt><dd>${escape(t.id)}</dd></dl><button class="text-button" data-action="inspect-record">Inspect saved record</button>` : "<p>No chat selected.</p>"}</aside></div>${pending(state)}</div>`;
 }
 function composer(state) {
   const disabled = locked() || !!selected;
@@ -136,13 +159,18 @@ function render(options = {}) {
   lastSubmission = state.submission;
   execution.setContext(state.origin, task()?.id || "", state.connected && !state.taskUnavailable);
   const page = currentPage();
+  const incidentQuery = new URLSearchParams(location.search);
+  const incidentId = page === "incidents" ? incidentQuery.get("incident") || "" : "";
+  const incidentProject = page === "incidents" ? incidentQuery.get("project") || "" : "";
+  const incidentOffset = Math.max(0, Number.parseInt(incidentQuery.get("offset"), 10) || 0);
+  incidents.setContext(state.origin, state.connected, page === "incidents" && !document.hidden, incidentId, incidentProject, incidentOffset);
   const t = task();
-  const content = `${notices(state)}${connection(state)}${page === "debugger" ? debuggerPage(state) : chat(state)}`;
+  const content = `${notices(state)}${connection(state)}${page === "incidents" ? incidentsView(incidents.state, { importDraft, questionDraft: incidentQuestions.get(incidentId) || "", projectDraft: incidentProjectDraft ?? incidentProject }) : page === "debugger" ? debuggerPage(state) : chat(state)}`;
   view.render(
     shell({
       page,
       task: selected,
-      title: t?.request.message || "New chat",
+      title: page === "incidents" ? "Incidents" : t?.request.message || "New chat",
       nav: navigation(state),
       content,
       locked: locked(),
@@ -151,7 +179,7 @@ function render(options = {}) {
       actions: `<button class="icon-button" data-action="settings" aria-label="Connection settings">${icon("settings")}</button>`,
       bottom: `<button class="nav-item" data-action="settings">${icon("settings")}Connection settings</button>`,
     }),
-    `${page}:${selected}`,
+    `${page}:${page === "incidents" ? incidentId : selected}`,
     options,
   );
   const refresh = $("#refresh-list");
@@ -161,15 +189,20 @@ function render(options = {}) {
     : state.error ||
       state.notice ||
       (state.connected
-        ? "Connected to the local Phase 3 API."
+        ? "Connected to the local API."
         : "Not connected.");
 }
 async function routeChanged() {
+  incidentProjectDraft = null;
   selected = new URLSearchParams(location.search).get("task") || "";
   render();
   if (selected && workspace.state.connected && task()?.id !== selected)
     await workspace.read(selected);
-  if (currentPage() === "debugger")
+  if (currentPage() === "debugger") {
+    const runId = new URLSearchParams(location.search).get("run");
+    if (runId && workspace.state.connected) { await execution.refresh(); await execution.select(runId); }
+  }
+  if (currentPage() !== "chat")
     $("#workspace")?.focus({ preventScroll: true });
   else if (task()) render({ focus: "detail-heading" });
 }
@@ -180,6 +213,10 @@ function newChat() {
 }
 root.addEventListener("input", (e) => {
   if (e.target.id === "api-origin") originDraft = e.target.value;
+  if (e.target.id === "incident-import-json") importDraft = e.target.value;
+  if (e.target.id === "incident-project") incidentProjectDraft = e.target.value;
+  if (e.target.id === "incident-question") incidentQuestions.set(incidents.state.selected, e.target.value);
+  if (e.target.id === "feedback-message" && execution.state.run) feedbackDrafts.set(execution.state.run.id, e.target.value);
   const releaseField = { "release-value": "release", "release-scenario": "scenario", "release-turns": "max_turns", "release-timeout": "timeout_seconds" }[e.target.id];
   if (releaseField) releaseDraft[releaseField] = e.target.value;
   if (e.target.id === "request-message") draft.message = e.target.value;
@@ -192,8 +229,9 @@ root.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (e.target.id === "connection-form") {
     const nextOrigin = $("#api-origin").value;
-    if (execution.state.pending && new URL(nextOrigin).origin !== execution.state.pending.origin) {
-      execution.state.error = "Resolve the pending run on its original server before switching.";
+    const pending = execution.state.pending || execution.state.operationPending || incidents.state.pending;
+    if (pending && new URL(nextOrigin).origin !== pending.origin) {
+      execution.state.error = "Resolve the pending operation on its original server before switching.";
       render(); return;
     }
     await workspace.connect(nextOrigin);
@@ -204,7 +242,17 @@ root.addEventListener("submit", async (e) => {
       if (selected && !task()) await workspace.read(selected);
     }
   }
+  if (e.target.id === "incident-filter-form") navigate(incidentURL("", incidentProjectDraft ?? incidents.state.project));
+  if (e.target.id === "incident-import-form" && await incidents.submit("import", importDraft)) { importDraft = ""; render(); }
+  if (e.target.id === "incident-question-form" && await incidents.submit("questions", incidentQuestions.get(incidents.state.selected) || "")) { incidentQuestions.delete(incidents.state.selected); render(); }
   if (e.target.id === "release-form") await execution.start(releaseDraft);
+  if (e.target.id === "feedback-form") {
+    const run = execution.state.run;
+    if (run && await execution.submitFeedback(feedbackDraft(), { clarification: run.status === "needs_input" })) {
+      feedbackDrafts.delete(run.id);
+      render();
+    }
+  }
   if (e.target.id === "request-form" && !selected)
     await workspace.submit(draft.message, draft.project);
 });
@@ -213,9 +261,16 @@ root.addEventListener("click", async (e) => {
   if (!button || button.disabled) return;
   switch (button.dataset.action) {
     case "run-refresh": await execution.refresh(); break;
+    case "incident-refresh": await incidents.refresh(); break;
+    case "incident-analyze": await incidents.submit("analyze"); break;
+    case "incident-retry": await incidents.retry(); break;
+    case "incident-review": incidents.reviewRejected(); break;
     case "run-retry": await execution.retry(); break;
     case "run-review": execution.reviewRejected(); break;
     case "run-cancel": await execution.cancel(); break;
+    case "operation-retry": await execution.retryOperation(); break;
+    case "operation-review": execution.reviewRejectedOperation(); break;
+    case "environment-rollback": await execution.rollback(); break;
     case "new":
       newChat();
       break;
@@ -256,10 +311,29 @@ root.addEventListener("click", async (e) => {
       break;
   }
 });
-root.addEventListener("change", (e) => {
+root.addEventListener("change", async (e) => {
+  if (e.target.id === "incident-import-file" && e.target.files?.[0]) {
+    const file = e.target.files[0];
+    try {
+      if (file.size > 2_000_000) throw new Error("Choose a JSON file smaller than 2 MB.");
+      importDraft = await file.text(); render();
+    } catch (error) { incidents.state.error = error.message; render(); }
+  }
+  if (e.target.id === "release-scenario") { releaseDraft.scenario = e.target.value; render(); }
   if (e.target.id === "run-history") void execution.select(e.target.value);
+  const field = { "release-supervised": "supervised", "release-repair": "repair_enabled", "release-omission": "demo_omit_notification" }[e.target.id];
+  if (field) {
+    releaseDraft[field] = e.target.checked;
+    if (!releaseDraft.supervised) {
+      releaseDraft.repair_enabled = false;
+      releaseDraft.demo_omit_notification = false;
+    } else if (e.target.checked && field === "repair_enabled") releaseDraft.demo_omit_notification = false;
+    else if (e.target.checked && field === "demo_omit_notification") releaseDraft.repair_enabled = false;
+    render();
+  }
 });
-window.addEventListener("pagehide", () => execution.stop());
-window.addEventListener("pageshow", (event) => { if (event.persisted) void execution.refresh(); });
+document.addEventListener("visibilitychange", () => render());
+window.addEventListener("pagehide", () => { execution.stop(); incidents.stop(); });
+window.addEventListener("pageshow", (event) => { if (event.persisted) { void execution.refresh(); void incidents.refresh(); } });
 render();
 // Opening, refreshing, and navigating never submit or auto-connect.

@@ -24,6 +24,7 @@ async function start(page, scenario = 'control', release = '2.4') {
   if (!(await page.getByRole('textbox', { name: 'Release', exact: true }).isVisible())) await page.locator('[data-key=another-release]>summary').click();
   await page.getByRole('textbox', { name: 'Release', exact: true }).fill(release);
   await page.getByLabel('Sandbox scenario').selectOption(scenario);
+  await page.locator('#release-supervised').uncheck();
   await page.getByRole('button', { name: 'Start release run' }).click();
   await expect(page.locator('[data-run-id]')).toBeVisible();
   return page.locator('[data-run-id]').getAttribute('data-run-id');
@@ -62,9 +63,9 @@ test('explicit release, named SSE, sourced checks, simulation objects, history a
   await expect(page.locator('.statusbar')).toContainText('Explicit release runs');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.evaluate(() => { document.querySelector('#page-scroll').scrollTop = 0; });
-  await page.screenshot({ path: `evidence/phase3-execution-${info.project.name}.png`, fullPage: true });
+  await page.screenshot({ path: `evidence/phase7-direct-execution-${info.project.name}.png`, fullPage: true });
   await page.locator('.trusted-result').scrollIntoViewIfNeeded();
-  await page.screenshot({ path: `evidence/phase3-results-${info.project.name}.png`, fullPage: true });
+  await page.screenshot({ path: `evidence/phase7-direct-results-${info.project.name}.png`, fullPage: true });
   let posts = 0; page.on('request', (r) => { if (r.method() === 'POST') posts++; });
   await page.reload(); await connect(page);
   await finish(page, 'completed');
@@ -82,7 +83,7 @@ test('explicit release, named SSE, sourced checks, simulation objects, history a
     state: await (await fetch(`${api}/api/runs/${id}/state`)).json(),
     trace: await (await fetch(`${api}/api/runs/${id}/trace`)).json(),
   })));
-  await writeFile(`evidence/phase3-execution-runs-${info.project.name}.json`, JSON.stringify({
+  await writeFile(`evidence/phase7-direct-execution-runs-${info.project.name}.json`, JSON.stringify({
     category: 'real-local-api-with-explicit-test-executor', actual_hermes_invoked: false,
     verified_at: new Date().toISOString(), runs: evidence,
   }, null, 2) + '\n');

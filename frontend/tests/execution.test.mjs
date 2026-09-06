@@ -2,15 +2,25 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { IntakeAPI, IntakeError } from '../src/intake-api.mjs';
-import { ExecutionAPI, ExecutionWorkspace, executionRecord, runEvent, runRequest, sameRunRequest, EVENT_NAMES, RUN_PENDING_KEY } from '../src/execution-api.mjs';
+import { ExecutionAPI, ExecutionWorkspace, executionRecord, runEvent, runRequest, sameRunRequest, supportsRepair, EVENT_NAMES, RUN_PENDING_KEY } from '../src/execution-api.mjs';
 const fixtures = JSON.parse(readFileSync(new URL('../../backend/fixtures/development.json', import.meta.url)));
 const model = (name) => structuredClone(fixtures.examples.find((x) => x.model === name).value);
 const task = model('Task');
-const runtime = { phase: 3, execution_enabled: true, hermes_available: true, active_run_id: null, workflow: 'release', simulation_only: true, automatic_supervision: false, automatic_repair: false };
+const runtime = { phase: 3, execution_enabled: true, hermes_available: true, active_run_id: null, workflow: 'release', simulation_only: true, automatic_supervision: true, automatic_repair: true, supervision_enabled: true };
 const record = (changes = {}) => ({ schema_version: 1, id: crypto.randomUUID(), task_id: task.id, request: runRequest({ release: '2.4' }), status: 'running', brief: { ...model('TaskBrief'), task_id: task.id }, created_at: task.created_at, updated_at: task.updated_at, final_response: null, executor_success: null, baseline: {}, verification: null, missing_evidence: [], error: null, ...changes });
 const event = (run, sequence, type = 'tool.result') => ({ id: crypto.randomUUID(), task_id: task.id, run_id: run.id, sequence, type, payload: { new_field: true }, emitted_at: task.created_at });
 const memory = () => { const map = new Map(); return { getItem: (k) => map.get(k) ?? null, setItem: (k, v) => map.set(k, v), removeItem: (k) => map.delete(k) }; };
 const deferred = () => { let resolve; const promise = new Promise((r) => { resolve = r; }); return { promise, resolve }; };
+test('Phase 7 connects and repair follows advertised targets rather than phase alone', async () => {
+  const current = { ...runtime, phase: 7, repair_opt_in: true, repair_targets: ['qa_lookup.py'] };
+  const api = new ExecutionAPI('http://localhost:8000', async (url) => new Response(JSON.stringify(url.endsWith('/health') ? { status: 'ok', storage: 'ok', phase: 7, execution_enabled: true } : current)));
+  assert.equal((await api.health()).phase, 7);
+  assert.equal((await api.runtime()).phase, 7);
+  assert.equal(supportsRepair(current, 'missing_lookup'), true);
+  assert.equal(supportsRepair(current, 'outdated_context'), false);
+  assert.equal(supportsRepair({ ...current, automatic_repair: false }, 'missing_lookup'), false);
+  assert.equal(supportsRepair({ ...current, repair_opt_in: false }, 'missing_lookup'), false);
+});
 function setup(t, options = {}) {
   const storage = options.storage || memory(), calls = [], sources = [];
   let current = options.run || null;

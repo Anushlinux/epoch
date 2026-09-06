@@ -193,6 +193,10 @@ def test_complete_repair_keeps_effects_and_later_discovery(service, monkeypatch,
     assert record.status == "completed", record.model_dump_json(indent=2)
     report = record.supervision.operations[0].repairs[0]
     assert report["status"] == "published" and len(report["attempts"]) == 1
+    assert report["incident_ids"]
+    incident = service.incidents.get_incident(report["incident_ids"][0])
+    assert incident["status"] == "monitoring"
+    assert any(repair["id"] == report["id"] for repair in incident["repairs"])
     assert all(p["passed"] for p in report["attempts"][0]["proofs"])
     assert len(harness.sessions) == 3  # Primary + isolated original + isolated fresh.
     before = report["state_before"]
@@ -205,6 +209,8 @@ def test_complete_repair_keeps_effects_and_later_discovery(service, monkeypatch,
     harness.debugger_outputs.append(ready_plan())
     later = start(service, scenario="broken_checklist")
     assert later.status == "completed" and later.environment_version == record.environment_version
+    incident = service.incidents.get_incident(report["incident_ids"][0])
+    assert incident["recurrence"]["after"] == {"affected": 0, "comparable": 1}
     discovery = ToolRegistry(service.sandbox(later)).discover_tools()["result"]["tools"]
     assert (
         next(t for t in discovery if t["name"] == "checklists.create")["implementation_version"]
