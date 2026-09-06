@@ -2,14 +2,14 @@
 
 Epoch is a planned task supervisor and debugger. The user describes the desired result in the interface; Epoch turns that request into verifiable checkpoints, gives Hermes a structured task brief, monitors execution, and directs corrections until the checks pass or a clear limit is reached. When the cause lies in the tools or supplied context, Epoch verifies and publishes an environment repair that benefits future tasks.
 
-**Current state: backend Phase 1 implemented.** The local Python API saves and reads tasks, persists them in SQLite, validates configuration, and publishes shared contracts and UI fixtures. Submitted tasks remain pending. Hermes execution, supervision, simulated business tools and repairs are unimplemented. See [backend setup](backend/README.md) and the [implementation status](docs/status.md).
+**Current state: task intake, simulated business services, MCP tools and actual Hermes execution are implemented.** An explicitly selected release workflow can create local tickets/checklists/messages, record activity, and report independently verified results through the API. Submitting a task alone leaves it pending. Automatic supervision, feedback revisions and generated repairs remain unimplemented. See [backend setup](backend/README.md) and the [implementation status](docs/status.md) for validation and remaining gaps.
 
 ## Start here
 
 1. Read the [product direction](docs/direction.md), preserved unchanged from the approved source.
 2. Read [AGENTS.md](AGENTS.md), the canonical instructions for agents working in this repository.
 3. Follow the [architecture and data flow](docs/architecture.md) and [integration verification checklist](docs/integrations.md).
-4. Follow the [Anushrut / Rajdeep work split](docs/tasks/README.md). Rajdeep's Phase 1 foundation is complete; Anushrut can use the [frontend handoff](backend/docs/FRONTEND_HANDOFF.md). Implement subsequent [backend phases](backend/PHASES.md) only when requested.
+4. Follow the [Anushrut / Rajdeep work split](docs/tasks/README.md). Anushrut can connect to the actual run/status/state/SSE endpoints in the [frontend handoff](backend/docs/FRONTEND_HANDOFF.md). Implement subsequent [backend phases](backend/PHASES.md) only when requested.
 
 ## User flow
 
@@ -44,7 +44,7 @@ User -> Epoch interface -> Supervisor: brief + checkpoints -> Hermes
 | **Rajdeep** | Python backend, task planning and checkpoint contracts, Hermes integration, event capture, evaluator, corrective instructions, shared tools/simulators, debugger, isolated verification, persistent versions and rollback | One working supervised task and verified environment-repair loop |
 | **Both** | Agree API/event contracts and task states first; integrate early and rehearse the demo | UI and backend express the same request, checkpoints, evidence, and result |
 
-Both can use Codex in parallel on separately owned files. Anushrut starts with clearly labeled development fixtures while Rajdeep establishes the runtime; fixtures are replaced by real events before claiming an end-to-end demo. Detailed handoffs and acceptance checks are in the [task README](docs/tasks/README.md).
+Both can use Codex in parallel on separately owned files. Anushrut can use live backend events for the implemented release flow; fixture screens for future supervision/repairs remain clearly labelled. Detailed handoffs and acceptance checks are in the [task README](docs/tasks/README.md).
 
 ## Intended first demonstration
 
@@ -54,7 +54,7 @@ Two later scenarios exercise the same loop: generating a missing QA-owner lookup
 
 ## Build direction
 
-- The foundation uses Python 3.12, FastAPI/Pydantic, SQLite, uv, pytest and Ruff; the [technical decisions](backend/DECISIONS.md) describe the choices and future enforcement boundaries.
+- The backend uses Python 3.12, FastAPI/Pydantic, SQLite, the official MCP SDK, uv, pytest and Ruff. See the [initial decisions](backend/DECISIONS.md) and [Phase 2/3 implementation plan](backend/PHASES_2_3_PLAN.md) for boundaries.
 - Keep a CLI/harness for early backend verification while Anushrut builds the product UI in parallel against agreed contracts. Prove one complete repair loop before expanding the demonstration.
 - Keep Hermes fixed during runtime repair. Protect trusted evaluators, bound maintenance permissions, and prevent duplicate side effects during replay.
 - Persist executable tool or retrieval changes. A successful-looking response, a reminder, or a prerecorded patch is not a repair.
@@ -68,7 +68,7 @@ From `backend/`, run `uv sync --frozen`, then `uv run --frozen epoch-backend ser
 
 For documentation changes, check relative links and anchors, preserve the exact direction source, inspect the diff for scope, and run `git diff --check`. The [documentation validation notes](docs/status.md#documentation-validation) describe the handoff checks and their limits.
 
-The preserved direction remains unchanged. The supervisor flow and named work split above record the user's later decision and supersede the earlier passive-debugger/CLI-only presentation. Only Phase 1 is implemented; later phases require an explicit assignment.
+The preserved direction remains unchanged. The supervisor flow and named work split above record the user's later decision and supersede the earlier passive-debugger/CLI-only presentation. The implemented release template is an initial executor path; the broader user flow above still requires later phases.
 
 ## Generic agent startup prompt
 
@@ -81,6 +81,6 @@ and existing changes; preserve unrelated work. Explain the task scope and
 dependencies before editing. Work only on the assigned task, follow its
 acceptance criteria, and report checks actually run, evidence and limitations.
 Update docs/status.md only for demonstrated results. Do not start later tasks.
-Phase 1 is complete. Read backend/PHASES.md and backend/DECISIONS.md, then
+Read backend/PHASES.md, backend/DECISIONS.md and backend/PHASES_2_3_PLAN.md;
 implement only the next phase explicitly assigned by the user.
 ```

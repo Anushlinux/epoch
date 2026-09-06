@@ -1,6 +1,6 @@
 # Implementation tasks: Anushrut and Rajdeep
 
-**Task 01 / backend Phase 1 is complete; Tasks 02–07 and the UI lane remain unimplemented.** Rajdeep owns the ordered backend tasks. Anushrut owns the separately assigned UI lane below and can use the [frontend contract handoff](../../backend/docs/FRONTEND_HANDOFF.md). A copied prompt authorizes only its assigned scope, not the entire roadmap. Follow the smaller [backend phases](../../backend/PHASES.md) for step-by-step implementation.
+**Tasks 01 and 02 are implemented; the executor portion of Task 03 is implemented, with its validation recorded in [status](../status.md). Phase 4 supervision and Tasks 04–07 remain unimplemented.** Rajdeep owns the backend. Anushrut owns the separate UI and can connect to the [live endpoint handoff](../../backend/docs/FRONTEND_HANDOFF.md). A copied prompt authorizes only its assigned scope. Follow the smaller [backend phases](../../backend/PHASES.md); Task 03 spans Phases 3 and 4.
 
 Read [AGENTS.md](../../AGENTS.md), [direction](../direction.md), [status](../status.md), [architecture](../architecture.md), and the [integration checklist](../integrations.md) before starting. Preserve the direction unchanged.
 
@@ -14,7 +14,7 @@ Read [AGENTS.md](../../AGENTS.md), [direction](../direction.md), [status](../sta
 | 06 | [Repair supplied context](06-context-repair.md) | 05 | Persistent scoped retrieval change with historical regression coverage |
 | 07 | [Integration verification and inspectable CLI demonstration](07-demo-evidence.md) | 06 | Verified Neatlogs/Workshop wiring and reproducible three-scenario evidence |
 
-Use Python for the backend, retain a CLI/test harness, and use local simulated services first. The user-facing product is the Epoch interface described in the [README](../../README.md#user-flow). Task 01 records [technical selections](../../backend/DECISIONS.md) and provides concrete frontend contracts with a verified minimal foundation. The sequence makes no ten-hour completion promise. Phase 2 is next and remains unstarted.
+Use Python for the backend, retain a CLI/test harness, and use local simulated services first. The user-facing product is the Epoch interface described in the [README](../../README.md#user-flow). Task 01 records [technical selections](../../backend/DECISIONS.md); the [Phase 2/3 plan](../../backend/PHASES_2_3_PLAN.md) connects the sandbox and installed executor. The sequence makes no ten-hour completion promise. Phase 4 requires its own explicit assignment.
 
 ## Anushrut: UI lane
 

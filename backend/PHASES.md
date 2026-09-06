@@ -1,6 +1,6 @@
 # Backend implementation phases
 
-Status: Phase 1 complete; Phases 2–8 unstarted. Owner: Rajdeep. Anushrut owns the separate UI and can use the [published backend contracts](docs/FRONTEND_HANDOFF.md). See [setup](README.md) and [validation evidence](../docs/status.md#phase-1-validation-record).
+Status: Phases 1–3 complete; Phases 4–8 unstarted. Owner: Rajdeep. Anushrut owns the separate UI and can use the [published backend contracts](docs/FRONTEND_HANDOFF.md). See [setup](README.md) and [validation evidence](../docs/status.md#phases-2-and-3-validation-record).
 
 All backend source, package configuration, tests, fixtures, development scripts, and runtime setup belong under `backend/`. Secrets and generated runtime data must not be committed. Shared repository instructions and product documentation remain at the repository root and under `docs/`.
 
@@ -26,6 +26,8 @@ Existing brief: [Task 01](../docs/tasks/01-technical-plan.md).
 
 ## Phase 2 — Sandbox tools, evidence, and trusted checks
 
+**Complete:** scoped registry/MCP, stateful simulated services, durable evidence, trusted checks, idempotency and seeded failure scenarios. See [sandbox evidence](fixtures/sandbox/README.md).
+
 - Implement the small shared tool registry with discovery, descriptions/schemas, scoped invocation, and structured errors.
 - Add stateful local ticket, checklist, messaging, directory, and runbook fixtures; begin with the narrow release workflow.
 - Persist tool/context events and application state. Implement trusted outcome checks, equivalent-state resets, and duplicate-effect prevention.
@@ -36,6 +38,8 @@ Existing brief: [Task 01](../docs/tasks/01-technical-plan.md).
 Existing brief: [Task 02](../docs/tasks/02-local-environment.md).
 
 ## Phase 3 — Real Hermes execution
+
+**Complete:** installed Hermes executes the explicit release template through MCP; HTTP/SSE expose real state, progress and checked results. Actual control/failure evidence and frozen-baseline comparisons are recorded in the [validation record](../docs/status.md#phases-2-and-3-validation-record). Automatic supervision remains Phase 4.
 
 - Connect actual Hermes to the shared environment and send a structured task brief using the agreed contracts.
 - Capture observable messages, tool calls, returned context, results, and errors under the same task/run identity.
@@ -102,4 +106,4 @@ Existing brief: [Task 07](../docs/tasks/07-demo-evidence.md).
 
 ## Phase handoff
 
-For every phase report: implemented scope, changed files, exact checks and outcomes, evidence locations, known limitations, and whether its pass condition is met. Keep user-task success, isolated verification, and persistent-learning claims separate. The next implementation request should name a phase; none has started yet.
+For every phase report: implemented scope, changed files, exact checks and outcomes, evidence locations, known limitations, and whether its pass condition is met. Keep user-task success, isolated verification, and persistent-learning claims separate. The next implementation request should name Phase 4 or another explicitly assigned scope; no later phase has started.

@@ -1,6 +1,6 @@
 # Task 03: Actual Hermes integration and frozen configuration proof
 
-Status: unstarted. Intended future implementation.
+Status: executor integration is implemented under Phase 3; acceptance evidence is recorded in [status](../status.md). This broader task also includes Phase 4 supervision and feedback, which remain unstarted. Do not mark all of Task 03 complete when only Phase 3 passes. See [phase boundaries](../../backend/PHASES.md) and [Hermes setup](../../backend/docs/HERMES_SETUP.md).
 
 ## Goal
 

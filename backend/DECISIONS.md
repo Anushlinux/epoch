@@ -1,5 +1,7 @@
 # Phase 1 technical decisions
 
+Historical decisions for the completed foundation. The [Phase 2–3 plan](PHASES_2_3_PLAN.md) records subsequent choices; [setup](README.md) and [frontend handoff](docs/FRONTEND_HANDOFF.md) describe the current runtime, including Phase 3 health responses.
+
 Selected before implementation on 2026-09-06. Rajdeep owns the backend; Anushrut can build the UI against the published contracts and explicitly labelled fixtures. This phase implements task intake and persistence only.
 
 ## Runtime and layout

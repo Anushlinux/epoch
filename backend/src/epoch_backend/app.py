@@ -1,4 +1,4 @@
-"""HTTP task intake only; creating a task does not schedule execution."""
+"""HTTP intake and explicit execution; creating a task does not schedule a run."""
 
 import logging
 import sqlite3
@@ -14,6 +14,9 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from epoch_backend.config import Settings
 from epoch_backend.contracts import ErrorEnvelope, HealthResponse, Task, TaskCreate, TaskList
+from epoch_backend.execution import ExecutionError, ExecutionService
+from epoch_backend.execution_api import execution_router
+from epoch_backend.sandbox import SandboxError
 from epoch_backend.storage import RequestConflict, SQLiteStore
 
 logger = logging.getLogger(__name__)
@@ -29,22 +32,30 @@ def error_response(
 def create_app(settings: Settings | None = None) -> FastAPI:
     config = settings if settings is not None else Settings()
     store = SQLiteStore(config.database_path)
+    execution = ExecutionService(config, store)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         store.initialize()
-        yield
+        execution.initialize()
+        try:
+            yield
+        finally:
+            execution.close()
 
     app = FastAPI(
         title="Epoch Backend",
         version="0.1.0",
         description=(
-            "Phase 1: durable task intake. Execution and progress streaming are not enabled."
+            "Local task intake, simulated release tools and bounded actual Hermes execution. "
+            "Automatic supervision and environment repair are not enabled."
         ),
         lifespan=lifespan,
     )
     app.state.store = store
     app.state.settings = config
+    app.state.execution = execution
+    app.include_router(execution_router(execution))
 
     @app.middleware("http")
     async def require_allowed_origin(request: Request, call_next):
@@ -61,7 +72,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         CORSMiddleware,
         allow_origins=config.cors_origins,
         allow_methods=["GET", "POST"],
-        allow_headers=["Content-Type"],
+        allow_headers=["Content-Type", "Last-Event-ID"],
         allow_credentials=False,
     )
 
@@ -85,6 +96,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             409, "request_conflict", "This client_request_id was used for a different request."
         )
 
+    @app.exception_handler(ExecutionError)
+    async def execution_error(request: Request, exc: ExecutionError):
+        return error_response(exc.status, exc.code, exc.message)
+
+    @app.exception_handler(SandboxError)
+    async def sandbox_error(request: Request, exc: SandboxError):
+        return error_response(422, exc.code, exc.message)
+
     async def storage_error(request: Request, exc: Exception):
         logger.error("Storage unavailable (%s)", type(exc).__name__)
         return error_response(503, "storage_unavailable", "Task storage is unavailable.")
@@ -105,7 +124,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def health() -> HealthResponse | JSONResponse:
         if not store.health():
             return error_response(503, "storage_unavailable", "Task storage is unavailable.")
-        return HealthResponse()
+        enabled = execution.runtime_info().execution_enabled
+        return HealthResponse(execution_enabled=enabled)
 
     @app.post(
         "/api/tasks",
