@@ -22,6 +22,32 @@ from pathlib import Path
 from typing import Any
 
 _PREFIX = "EPOCH_BRIDGE:"
+_PDF_RESPONSE_INSTRUCTIONS = """You are the task executor in Epoch's PDF workshop.
+Your user-facing responses must report only what you actually did and the observed output.
+Name the resulting file and provide its asset link when available. Make failed or incomplete
+results explicit, including the concrete failed checks and missing or unreadable content.
+Never claim that producing a file means the task succeeded when its checks failed.
+Do not diagnose the underlying cause, propose a fix, recommend an alternative tool or renderer,
+explain what code should change, or tell the user or another agent what to do next.
+Diagnosis, repair recommendations and next steps belong to the separate Debugger agent.
+When a capability is missing, record it through capabilities.request and report that the
+requested output was not created because that capability is unavailable; do not prescribe
+how to add it. After any continuation, report only actions actually taken and their results.
+Apply this response boundary even if earlier conversation replies included repair advice.
+Continue performing the requested task using permitted tools; do not conceal tool failures.
+"""
+
+
+def _response_instructions(request: dict[str, Any]) -> str | None:
+    args = request.get("mcp_args", [])
+    if any(
+        a == "--environment" and b == "pdf_workshop"
+        for a, b in zip(args, args[1:], strict=False)
+    ):
+        return _PDF_RESPONSE_INSTRUCTIONS
+    return None
+
+
 _SAFE_ENV = {
     "PATH",
     "SYSTEMROOT",
@@ -148,6 +174,15 @@ def _failure(code: str, message: str, baseline: dict | None = None) -> dict:
         "missing_evidence": ["Executor did not produce a complete result"],
         "error": {"code": code, "message": message},
     }
+
+
+def _initialization_failure(error: Exception) -> dict:
+    # Provider exception text may contain credentials or response bodies.
+    return _failure(
+        "executor_initialization_failed",
+        f"Hermes could not initialize the configured provider ({type(error).__name__}). "
+        "Check the backend Hermes provider/endpoint setup. No model request was sent.",
+    )
 
 
 def probe_tools(
@@ -456,6 +491,32 @@ class Session:
                 self.process.stdout.close()
 
 
+def _visible_history(value: Any) -> list[dict] | None:
+    """Admit visible conversation text only, never tool/system/private history."""
+    if value is None:
+        return None
+    if not isinstance(value, list) or any(
+        not isinstance(item, dict)
+        or set(item) != {"role", "content"}
+        or item["role"] not in {"user", "assistant"}
+        or not isinstance(item["content"], str)
+        for item in value
+    ):
+        raise ValueError("Invalid visible conversation history")
+    return value or None
+
+
+def _client_base_url(metadata: dict) -> str | None:
+    """Resolve Codex's standard route without invoking Hermes credential discovery."""
+    if metadata["base_url"]:
+        return metadata["base_url"]
+    if metadata["provider"] == "openai-codex":
+        # Current Hermes only honors the explicit in-memory credential when a URL
+        # accompanies it. Its isolated home intentionally contains no auth.json.
+        return "https://chatgpt.com/backend-api/codex"
+    return None
+
+
 def execute(
     request: dict[str, Any],
     on_event: Callable[[dict], None],
@@ -599,6 +660,7 @@ def _worker(request: dict) -> int:
         emit("event", {"type": event_type, "data": data})
 
     agent = None
+    initializing_agent = False
     baseline: dict = {}
     observed_prompt_hashes: set[str] = set()
     restore_gate: Callable[[], None] | None = None
@@ -738,12 +800,13 @@ def _worker(request: dict) -> int:
         if not names:
             raise ValueError("Hermes could not discover Epoch MCP tools")
         event("executor.started", provider=metadata["provider"], model=metadata["model"])
+        initializing_agent = True
         agent = AIAgent(
             model=metadata["model"],
             provider=metadata["provider"],
             requested_provider=metadata["provider"],
             api_key=token,
-            base_url=metadata["base_url"] or None,
+            base_url=_client_base_url(metadata),
             api_mode=(
                 "codex_responses"
                 if metadata["provider"] == "openai-codex"
@@ -784,12 +847,17 @@ def _worker(request: dict) -> int:
             step_callback=on_step,
             clarify_callback=lambda *_, **__: "No clarification available; report missing input.",
         )
+        initializing_agent = False
         definitions = getattr(agent, "tools", [])
         tool_names = [
             tool.get("function", {}).get("name", tool.get("name", "")) for tool in definitions
         ]
         if probe_only:
-            probe_prompt = agent._build_system_prompt()
+            response_instructions = _response_instructions(request)
+            probe_prompt = (
+                agent._build_system_prompt(response_instructions)
+                if response_instructions else agent._build_system_prompt()
+            )
             prompt_path = isolated_home / "probe-system-prompt.txt"
             prompt_path.write_text(probe_prompt, encoding="utf-8")
             emit(
@@ -798,6 +866,7 @@ def _worker(request: dict) -> int:
                     "success": bool(tool_names) and all(name in names for name in tool_names),
                     "final_response": "Discovery only; inference was not invoked",
                     "baseline": {
+                        "effective_base_url": _client_base_url(metadata),
                         "tool_names": tool_names,
                         "discovered_names": names,
                         "system_prompt_sha256": _digest(probe_prompt),
@@ -815,6 +884,7 @@ def _worker(request: dict) -> int:
         baseline = {
             **_source_baseline(checkout),
             **metadata,
+            "effective_base_url": _client_base_url(metadata),
             "model_configuration_sha256": _digest([minimal_model, inference_options]),
             "inference_options": inference_options,
             "user_settings_sha256": settings_before,
@@ -830,7 +900,9 @@ def _worker(request: dict) -> int:
             "bridge_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         }
         event("executor.baseline", **baseline)
-        history = None
+        # Only explicit visible user/assistant text may seed a new chat operation.
+        # Internal model/tool history still remains private inside this worker.
+        history = _visible_history(request.get("visible_history"))
         segment_number = 0
         verification_pause = 0.0
         while True:
@@ -895,6 +967,9 @@ def _worker(request: dict) -> int:
             active_segment = True
             try:
                 kwargs = {"task_id": request["task_id"]}
+                response_instructions = _response_instructions(request)
+                if response_instructions:
+                    kwargs["system_message"] = response_instructions
                 if history is not None:
                     kwargs["conversation_history"] = history
                 result = agent.run_conversation(instruction, **kwargs)
@@ -974,6 +1049,11 @@ def _worker(request: dict) -> int:
                 return 1
 
     except Exception as exc:
+        if initializing_agent:
+            outcome = _initialization_failure(exc)
+            event("executor.error", **outcome["error"])
+            emit("result", outcome)
+            return 1
         # Known configuration failures are ours; external exceptions may contain secrets.
         message = (
             str(exc) if type(exc) is ValueError else f"Hermes bridge failed ({type(exc).__name__})"

@@ -12,6 +12,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from epoch_backend.chat import ChatService, chat_router
+from epoch_backend.candidate_runner import CandidateError
 from epoch_backend.config import Settings
 from epoch_backend.contracts import ErrorEnvelope, HealthResponse, Task, TaskCreate, TaskList
 from epoch_backend.execution import ExecutionError, ExecutionService
@@ -35,12 +37,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     config = settings if settings is not None else Settings()
     store = SQLiteStore(config.database_path)
     execution = ExecutionService(config, store)
+    chats = ChatService(execution)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         store.initialize()
         execution.initialize()
         try:
+            chats.initialize()
             yield
         finally:
             execution.close()
@@ -58,9 +62,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.store = store
     app.state.settings = config
     app.state.execution = execution
+    app.state.chats = chats
+    app.include_router(chat_router(chats))
     app.include_router(execution_router(execution))
     app.include_router(incident_router(execution.incidents))
     app.include_router(telemetry_router(execution.telemetry))
+
+    @app.exception_handler(CandidateError)
+    async def pdf_error(request: Request, exc: CandidateError):
+        return error_response(404 if exc.code == "asset_not_found" else 422, exc.code, exc.message)
 
     @app.middleware("http")
     async def require_allowed_origin(request: Request, call_next):

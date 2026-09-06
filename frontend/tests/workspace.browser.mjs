@@ -118,10 +118,10 @@ test("chat layout, empty state, source labels, keyboard skip link and responsive
     page.getByRole("heading", { name: "EPOCH", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Save request" }),
+    page.getByRole("button", { name: "Send message" }),
   ).toBeDisabled();
   await expect(
-    page.getByRole("textbox", { name: "What needs to be done?" }),
+    page.getByRole("textbox", { name: "Message Hermes" }),
   ).toBeEditable();
   await page.evaluate(() => document.fonts.ready);
   await fits(page);

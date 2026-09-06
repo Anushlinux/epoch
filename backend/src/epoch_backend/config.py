@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
 
-from pydantic import Field, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
@@ -18,8 +18,20 @@ class Settings(BaseSettings):
     port: int = Field(default=8000, ge=1, le=65535)
     log_level: Literal["critical", "error", "warning", "info", "debug", "trace"] = "info"
     enable_hermes: bool = True
+    pdf_image_id: str = ""
+
+    @field_validator("pdf_image_id")
+    @classmethod
+    def validate_pdf_image(cls, value: str) -> str:
+        import re
+        if value and not re.fullmatch(r"sha256:[a-f0-9]{64}", value):
+            raise ValueError("PDF image must be an immutable sha256 image ID")
+        return value
     telemetry_enabled: bool = True
     neatlogs_cloud_enabled: bool = False
+    neatlogs_api_key: SecretStr = Field(
+        default=SecretStr(""), validation_alias="NEATLOGS_API_KEY", exclude=True, repr=False
+    )
     repair_image: str = (
         "python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea"
     )

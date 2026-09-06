@@ -15,6 +15,30 @@ import pytest
 from epoch_backend import hermes_bridge as bridge
 
 
+@pytest.mark.parametrize("exception", [RuntimeError, ValueError])
+def test_provider_initialization_diagnostic_never_exposes_provider_exception(exception):
+    result = bridge._initialization_failure(exception("Bearer secret-provider-token"))
+    assert result["error"]["code"] == "executor_initialization_failed"
+    assert "No model request was sent" in result["error"]["message"]
+    assert "secret-provider-token" not in json.dumps(result)
+
+
+def test_codex_explicit_credential_gets_default_url_without_auth_rediscovery():
+    assert bridge._client_base_url({"provider": "openai-codex", "base_url": ""}) == (
+        "https://chatgpt.com/backend-api/codex"
+    )
+    assert (
+        bridge._client_base_url(
+            {
+                "provider": "openai-codex",
+                "base_url": "https://configured.example/codex",
+            }
+        )
+        == "https://configured.example/codex"
+    )
+    assert bridge._client_base_url({"provider": "anthropic", "base_url": ""}) is None
+
+
 def test_missing_installation_is_reported(monkeypatch):
     monkeypatch.setattr(bridge, "_installation_paths", lambda: None)
     assert bridge.detect_installation()["available"] is False
@@ -202,8 +226,10 @@ def test_wall_clock_limit_terminates_child(tmp_path, monkeypatch, fake_installat
 
 
 @pytest.mark.parametrize(
-    "unexpected_tool,probe_only,continuation",
-    [(False, False, False), (True, False, False), (True, True, False), (False, False, True)],
+    "unexpected_tool,probe_only,continuation,pdf",
+    [(False, False, False, False), (True, False, False, False),
+     (True, True, False, False), (False, False, True, False),
+     (False, False, True, True), (False, True, False, True)],
 )
 def test_worker_scopes_tools_preserves_settings_and_redacts_token(
     tmp_path,
@@ -213,6 +239,7 @@ def test_worker_scopes_tools_preserves_settings_and_redacts_token(
     unexpected_tool,
     probe_only,
     continuation,
+    pdf,
 ):
     source = Path(fake_installation["home"])
     source.mkdir()
@@ -252,8 +279,9 @@ def test_worker_scopes_tools_preserves_settings_and_redacts_token(
             self._cached_system_prompt = "Fixed test-only prompt"
             self._cached_system_prompt_static = "Fixed test-only prompt"
 
-        def run_conversation(self, brief, task_id, conversation_history=None):
+        def run_conversation(self, brief, task_id, conversation_history=None, system_message=None):
             observed["ran"] = True
+            observed.setdefault("response_instructions", []).append(system_message)
             observed.setdefault("conversations", []).append((brief, conversation_history))
             observed["step_callback"](1, None)
             observed["tool_start_callback"]("call-1", "mcp_epoch_discover_tools", {})
@@ -276,7 +304,8 @@ def test_worker_scopes_tools_preserves_settings_and_redacts_token(
         def close(self):
             observed["closed"] = True
 
-        def _build_system_prompt(self):
+        def _build_system_prompt(self, system_message=None):
+            observed["probe_instructions"] = system_message
             return self._cached_system_prompt
 
     monkeypatch.setitem(sys.modules, "yaml", SimpleNamespace(safe_load=json.loads))
@@ -311,6 +340,8 @@ def test_worker_scopes_tools_preserves_settings_and_redacts_token(
         "isolated_home": str(isolated),
         "probe_only": probe_only,
     }
+    if pdf:
+        request["mcp_args"] += ["--environment", "pdf_workshop"]
     if probe_only:
         monkeypatch.setattr(bridge, "_read_token", lambda *_: pytest.fail("Probe read credentials"))
     if continuation:
@@ -333,6 +364,9 @@ def test_worker_scopes_tools_preserves_settings_and_redacts_token(
         assert observed["conversations"][0][1] is None
         assert observed["conversations"][1][1][0]["content"] == "PRIVATE-HISTORY"
         assert '"history_retained": true' in output
+        assert observed["response_instructions"] == [
+            bridge._PDF_RESPONSE_INSTRUCTIONS if pdf else None
+        ] * 2
     assert (source / "config.yaml").read_text() == original_config
     assert (source / "auth.json").read_text() == original_auth
     assert "PRIVATE" not in (isolated / "config.yaml").read_text()
@@ -352,6 +386,9 @@ def test_worker_scopes_tools_preserves_settings_and_redacts_token(
     assert observed["closed"] is True
     if probe_only:
         assert code == 0
+        assert observed["probe_instructions"] == (
+            bridge._PDF_RESPONSE_INSTRUCTIONS if pdf else None
+        )
         assert "ran" not in observed
         assert "inference was not invoked" in output
     elif unexpected_tool:

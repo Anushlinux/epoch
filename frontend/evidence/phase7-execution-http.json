@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-09-06T17:04:23.674Z",
+  "verified_at": "2026-09-06T17:47:27.973Z",
   "category": "local-http-with-explicit-test-executor",
   "production_entrypoint_used": false,
   "isolated_temporary_database": true,
@@ -11,15 +11,15 @@
   },
   "task": {
     "schema_version": 1,
-    "id": "dba43cfa-0660-41c8-893f-c67248a5a0c8",
+    "id": "c9f537a7-903e-444e-a006-960588544c3c",
     "request": {
-      "client_request_id": "606989bf-5a0f-47b5-a457-d82aeb3e2342",
+      "client_request_id": "f55e01cd-5c51-4695-8ab5-5ec9fdf8ad0f",
       "message": "Persisted HTTP intake proof · no execution",
       "project_id": "integration-proof"
     },
     "status": "pending",
-    "created_at": "2026-09-06T17:04:11.488974Z",
-    "updated_at": "2026-09-06T17:04:11.488974Z"
+    "created_at": "2026-09-06T17:47:17.264933Z",
+    "updated_at": "2026-09-06T17:47:17.264933Z"
   },
   "checks": {
     "create": 201,
@@ -35,10 +35,10 @@
   },
   "execution_occurred": true,
   "actual_hermes_invoked": false,
-  "browser_origin": "http://127.0.0.1:5183",
+  "browser_origin": "http://127.0.0.1:5187",
   "limitations": [
     "Real HTTP/storage/trusted checks with an explicit test executor; no actual Hermes/model or Docker",
-    "Actual frontend dev server at http://127.0.0.1:5183 and current backend; no source interception or security bypass",
+    "Actual frontend dev server at http://127.0.0.1:5187 and current backend; no source interception or security bypass",
     "Unknown acknowledgement and offline browser cases inject transport faults, not backend failures"
   ]
 }

@@ -13,7 +13,7 @@ test('release controls default to supervision and use current backend limits', (
   assert.match(html, /id="release-turns"[^>]*max="20"/);
   assert.match(html, /id="release-timeout"[^>]*max="600"/);
   assert.doesNotMatch(html, /Automatic supervision, feedback revisions and environment repair are not implemented/);
-  assert.match(html, /id="start-release" >Start release run/);
+  assert.match(html, /id="start-release" >Run release evaluation/);
 });
 
 test('repair cannot present omission as checked and unavailable supervision blocks start', () => {

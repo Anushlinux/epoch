@@ -168,3 +168,39 @@ PR #2 was rebased onto `origin/main` at `0a062dd` on September 6, 2026. Conflict
 - Documentation checks passed for **163 relative Markdown links/anchors**, all seven task structures and canonical agent entrypoints. `docs/direction.md` remains byte-identical to `e1395bc`, with the SHA-256 and original hard breaks recorded above. `git diff --check` passed; no unresolved conflict entries remain.
 - Frontend implementation, tests and tooling match the pre-rebase PR. Backend implementation and workflow match the new base. Backend tests were not rerun for this frontend rebase; their existing Phase 1 validation record is preserved separately.
 - No network adapter, backend integration or actual supervised repair verification was added. Existing AO preview evidence above remains applicable to the unchanged UI; the documentation-only conflict resolution did not require another visual QA cycle.
+
+
+## General chat and manual debugger — September 6, 2026
+
+The replacement chat flow is covered by `tests/chat.test.mjs` and
+`tests/chat.browser.mjs`. The full unit suite passes 69 tests. New chat browser
+coverage passes six desktop/mobile cases; the existing fixture workspace passes
+34 cases. Browser API responses are intercepted test data, not live model output.
+The cases verify separate chat/debugger endpoints, read-only navigation and reload,
+retained requirements, exact investigation retry, and debugger availability when
+Hermes execution is unavailable.
+
+- [General chat, desktop](generic-chat-desktop.png)
+- [General chat, mobile](generic-chat-mobile.png)
+- [Manual debugger, desktop](manual-debugger-desktop.png)
+- [Manual debugger, mobile](manual-debugger-mobile.png)
+
+These images record the new interface with explicitly mocked responses. Historical
+screenshots retain their previous names/content. The historical intake browser
+suite still targets the removed one-request release-chat form and was not run.
+See [current status](../../docs/status.md) for backend checks and remaining limits.
+
+
+## CSV environment — September 6, 2026
+
+The CSV selector, explicit sample task, immutable environment recovery and
+backend-derived verdicts are covered by 75 frontend unit tests and 10 focused
+chat browser cases. The four CSV cases were rerun after mobile spacing fixes.
+Their API transport is intercepted, but displayed customer/check data comes from
+[actual local sandbox execution](../../backend/fixtures/csv/local-evidence.json).
+No screenshot is evidence of live Hermes or Luna execution.
+
+- [Broken adapter, desktop](csv-csv_broken-desktop.png)
+- [Broken adapter, mobile](csv-csv_broken-mobile.png)
+- [Healthy control, desktop](csv-csv_healthy-desktop.png)
+- [Healthy control, mobile](csv-csv_healthy-mobile.png)

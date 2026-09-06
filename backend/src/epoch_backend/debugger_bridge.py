@@ -524,10 +524,20 @@ def _worker(payload: dict) -> dict:
             )
         return _clean(result, tuple(secrets))
     except urllib.error.HTTPError as error:
-        # Error bodies can include prompts or credentials; retain only the status.
+        # Retain bounded useful diagnostics, with the same credential redaction
+        # applied to successful provider results. Never expose an unparsed body.
+        details = ""
+        try:
+            provider_error = json.loads(error.read(8192)).get("error", {})
+            if isinstance(provider_error, dict):
+                message = provider_error.get("message")
+                if isinstance(message, str):
+                    details = ": " + _clean(message[:1500], tuple(secrets))
+        except (ValueError, OSError, AttributeError):
+            pass
         return _failure(
             "openai_http_error",
-            f"OpenAI returned HTTP {error.code}; no retry or model fallback",
+            f"OpenAI returned HTTP {error.code}; no retry or model fallback{details}",
             route,
             baseline,
         )

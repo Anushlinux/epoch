@@ -4,22 +4,20 @@ import { writeFile } from 'node:fs/promises';
 const api = process.env.EPOCH_INTAKE_TEST_ORIGIN;
 const origin = process.env.EPOCH_INTAKE_FRONTEND_ORIGIN;
 async function connect(page) {
-  await page.locator('.topbar [data-action=settings]').click();
-  const field = page.locator('#api-origin');
-  if (await field.isEnabled()) await field.fill(api);
-  await page.locator('#connect').click();
+  // The origin is saved by setup; startup and reload reconnect without a write.
   await expect(page.locator('.connection-state')).toHaveAttribute('title', 'Connected · local API');
 }
 async function create(page, message, project = `proof-${crypto.randomUUID()}`) {
-  await page.goto(`${origin}/chat`);
+  // Saved task is setup for this execution test; generic chat no longer doubles as intake.
+  const response = await fetch(`${api}/api/tasks`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ client_request_id: crypto.randomUUID(), message, project_id: project }) });
+  expect(response.status).toBe(201);
+  const task = await response.json();
+  await page.addInitScript(value => sessionStorage.setItem('epoch.intake.origin.v1', value), api);
+  await page.goto(`${origin}/debugger?task=${task.id}`);
+  await expect(page.locator('.connection-state')).toHaveAttribute('title', 'Connected · local API');
   await connect(page);
-  await page.locator('#request-message').fill(message);
-  await page.locator('[data-key=project]>summary').click();
-  await page.locator('#project-id').fill(project);
-  await page.locator('[data-key=project]>summary').click();
-  await page.locator('#save-request').click();
   await expect(page.locator('#start-release')).toBeEnabled();
-  return { taskId: new URL(page.url()).searchParams.get('task'), project };
+  return { taskId: task.id, project };
 }
 async function start(page, { repair = false, omission = false, release = '4.1' } = {}) {
   if (!(await page.locator('#release-value').isVisible())) await page.locator('[data-key=another-release]>summary').click();

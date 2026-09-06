@@ -1,0 +1,111 @@
+{
+  "live": true,
+  "passed": true,
+  "scope": "Local simulated customers; actual configured Luna and Hermes inference.",
+  "source_report": "data/csv-repair-live-20260906-c/acceptance.json",
+  "chat_id": "6a69de03-3963-4765-a12a-aaf6fc19f32d",
+  "later_chat_id": "21d784ce-534b-4f33-aede-f4357f6bea8c",
+  "debugger_model": "gpt-5.6-luna",
+  "executor_model": "gpt-6-astra",
+  "failure": {
+    "id": "7721335f-b9b4-4957-941f-170aebefa086",
+    "outgoing_fields": [
+      "emailAddress",
+      "name"
+    ],
+    "expected_fields": [
+      "name",
+      "email"
+    ],
+    "error": {
+      "code": "missing_email",
+      "message": "Customer 1: email is required."
+    }
+  },
+  "repair": {
+    "version": "6d87af27-1bbf-4a4d-804a-128aac664583",
+    "sha256": "39bd3f24e32fc234345ed3bde3f02e70fa0f50ff057a7431b8390f9d92eea6bb",
+    "mapping": {
+      "name_field": "name",
+      "email_field": "email"
+    },
+    "status": "published",
+    "previous_version": null
+  },
+  "checks": [
+    {
+      "name": "original_mapping",
+      "passed": true
+    },
+    {
+      "name": "fresh_mapping",
+      "passed": true
+    },
+    {
+      "name": "original_state",
+      "passed": true
+    },
+    {
+      "name": "exact_retry",
+      "passed": true
+    },
+    {
+      "name": "deduplication",
+      "passed": true
+    },
+    {
+      "name": "invalid_atomic",
+      "passed": true
+    },
+    {
+      "name": "healthy_control",
+      "passed": true
+    },
+    {
+      "name": "original_hermes",
+      "passed": true,
+      "turns_used": 6,
+      "baseline_matches_original": true
+    },
+    {
+      "name": "fresh_hermes",
+      "passed": true,
+      "turns_used": 6,
+      "baseline_matches_original": true
+    }
+  ],
+  "before": {
+    "saved": 0,
+    "passed": false
+  },
+  "recovery": {
+    "saved": 3,
+    "passed": true,
+    "hermes_success": true,
+    "turns_used": 6,
+    "original_receipts_retained": true
+  },
+  "later_session": {
+    "saved": 3,
+    "passed": true,
+    "version": "6d87af27-1bbf-4a4d-804a-128aac664583",
+    "debugger_operations": 0,
+    "turns_used": null
+  },
+  "criteria_unchanged": true,
+  "debugger_usage": {
+    "input_tokens": 2866,
+    "output_tokens": 508,
+    "total_tokens": 3374
+  },
+  "prior_attempts": [
+    {
+      "directory": "data/csv-repair-live-20260906-a",
+      "result": "Provider unreachable in restricted network; no import."
+    },
+    {
+      "directory": "data/csv-repair-live-20260906-b",
+      "result": "Actual failure diagnosed; raw-text eligibility rejected formatting-only retry. Fixed before the passing run."
+    }
+  ]
+}

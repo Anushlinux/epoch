@@ -22,7 +22,7 @@ import {
 const root = $("#intake");
 const view = new View(root);
 const inspect = installInspector();
-let draft = { message: "", project: "demo" };
+let draft = { message: "Prepare the release ticket, checklist, and QA notification.", project: "demo" };
 let settings = false;
 let originDraft = null;
 const releaseDraft = { release: "", scenario: "control", max_turns: 20, timeout_seconds: 600,
@@ -102,10 +102,10 @@ function navigation(state) {
     ? state.list.items
         .map(
           (t) =>
-            `<a data-route data-task="${escape(t.id)}" class="session-item" href="${urlFor(false, currentPage() === "incidents" ? "chat" : currentPage(), t.id)}" ${selected === t.id ? 'aria-current="page"' : ""}>${icon("chat")}<span><strong>${escape(t.request.message)}</strong><small>${escape(t.request.project_id)} · ${escape(t.status)}</small></span></a>`,
+            `<a data-route data-task="${escape(t.id)}" class="session-item" href="${urlFor(false, "debugger", t.id)}" ${selected === t.id ? 'aria-current="page"' : ""}>${icon("chat")}<span><strong>${escape(t.request.message)}</strong><small>${escape(t.request.project_id)} · ${escape(t.status)}</small></span></a>`,
         )
         .join("")
-    : `<div class="sidebar-empty">${icon("chat")}<p>${state.list ? "No chats yet" : "Connect to see your chats"}</p></div>`;
+    : `<div class="sidebar-empty">${icon("chat")}<p>${state.list ? "No evaluations yet" : "Connect to see evaluations"}</p></div>`;
   if (state.list)
     html += `<div class="pagination"><button id="previous-page" data-action="previous" ${state.busy || !state.connected || !state.offset ? "disabled" : ""}>Newer</button><span>${state.list.total ? state.offset + 1 : 0}–${state.offset + state.list.items.length} of ${state.list.total}</span><button id="next-page" data-action="next" ${state.busy || !state.connected || state.offset + state.list.items.length >= state.list.total ? "disabled" : ""}>Older</button></div>`;
   return html;
@@ -125,35 +125,17 @@ function pending(state) {
 function receipt(t, state) {
   return `<section class="intake-detail"><div class="inline-row"><h2 id="detail-heading" tabindex="-1">Saved request detail</h2><button class="text-button" id="refresh-detail" data-action="refresh-detail" ${state.busy || !state.connected ? "disabled" : ""}>${icon("refresh")} Reload detail</button></div><p class="intake-stale">${state.taskUnavailable ? "Unavailable · last loaded record" : t.status === "pending" ? "Pending · no execution" : escape(t.status)}</p>${state.taskUnavailable ? '<p class="intake-stale">The API could not find this task. This is a retained copy, not a current stored record.</p>' : ""}${!state.connected ? '<p class="intake-stale">Last loaded detail · reconnect to verify the stored record</p>' : ""}<dl class="metadata"><dt>Task ID</dt><dd>${escape(t.id)}</dd><dt>Project</dt><dd>${escape(t.request.project_id)}</dd><dt>Request ID</dt><dd>${escape(t.request.client_request_id)}</dd><dt>Saved</dt><dd>${escape(stamp(t.created_at))}</dd></dl><details class="disclosure" data-key="api-record"><summary>Inspect API record · intake only ${icon("down")}</summary><pre id="task-record">${escape(JSON.stringify(t, null, 2))}</pre><button class="text-button" data-action="inspect-record">Open record inspector ${icon("arrow")}</button></details></section>`;
 }
-function chat(state) {
-  const t = task();
-  if (!t) {
-    if (selected)
-      return empty(
-        state.busy ? "Loading request…" : "Request not loaded",
-        state.connected
-          ? "This request could not be loaded. Refresh the connection or choose another chat."
-          : "Connect to the local backend to load this request.",
-      );
-    return `${welcome()}${state.pending ? `<div class="conversation pending-conversation">${pending(state)}</div>` : ""}`;
-  }
-  return `<div class="conversation"><div class="message user"><div class="message-body"><blockquote>${escape(t.request.message)}</blockquote></div></div><div class="system-receipt">${icon("info")}<div><strong>System receipt</strong><p>${state.taskUnavailable ? "The previously saved request is currently unavailable." : t.status === "pending" ? "Request saved. Start a release run below when ready." : `Request saved. Current task status: ${escape(t.status)}.`}</p></div></div><details class="disclosure" data-key="receipt" open><summary>Request details ${icon("down")}</summary><div class="disclosure-body">${receipt(t, state)}</div></details>${executionPanel(execution.state, releaseDraft, { unavailable: state.taskUnavailable, feedbackDraft: feedbackDraft() })}${routeLink(false, "debugger", selected, "Open debugger", "pipeline", 'class="back-link"')}${pending(state)}</div>`;
-}
 function debuggerPage(state) {
   const t = task();
-  return `<div class="debugger"><header class="debug-heading"><p class="eyebrow">Epoch / debugger</p><h1>${execution.state.run ? "Release execution evidence" : "No execution recorded"}</h1><p>Inspect Hermes and Luna activity, trusted evaluations, repair evidence and simulated effects.</p></header><div class="debug-layout"><div>${t ? executionPanel(execution.state, releaseDraft, { debuggerView: true, unavailable: state.taskUnavailable, feedbackDraft: feedbackDraft() }) : "Select a saved chat to inspect its execution."}</div><aside class="context-column"><h2>Original request</h2>${t ? `<blockquote>${escape(t.request.message)}</blockquote><p>Saving a request does not start execution.</p>${badge(t.status, t.status)}<dl class="metadata"><dt>Project</dt><dd>${escape(t.request.project_id)}</dd><dt>Task ID</dt><dd>${escape(t.id)}</dd></dl><button class="text-button" data-action="inspect-record">Inspect saved record</button>` : "<p>No chat selected.</p>"}</aside></div>${pending(state)}</div>`;
-}
-function composer(state) {
-  const disabled = locked() || !!selected;
-  return `<div class="composer-dock"><form id="request-form" class="composer-box"><label class="sr-only" for="request-message">What needs to be done?</label><textarea id="request-message" data-autogrow data-submit rows="1" required placeholder="${selected ? "Start a new chat to save another request" : "What should we work on?"}" ${disabled ? "disabled" : ""}>${escape(selected ? "" : draft.message)}</textarea><div class="composer-tools"><div class="composer-tools-left"><details class="project-menu" data-key="project"><summary>${icon("plus")}<span id="project-label">${escape(draft.project)}</span>${icon("down")}</summary><div class="popover"><label for="project-id">Project label</label><input id="project-id" value="${escape(draft.project)}" ${disabled ? "disabled" : ""}><p>A label to organize this request. Up to 100 characters.</p></div></details></div><div class="composer-tools-right"><span class="composer-hint">${selected ? "Start the explicit release workflow above" : state.busy ? "Saving…" : "Enter to save · Shift Enter for a new line"}</span><button id="save-request" class="send-button" aria-label="Save request" ${disabled || !state.connected ? "disabled" : ""}>${icon("send")}</button></div></div></form><p class="composer-caption">${selected ? '<button class="text-button" data-action="new">New chat</button>' : !state.connected ? '<button class="text-button" data-action="settings">Connect your local backend to save a request</button>' : "Saving a request does not start execution."}</p></div>`;
+  const input = !t ? `<section class="evaluation-brief"><h2>Evaluation request</h2><label for="request-message">What should the release workflow accomplish?</label><textarea id="request-message" maxlength="16000" ${locked() ? 'disabled' : ''}>${escape(draft.message)}</textarea><label for="project-id">Project</label><input id="project-id" value="${escape(draft.project)}" ${locked() ? 'disabled' : ''}><p>Starting creates a separate evaluation task and sandbox. Chat messages and objects stay separate.</p></section>` : '';
+  return `<div class="debugger"><header class="debug-heading"><h1>Release demo</h1><p>This example runs the release workflow against local simulated services. Start it explicitly to inspect its checks and repair evidence.</p><a href="/debugger?mode=release" class="text-button">New release example</a> · <a href="/debugger" class="text-button">Open debugger</a> · <a data-route href="/incidents" class="text-button">Incidents and investigations</a></header><div class="debug-layout"><div>${input}${executionPanel(execution.state, releaseDraft, { debuggerView: true, allowNewTask: !t, unavailable: state.taskUnavailable || state.busy || !!state.pending, feedbackDraft: feedbackDraft() })}</div><aside class="context-column"><h2>Evaluation context</h2>${t ? `<blockquote>${escape(t.request.message)}</blockquote>${badge(t.status, t.status)}<dl class="metadata"><dt>Project</dt><dd>${escape(t.request.project_id)}</dd><dt>Task ID</dt><dd>${escape(t.id)}</dd></dl><button class="text-button" data-action="inspect-record">Inspect saved record</button>` : '<p>The release workflow uses Hermes, optional Luna supervision, and scoped simulated services.</p><p>Generated repair must be enabled explicitly and pass its verification gates before publication.</p>'}</aside></div>${pending(state)}</div>`;
 }
 function render(options = {}) {
   const state = workspace.state;
   if (state.submission === "saved" && lastSubmission !== "saved") {
-    draft.message = "";
     selected = state.task.id;
-    history.replaceState(null, "", urlFor(false, "chat", selected));
-    options.focus = "detail-heading";
+    history.replaceState(null, "", urlFor(false, "debugger", selected));
+    options.focus = "release-value";
     options.bottom = true;
   }
   lastSubmission = state.submission;
@@ -165,7 +147,7 @@ function render(options = {}) {
   const incidentOffset = Math.max(0, Number.parseInt(incidentQuery.get("offset"), 10) || 0);
   incidents.setContext(state.origin, state.connected, page === "incidents" && !document.hidden, incidentId, incidentProject, incidentOffset);
   const t = task();
-  const content = `${notices(state)}${connection(state)}${page === "incidents" ? incidentsView(incidents.state, { importDraft, questionDraft: incidentQuestions.get(incidentId) || "", projectDraft: incidentProjectDraft ?? incidentProject }) : page === "debugger" ? debuggerPage(state) : chat(state)}`;
+  const content = `${notices(state)}${connection(state)}${page === "incidents" ? incidentsView(incidents.state, { importDraft, questionDraft: incidentQuestions.get(incidentId) || "", projectDraft: incidentProjectDraft ?? incidentProject }) : debuggerPage(state)}`;
   view.render(
     shell({
       page,
@@ -174,7 +156,7 @@ function render(options = {}) {
       nav: navigation(state),
       content,
       locked: locked(),
-      composer: page === "chat" ? composer(state) : "",
+      composer: "",
       status: `<span class="connection-state ${state.connected ? "connected" : ""}" title="${state.connected ? "Connected · local API" : "Not connected"}"><i></i>${state.connected ? "Connected · local API" : "Not connected"}</span>`,
       actions: `<button class="icon-button" data-action="settings" aria-label="Connection settings">${icon("settings")}</button>`,
       bottom: `<button class="nav-item" data-action="settings">${icon("settings")}Connection settings</button>`,
@@ -193,6 +175,8 @@ function render(options = {}) {
         : "Not connected.");
 }
 async function routeChanged() {
+  const query = new URLSearchParams(location.search);
+  if (currentPage() === "chat" || (currentPage() === "debugger" && !query.has("task") && query.get("mode") !== "release")) { location.assign(location.href); return; }
   incidentProjectDraft = null;
   selected = new URLSearchParams(location.search).get("task") || "";
   render();
@@ -208,8 +192,7 @@ async function routeChanged() {
 }
 function newChat() {
   if (locked()) return;
-  navigate(urlFor(false, "chat"));
-  $("#request-message")?.focus();
+  location.assign("/chat");
 }
 root.addEventListener("input", (e) => {
   if (e.target.id === "api-origin") originDraft = e.target.value;
@@ -222,7 +205,7 @@ root.addEventListener("input", (e) => {
   if (e.target.id === "request-message") draft.message = e.target.value;
   if (e.target.id === "project-id") {
     draft.project = e.target.value;
-    $("#project-label").textContent = e.target.value || "Project";
+    if ($("#project-label")) $("#project-label").textContent = e.target.value || "Project";
   }
 });
 root.addEventListener("submit", async (e) => {
@@ -245,7 +228,15 @@ root.addEventListener("submit", async (e) => {
   if (e.target.id === "incident-filter-form") navigate(incidentURL("", incidentProjectDraft ?? incidents.state.project));
   if (e.target.id === "incident-import-form" && await incidents.submit("import", importDraft)) { importDraft = ""; render(); }
   if (e.target.id === "incident-question-form" && await incidents.submit("questions", incidentQuestions.get(incidents.state.selected) || "")) { incidentQuestions.delete(incidents.state.selected); render(); }
-  if (e.target.id === "release-form") await execution.start(releaseDraft);
+  if (e.target.id === "release-form" && currentPage() === "debugger") {
+    if (locked()) return;
+    if (!selected) {
+      await workspace.submit(draft.message, draft.project);
+      if (workspace.state.submission !== "saved") return;
+      await execution.refresh();
+    }
+    await execution.start(releaseDraft);
+  }
   if (e.target.id === "feedback-form") {
     const run = execution.state.run;
     if (run && await execution.submitFeedback(feedbackDraft(), { clarification: run.status === "needs_input" })) {
@@ -253,8 +244,7 @@ root.addEventListener("submit", async (e) => {
       render();
     }
   }
-  if (e.target.id === "request-form" && !selected)
-    await workspace.submit(draft.message, draft.project);
+
 });
 root.addEventListener("click", async (e) => {
   const button = e.target.closest("button");
@@ -302,7 +292,7 @@ root.addEventListener("click", async (e) => {
     case "edit-rejected":
       if (workspace.editRejected()) {
         selected = "";
-        history.replaceState(null, "", urlFor(false, "chat"));
+        history.replaceState(null, "", "/debugger?mode=release");
         render({ focus: "request-message" });
       }
       break;
@@ -336,4 +326,8 @@ document.addEventListener("visibilitychange", () => render());
 window.addEventListener("pagehide", () => { execution.stop(); incidents.stop(); });
 window.addEventListener("pageshow", (event) => { if (event.persisted) { void execution.refresh(); void incidents.refresh(); } });
 render();
-// Opening, refreshing, and navigating never submit or auto-connect.
+// Startup connects read-only. No evaluation, investigation, or retry is automatic.
+void workspace.connect().then(async () => {
+  if (selected) await workspace.read(selected);
+  if (selected && new URLSearchParams(location.search).get("run")) await routeChanged();
+});

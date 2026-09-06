@@ -135,7 +135,12 @@ class TelemetryService:
         self.enabled = getattr(settings, "telemetry_enabled", True)
         self.cloud_enabled = getattr(settings, "neatlogs_cloud_enabled", False)
         self._token = os.environ.get("EPOCH_TELEMETRY_TOKEN", "").strip()
-        self._key = os.environ.get("NEATLOGS_API_KEY", "").strip()
+        cloud_key = getattr(settings, "neatlogs_api_key", None)
+        self._key = (
+            cloud_key.get_secret_value()
+            if cloud_key is not None
+            else os.environ.get("NEATLOGS_API_KEY", "")
+        ).strip()
         self._stop = threading.Event()
         self._thread = None
         self._ready = False
@@ -503,7 +508,7 @@ class TelemetryService:
         if self.enabled and not self._token:
             warnings.append("Set process EPOCH_TELEMETRY_TOKEN to accept local SDK traces.")
         if self.cloud_enabled and not self._key:
-            warnings.append("Cloud export is enabled but process NEATLOGS_API_KEY is missing.")
+            warnings.append("Cloud export is enabled but NEATLOGS_API_KEY is missing.")
         if counts.get("failed", 0):
             warnings.append("Some cloud exports failed; records are retained locally.")
         if self._warning:

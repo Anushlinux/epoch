@@ -65,6 +65,11 @@ For the configured `openai-codex` route, the worker reads the existing access to
 into its memory and passes it directly to Hermes. It does not copy `auth.json`, write
 a token to config, perform login or refresh the user's credentials. An expired token
 therefore produces a failed run; refresh/login remains a normal user Hermes operation.
+When the Codex base URL is omitted, the bridge passes the standard Codex endpoint
+explicitly alongside the in-memory credential. Current Hermes requires both values
+to avoid searching the isolated home for credentials. The effective endpoint is
+recorded in execution evidence. Initializer failures produce a sanitized stage
+message; raw provider exceptions and credential values are never exposed.
 The implementation also accepts explicitly configured API-key routes for `openai`,
 `anthropic`, `openrouter` and `custom`, but those routes require separate installed
 execution evidence before any compatibility claim.
