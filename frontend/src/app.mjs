@@ -106,9 +106,9 @@ function header() {
   <header class="topbar"><div class="breadcrumb">Workspace ${icon("chevron")} <strong>Release preparation</strong></div><div class="connection"><span class="connection-dot ${state.connection === "connected" ? "" : "offline"}"></span>${state.connection === "connected" ? "Local fixtures" : "Updates paused"}</div></header>`;
 }
 function sidebar() {
-  return `<aside class="sidebar"><a class="brand" href="./index.html" aria-label="Epoch fixture workspace home"><img src="./mark.svg" alt="" width="32" height="32">epoch<span>preview</span></a>
+  return `<aside class="sidebar"><a class="brand" href="./index.html" aria-label="Epoch saved tasks"><img src="./mark.svg" alt="" width="32" height="32">epoch<span>preview</span></a>
     <button class="new-task" data-action="new" ${ui.pending || ui.recoveryUnknown ? "disabled" : ""}>${icon("plus")} New request</button>
-    <nav aria-label="Workspace"><p class="nav-label">Workspace</p><button class="nav-item selected" data-action="task">${icon("layers")} Task workspace <span class="nav-count">1</span></button></nav>
+    <nav aria-label="Workspace"><a href="./index.html">Saved tasks · real API</a><p class="nav-label">Fixture workspace</p><button class="nav-item selected" data-action="task">${icon("layers")} Task workspace <span class="nav-count">1</span></button></nav>
     <div class="task-nav"><p class="nav-label">Current task</p><button data-action="task" class="current-task"><span class="task-bullet"></span><span>${escape(state.title)}<small>${taskLabel()}</small></span></button></div>
     <div class="sidebar-bottom"><div class="local-label">${icon("box")} Development space</div><p>Session memory only.<br>Reloading restores the example.</p><a href="./README.md" target="_blank" rel="noopener">Frontend handoff ${icon("arrow")}</a></div>
   </aside>`;

@@ -1,6 +1,6 @@
 # Implementation tasks: Anushrut and Rajdeep
 
-**Task 01 / backend Phase 1 is complete; Tasks 02–07 remain unimplemented. The UI lane has a frontend-only fixture implementation; backend integration is pending.** Rajdeep owns the ordered backend tasks. Anushrut owns the separately assigned UI lane below and can use the [frontend contract handoff](../../backend/docs/FRONTEND_HANDOFF.md). A copied prompt authorizes only its assigned scope, not the entire roadmap. Follow the smaller [backend phases](../../backend/PHASES.md) for step-by-step implementation.
+**Task 01 / backend Phase 1 is complete; Tasks 02–07 remain unimplemented. The UI lane has Phase 1 intake integration and separate future-workflow fixtures; execution integration is pending.** Rajdeep owns the ordered backend tasks. Anushrut owns the separately assigned UI lane below and can use the [frontend contract handoff](../../backend/docs/FRONTEND_HANDOFF.md). A copied prompt authorizes only its assigned scope, not the entire roadmap. Follow the smaller [backend phases](../../backend/PHASES.md) for step-by-step implementation.
 
 Read [AGENTS.md](../../AGENTS.md), [direction](../direction.md), [status](../status.md), [architecture](../architecture.md), and the [integration checklist](../integrations.md) before starting. Preserve the direction unchanged.
 
@@ -18,7 +18,7 @@ Use Python for the backend, retain a CLI/test harness, and use local simulated s
 
 ## Anushrut: UI lane
 
-**Local implementation:** [Frontend fixture workspace](../../frontend/README.md), [PROPOSED contract](../../frontend/CONTRACT-PROPOSAL.md), and [UI verification](../../frontend/evidence/README.md). The fixture contract is not agreed with Rajdeep. The Phase 1 handoff is now available; reconciling and integrating it is separate work, and actual execution endpoints remain unimplemented.
+**Local implementation:** [Frontend fixture workspace](../../frontend/README.md), [PROPOSED contract](../../frontend/CONTRACT-PROPOSAL.md), and [UI verification](../../frontend/evidence/README.md). The fixture contract is not agreed with Rajdeep. The primary UI consumes the published Phase 1 intake/list/detail API. Future fixture mapping remains under review; actual execution endpoints remain unimplemented. See UI verification for actual local HTTP/browser proof and the AO CORS limitation.
 
 **Goal:** build the interface through which the user requests work, sees checkpoints and evidence, receives results, and provides revisions.
 

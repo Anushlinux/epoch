@@ -1,0 +1,43 @@
+{
+  "verified_at": "2026-09-06T13:35:24.802Z",
+  "category": "actual-local-phase-1-http",
+  "backend_base": "0a062dde6fcf5f10f792cf77813fe8adbaf117e3",
+  "isolated_temporary_database": true,
+  "health": {
+    "status": "ok",
+    "phase": 1,
+    "storage": "ok",
+    "execution_enabled": false
+  },
+  "task": {
+    "schema_version": 1,
+    "id": "e84ee901-359f-4570-9370-d51dcae926ac",
+    "request": {
+      "client_request_id": "f5f8bc2d-cb63-4fed-9f3c-06e40d9056a5",
+      "message": "Persisted HTTP intake proof · no execution",
+      "project_id": "integration-proof"
+    },
+    "status": "pending",
+    "created_at": "2026-09-06T13:35:17.163111Z",
+    "updated_at": "2026-09-06T13:35:17.163111Z"
+  },
+  "checks": {
+    "create": 201,
+    "identical_retry": 200,
+    "normalized_retry": 200,
+    "conflict": 409,
+    "validation": 422,
+    "missing": 404,
+    "disallowed_origin": 403,
+    "allowed_cors_preflight": 200,
+    "restart_record_unchanged": true,
+    "restart_identical_retry": 200
+  },
+  "execution_occurred": false,
+  "browser_origin": "http://localhost:5173",
+  "limitations": [
+    "Temporary local intake/storage only; no executor or repair",
+    "Browser source served by test interception; API requests use the actual unchanged backend",
+    "Unknown acknowledgement and offline browser cases inject transport faults, not backend failures"
+  ]
+}

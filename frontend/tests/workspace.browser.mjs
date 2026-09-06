@@ -31,7 +31,7 @@ test.beforeEach(async ({ page }) => {
       return route.fulfill({ status: 404, body: "Missing test fixture file" });
     }
   });
-  await page.goto(`${origin}/index.html`);
+  await page.goto(`${origin}/fixtures.html`);
 });
 async function controls(page) {
   const details = page.locator(".fixture-controls");

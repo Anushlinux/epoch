@@ -1,10 +1,10 @@
 # Current implementation status
 
-As of September 6, 2026, **backend Phase 1 is implemented and locally verified**, alongside a separately tested **frontend-only fixture workspace**. It provides task intake, configuration, persistence and shared contracts. The supervisor, Hermes executor and repair loop remain unimplemented; the approved direction is still a product target.
+As of September 6, 2026, **backend Phase 1 is implemented and locally verified**, alongside tested **frontend task intake and separate future-workflow fixtures**. The backend provides task intake, configuration, persistence and shared contracts. The supervisor, Hermes executor and repair loop remain unimplemented; the approved direction is still a product target.
 
 ## Implemented facts
 
-The repository contains the documentation, bounded Phase 1 foundation and separate fixture UI below. The UI is not connected to the backend; its execution activity, outcomes, candidate diffs, test records and artifacts are authored fixtures, not business-service effects or supervised repair evidence:
+The repository contains the documentation, bounded Phase 1 foundation and frontend workspace below. Its primary page connects to real Phase 1 task intake/list/detail. Execution activity, outcomes, candidate diffs, test records and artifacts remain on a separate fixture page; these are authored examples, not business-service effects or supervised repair evidence:
 
 - [README](../README.md): product summary, current state, and reading order.
 - [Direction](direction.md): unchanged source document.
@@ -39,7 +39,7 @@ Hermes discovery behavior, Neatlogs capture coverage, Workshop replay, and inter
 | Concrete runtime/tooling, library, schema, storage, transport, testing and CI decisions | Selected and recorded; future transport/isolation still unimplemented | Task 01 complete |
 | Python API/CLI, config validation, task persistence and shared contracts | Implemented; 66 tests and live-server restart smoke pass locally | Phase 1 complete |
 | Task brief/checkpoint planning, targeted continuation and feedback revisions | Unimplemented | Contracts in Task 01; executor/supervision in Task 03 |
-| User interface, checkpoint board, results and feedback flow | Implemented with labeled local fixtures; frontend tests only | Phase 1 handoff available; UI integration pending, execution endpoints unimplemented |
+| User interface, checkpoint board, results and feedback flow | Real Phase 1 intake/list/detail integrated; future execution flows remain labeled fixtures | Actual local HTTP/browser intake verified; AO CORS limitation and later execution endpoints remain open |
 | Local simulated business services and inspectable state | Unimplemented | Task 02 |
 | Permission-scoped tool registry and version lifecycle | Unimplemented | Tasks 02 and 04 |
 | Hermes integration and dynamic tool discovery | Unimplemented; compatibility unverified | Task 03 |
@@ -110,4 +110,12 @@ Anushrut has the published HTTP/error contracts and fixture states; this does no
 
 The UI preserves original requests and clarifications, displays all six sourced checkpoint states, keeps task and repair outcomes separate, retains rejected candidates and partial artifacts, and records feedback as explicit revisions with previous results retained. Local tests cover evidence/identity guards, stale and duplicate events, stream gaps, uncertain submissions, retry/reconnect, forms, keyboard navigation, mobile layout and text escaping. See the [verification record](../frontend/evidence/README.md) for actual commands, outcomes, screenshots and limitations.
 
-The [frontend-local contract proposal](../frontend/CONTRACT-PROPOSAL.md) is **PROPOSED, not agreed**. The Phase 1 [backend handoff](../backend/docs/FRONTEND_HANDOFF.md) now publishes intake endpoints and future data contracts. The fixture proposal has not been reconciled with that handoff, and the UI is not connected. Actual supervised repair verification remains blocked because execution, streaming, feedback and repair endpoints are unimplemented. The fixture adapter stores data only in page memory and cannot establish durable duplicate prevention, secure repair isolation, trusted evaluation or backend compatibility.
+The [frontend-local contract proposal](../frontend/CONTRACT-PROPOSAL.md) is **PROPOSED, not agreed**. The Phase 1 [backend handoff](../backend/docs/FRONTEND_HANDOFF.md) now publishes intake endpoints and future data contracts. The primary UI consumes the published intake models directly; the future fixture proposal remains separate and unagreed. Actual supervised repair verification remains blocked because execution, streaming, feedback and repair endpoints are unimplemented. The fixture adapter stores data only in page memory and cannot establish durable duplicate prevention, secure repair isolation, trusted evaluation or backend compatibility.
+
+### Frontend Phase 1 intake integration
+
+Against the unchanged Phase 1 backend at `0a062dd`, the frontend verified actual health/create/list/detail, 201 intake, 200 identical/normalized retry, 409 conflict, 422 validation, 404 missing records, 403 disallowed origin, explicit allowed CORS and SQLite record/ID persistence across restart. Tasks stayed pending and health reported execution disabled. Temporary test data was isolated and removed; no backend source, configuration defaults or evaluator logic changed.
+
+`npm run test:all --prefix frontend` passed 35 state tests and 26 fixture browser tests. `npm run test:integration --prefix frontend` passed HTTP checks and 10 desktop/mobile browser cases using actual API requests. Transport fault injection tests are labeled separately. Full evidence and screenshots are in the frontend verification record.
+
+AO can display the actual intake UI, but its generated `.localhost` origin is rejected by the current backend CORS configuration validator; direct AO API access was observed failing. This is reported for backend-owner coordination. Browser intake proof used the documented exact `http://localhost:5173` origin. No SSE, checkpoints, execution, feedback or repair endpoint was added or claimed. Actual supervised repair remains blocked on later phases.

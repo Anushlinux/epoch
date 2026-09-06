@@ -4,7 +4,23 @@
 
 Rebase update: [backend/FRONTEND_HANDOFF](../backend/docs/FRONTEND_HANDOFF.md) is available from `main` at `0a062dd`. It implements task intake/read/list; tasks remain pending. Its future progress envelope uses per-task sequence numbers, whereas this fixture models cursors per task/run/revision. That difference requires explicit reconciliation before integration; neither contract is silently treated as the other. No network adapter or execution integration was added by the rebase.
 
-## What the interface needs
+## Published Phase 1 mapping now consumed
+
+The primary intake view consumes Rajdeep's published models directly; it does not send the fixture's command, revision or event fields. This is implementation against the published handoff, not a claim of joint approval for the older fixture proposal.
+
+| Published model / route | Frontend behavior |
+| --- | --- |
+| `HealthResponse`, GET `/api/health` | Require `status=ok`, `storage=ok`, `phase=1`, `execution_enabled=false` before enabling intake. |
+| `TaskCreate`, POST `/api/tasks` | Freeze `client_request_id`, `message`, `project_id` and local API origin. Store the exact pending payload in per-tab session storage before sending. No expected revision exists in this Phase 1 model. |
+| `Task`, POST response / GET `/api/tasks/{task_id}` | Validate schema version, IDs, original request and timestamps. Support only `pending`; display a storage receipt, never task success or progress. Preserve backend-normalized text. |
+| `TaskList`, GET `/api/tasks?limit=20&offset=…` | Display server records with pagination; no fixture merging. Reject late or unrelated detail responses. |
+| HTTP 201 / 200 | New intake / identical normalized retry. Require acknowledgement to match the frozen request before clearing it. |
+| HTTP 409 / 422 / 403 with `ErrorEnvelope` | Display the backend message/status; preserve rejected content until an explicit return-to-draft action. Never automatically allocate another ID. |
+| Lost response, malformed acknowledgement, 5xx | Acknowledgement remains unknown. Read-only reconnect does not POST. Explicit exact retry uses published server deduplication. Corrupt/unavailable recovery storage blocks new submissions. |
+
+A pending intake payload includes task text in session storage; it is removed after acknowledgement. This differs intentionally from the fixture's ID-only marker below. No lookup-by-client-ID, SSE, checkpoint, feedback, result or repair endpoint has been invented. Browser requests omit credentials and accept only the configured local API origin. Backend intake persistence and deduplication were verified against an isolated unchanged server; future execution semantics below remain review requests.
+
+## Future interface information needs (PROPOSED)
 
 | Record | Proposed information | Responsibility |
 | --- | --- | --- |
@@ -19,13 +35,13 @@ Rebase update: [backend/FRONTEND_HANDOFF](../backend/docs/FRONTEND_HANDOFF.md) i
 | Result | Explicit delivery status, object/evidence IDs, unresolved requirements, missing evidence, link or inspectable sandbox object | Requires separate outcome event and checkpoint evidence |
 | Feedback | Stable command ID, parent revision, exact feedback, category (missed requirement, evaluation concern, new preference), previous result and requirements | Backend creates explicit revision; original history survives |
 
-The fixture implementation uses `taskId`, `runId`, `revision`, `seq`, `eventId`, `kind`, `data`, and `category: "fixture"`. These are local names for review, not proposed HTTP routes. No network adapter exists. Current sample code and test outcomes are authored display data; they are not executable repairs or sandbox effects.
+The fixture implementation uses `taskId`, `runId`, `revision`, `seq`, `eventId`, `kind`, `data`, and `category: "fixture"`. These are local names for review, not proposed HTTP routes. The separate intake network adapter never consumes these fixture fields. Current sample code and test outcomes are authored display data; they are not executable repairs or sandbox effects.
 
 ## Adapter seam
 
-`FixtureAdapter` exposes `snapshot()`, `command(command)`, read-only `lookup(command)`, `reconnect()` and manual `next()` fixture events. The view has no `fetch`, socket or model client. Replace this adapter only after agreement; retain the reducer's completeness checks and rendering tests. A real adapter will need explicit evidence categories such as simulated-service execution, actual Hermes execution, local component test and live provider observation. Merely relabeling a fixture is forbidden.
+`FixtureAdapter` exposes `snapshot()`, `command(command)`, read-only `lookup(command)`, `reconnect()` and manual `next()` fixture events. The fixture view has no `fetch`, socket or model client; the separate intake view uses only the published Phase 1 routes. Replace this adapter only after agreement; retain the reducer's completeness checks and rendering tests. A real adapter will need explicit evidence categories such as simulated-service execution, actual Hermes execution, local component test and live provider observation. Merely relabeling a fixture is forbidden.
 
-## Recovery and evidence rules to agree
+## Future fixture recovery and evidence rules to agree
 
 - First submission freezes the command ID, payload, kind, task identity and expected revision together. Edits before submission are drafts; edits after an unknown acknowledgement cannot change that submitted identity or create a replacement command for the same unresolved action. The UI disables further submission/editing while it reconciles the frozen command.
 - **Acknowledgement unknown is neither rejection nor task success.** Only explicit rejection releases the draft for a new decision. Lookup/reconnect must reconcile the submitted identity before any replacement or replay. The fixture's “Check submission status” action performs read-only lookup; an unknown lookup stays pending and does not call `command()` again. A future backend must specify authoritative rejection, lookup and safe retry semantics; a timeout alone cannot supply them.
@@ -38,11 +54,11 @@ The fixture implementation uses `taskId`, `runId`, `revision`, `seq`, `eventId`,
 - Feedback retains prior checkpoints, results and repair evidence in the previous revision; new work starts without inherited pass decisions. Historical rejected candidates, partial effects, documents and supervisory interventions remain inspectable.
 - User-controlled text is rendered as text. Result links must be validated against the future authorized service policy; this fixture has only inline JSON inspection and labeled JSON download, with no remote result URLs.
 
-## Handoff needed before integration
+## Handoff needed before execution integration
 
 1. Available: [Task 01 decisions](../backend/DECISIONS.md) and [backend handoff](../backend/docs/FRONTEND_HANDOFF.md). Pending: joint fixture-to-backend mapping, frontend tooling and future event/recovery agreement.
-2. Available: Phase 1 intake endpoints and HTTP/error semantics in that handoff. Pending: integration, acknowledgement lookup and execution-stream reconnect/transition behavior.
+2. Available: Phase 1 intake endpoints and HTTP/error semantics in that handoff. Implemented: Phase 1 intake/list/detail and exact retry. Pending for later phases: feedback acknowledgement lookup and execution-stream reconnect/transition behavior.
 3. Real sanitized failure/repair run, checkpoint provenance and evaluator evidence, partial-effect/replay cases, rejected candidate and result objects.
 4. Intent revision semantics, result history retention, missing evidence behavior and documented service permissions.
 
-The intake handoff is now available, but this UI is not integrated. Actual supervised repair verification remains **blocked** on the unimplemented execution/repair endpoints and the remaining agreement above. There are no backend run IDs, real result links or compatibility claims to report.
+The intake UI is now integrated with the published Phase 1 API. Future fixture screens remain disconnected. Actual supervised repair verification remains **blocked** on the unimplemented execution/repair endpoints and the remaining agreement above. Real task/request IDs establish intake only. There are no backend run IDs, real task-result links or execution compatibility claims to report.

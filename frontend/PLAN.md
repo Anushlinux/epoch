@@ -15,3 +15,14 @@ Completed: fixture workspace, proposal and frontend documentation implemented; 1
 Review follow-up: clarify authorized scope transitions and frozen submissions; add a fixture-only transition adoption path, acknowledgement lookup and reload-uncertainty guard; verify acknowledged/missed transitions, late old events, edited pending input and reload behavior; update PR #2 without backend changes or merge.
 
 Review follow-up verified: 24 state tests and 26 desktop/mobile browser tests passed. Both contract risks are addressed locally; backend integration remains blocked.
+
+## Phase 1 intake integration plan
+
+Authorized after the rebase onto `0a062dd`. Keep backend files unchanged.
+
+1. Use the published `TaskCreate`, `Task`, `TaskList`, `HealthResponse` and error envelope for real health/create/list/detail requests. Make intake the primary page and retain future fixtures on a separate labeled page.
+2. Freeze and retain the submitted request ID/content before HTTP submission. Handle unknown acknowledgement, identical retry, rejection/conflict, reload, stale reads and disconnected state without starting duplicate unresolved work. Render only pending intake, never execution progress.
+3. Verify against the unchanged backend with temporary storage and explicit loopback CORS settings: real HTTP/browser intake, retries, errors, reconnect and restart persistence. Keep fault-injected browser checks distinct from actual server responses. Re-run fixture regression checks and bounded desktop/mobile/AO inspection.
+4. Update boundary mapping and evidence/status, then commit, push, update PR #2 and report to epoch-2. Future event/feedback/repair questions remain review requests; actual supervised repair stays blocked.
+
+Phase 1 integration completed locally: primary intake/list/detail UI, frozen recoverable submission payloads and explicit retry, separate future fixtures, 35 state tests, 26 fixture browser tests and 10 real-backend browser checks pass. Actual HTTP restart persistence and response semantics passed. AO preview is visible but API connection is blocked by the backend CORS origin validator; reported to epoch-2 without backend changes. Evidence and PR handoff follow.
