@@ -1,0 +1,73 @@
+.chat-transcript { max-width: 780px; padding-bottom: 32px; }
+.chat-transcript .message { margin-bottom: 32px; }
+.chat-speaker { display: block; font-size: 12px; font-weight: 600; color: var(--muted, #a0a5ab); margin-bottom: 9px; }
+.chat-transcript .message.user { display: block; margin-left: auto; max-width: 88%; }
+.chat-transcript .message.user .chat-speaker { text-align: right; }
+.chat-transcript .message.user .message-body { width: fit-content; margin-left: auto; }
+.chat-transcript .message.assistant > .message-body { padding-left: 0; }
+.chat-prose { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.75; font-size: 15px; }
+.chat-prose:empty { display: none; }
+.chat-transcript pre { max-width: 100%; overflow: auto; background: #151719; border: 1px solid #363a3e; padding: 16px; border-radius: 8px; }
+.chat-transcript code { font-size: 13px; line-height: 1.65; }
+.chat-working { display: flex; align-items: center; gap: 10px; color: #a0a5ab; font-size: 13px; }
+.chat-working svg { width: 17px; height: 17px; }
+.chat-model { color: #cbd0d4; font-size: 12px; padding: 6px; }
+.chat-stop { border: 1px solid #61676d; border-radius: 6px; padding: 7px 13px; background: #282c2f; color: #e4e7e9; }
+.chat-alert { max-width: 780px; margin: 20px auto; padding: 14px 18px; background: #302823; color: #f2d3bc; border-radius: 8px; line-height: 1.6; overflow-wrap: anywhere; }
+.chat-alert button { display: block; margin-top: 10px; }
+.evaluation-brief { margin: 20px 0 28px; }
+.evaluation-brief textarea { width: 100%; min-height: 95px; margin: 8px 0 16px; }
+.evaluation-summary { margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid #363a3e; }
+.conversation-debugger { max-width: 880px; margin-inline: auto; }
+.conversation-debugger section, .investigation-result { margin-bottom: 30px; min-width: 0; }
+.conversation-debugger h2 { font-size: 18px; margin-bottom: 12px; overflow-wrap: anywhere; }
+.conversation-debugger p { line-height: 1.65; max-width: 72ch; }
+.conversation-debugger blockquote { margin: 16px 0; padding: 0 0 0 16px; border-left: 1px solid #61676d; }
+.conversation-debugger pre { max-width: 100%; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.debugger-action textarea { display: block; box-sizing: border-box; width: 100%; min-height: 100px; margin: 10px 0; }
+.debugger-action button { margin-top: 8px; }
+.debugger-other { padding-top: 24px; border-top: 1px solid #363a3e; }
+.chat-environment-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 2px 4px 12px; border-bottom: 1px solid #363a3e; margin-bottom: 12px; }
+.chat-environment-picker label { font-size: 12px; color: #cbd0d4; }
+.chat-environment-picker select { min-width: 0; max-width: 100%; font-size: 12px; padding: 7px 9px; }
+.chat-environment-picker button { font-size: 12px; padding: 7px 10px; }
+.chat-environment-picker p { width: 100%; margin: 0; color: #adb3b8; font-size: 12px; line-height: 1.5; }
+@media (max-width: 760px) {
+  .chat-transcript .message.user { max-width: 96%; }
+  .chat-prose { font-size: 15px; }
+  .chat-transcript .message { margin-bottom: 26px; }
+  .chat-environment-picker { gap: 8px; }
+  .chat-environment-picker select { flex: 1; }
+}
+
+.pdf-environment { max-width: 780px; margin: 0 auto 28px; min-width: 0; }
+.pdf-environment h2 { font-size: 18px; margin: 0; }
+.pdf-environment .inline-row { flex-wrap: wrap; }
+.pdf-environment .inline-row > span, .pdf-file p, .pdf-file-controls > span { font-size: 13px; color: #adb3b8; }
+.pdf-file-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 16px 0; }
+.pdf-file-controls > span { flex-basis: 100%; }
+.pdf-file-controls button, .pdf-upload, .pdf-file-actions button, .pdf-file-actions a { font-size: 13px; }
+.pdf-upload { display: flex; align-items: center; gap: 8px; max-width: 100%; }
+.pdf-upload input { max-width: 210px; font-size: 12px; }
+.pdf-files { border-top: 1px solid #363a3e; }
+.pdf-file { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 0; border-bottom: 1px solid #363a3e; }
+.pdf-file > div:first-child { min-width: 0; flex: 1; }
+.pdf-file strong { font-size: 14px; overflow-wrap: anywhere; }
+.pdf-file p { margin: 6px 0 0; }
+.pdf-file-actions { display: flex; align-items: center; gap: 14px; }
+.pdf-file details { width: 100%; font-size: 13px; overflow-wrap: anywhere; }
+.pdf-preview { margin: 24px 0; }
+.pdf-preview img { width: 100%; height: auto; background: #fff; display: block; }
+.pdf-preview-toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding: 12px 0; font-size: 13px; }
+.pdf-preview-toolbar strong { overflow-wrap: anywhere; }
+.pdf-environment pre { overflow: auto; max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; }
+.pdf-environment .disclosure { margin-top: 20px; }
+.pdf-empty { color: #adb3b8; padding: 16px 0; }
+.pdf-repair-choice { margin: 20px 0; }
+.pdf-repair-choice p { margin-top: 8px; }
+@media (max-width: 760px) {
+ .chat-workspace .pdf-environment { padding-inline: 20px; }
+ .pdf-file-actions { width: 100%; }
+ .pdf-file-controls { gap: 8px; }
+ .pdf-upload { flex-wrap: wrap; }
+}

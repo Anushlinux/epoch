@@ -1,6 +1,6 @@
 # Epoch frontend
 
-Epoch has a chat interface, an execution debugger and an incident workspace. The real workspace connects to the Phase 7 backend for explicit release execution, supervision, feedback and environment repair evidence. The interactive Atlas release example remains a separate, clearly labeled demo.
+Epoch opens with a normal Hermes conversation. The debugger investigates a selected conversation only after an explicit action. Release execution and the interactive Atlas fixture remain separate, clearly labeled examples. The incident workspace supports broader imported evidence.
 
 ## Run
 
@@ -18,7 +18,9 @@ The host uses Node's built-in HTTP server and binds to loopback. It serves only 
 
 | URL | Behavior |
 | --- | --- |
-| `/chat` | Real request intake and saved conversations |
+| `/chat`, `/chat?chat=UUID` | Hermes chat and saved conversation history |
+| `/debugger`, `/debugger?chat=UUID` | Select a conversation, inspect its requirements and explicitly request an investigation |
+| `/debugger?mode=release` | Separate release evaluation example using local simulated services |
 | `/debugger?task=UUID` | Actual run history, sourced checkpoints, activity and simulated state |
 | `/incidents` | Incident list, source evidence, related runs, recurrence and explicit Luna analysis |
 | `/demo/chat` | Existing Atlas 2.4 release fixture as a conversation |
@@ -26,12 +28,58 @@ The host uses Node's built-in HTTP server and binds to loopback. It serves only 
 | `/`, `/index.html` | Compatibility aliases for real chat |
 | `/fixtures.html` | Compatibility alias for demo chat |
 
-Same-mode navigation retains in-memory drafts, selection, disclosures and page scroll. Browser Back/Forward and task-ID links are supported. Real and demo modes use separate entrypoints and controllers. Demo policy forbids connections; the real entrypoint permits only explicit loopback API requests. Opening or navigating never submits a request. Connecting remains an explicit read-only action.
+Same-mode navigation retains in-memory drafts, selection, disclosures and page scroll. Browser Back/Forward and task-ID links are supported. Real and demo modes use separate entrypoints and controllers. Demo policy forbids connections; the real entrypoint permits only explicit loopback API requests. Startup and navigation may read connection status and saved records. They never send messages, run evaluations or request investigations. Connection settings can change the local server.
 
-## Real task intake
+## Hermes chat and manual investigation
 
-A chat starts as one saved request. Saving does not start Hermes. After saving,
-enter a release value, choose a sandbox scenario, and select **Start release run**.
+Send a message to start Hermes and continue the same saved conversation with
+follow-up messages. The chat API stores visible messages and operation status
+separately from release tasks. Requests use exact retry identities saved before
+submission; uncertain acknowledgements require an explicit retry. Reloading and
+reconnecting do not replay work. While the selected operation runs, the UI polls
+its conversation every 1.5 seconds. It refreshes runtime availability once when
+the operation ends, then stops polling while idle, including after a failure.
+Hidden tabs pause polling; returning to the tab or refreshing the list performs a
+read-only refresh. When another operation occupies Hermes, availability checks
+run at most every five seconds. Failed active reads back off up to 30 seconds.
+
+Open **Debugger** from a conversation to inspect it. Starting an investigation
+explicitly requests Luna analysis of original user requirements, visible responses,
+operation errors and captured tool activity. Findings retain evidence references,
+hypotheses and missing evidence. This is a general investigation surface, not a
+new trusted evaluator for arbitrary tasks. Existing release criteria and repair
+permissions remain unchanged. Standard investigation remains diagnosis-only;
+the PDF actions below can generate a tool change and run Hermes recovery.
+
+Hermes still has only the configured tools; the current business tools use local
+simulated services. General conversation does not imply access to arbitrary live
+services. Debugger analysis requires the existing backend debugger configuration.
+
+## PDF workshop
+
+New chats default to PDF workshop. Add a retreat/festival pack or upload a static
+PDF, then send the sample task. Files are scoped to the current conversation;
+published tools are shared within its project. Adding files and opening Debugger
+never start a model call. Preview displays pages rendered from the actual PDF.
+
+The initial renderer genuinely draws past the first page boundary. Its saved output
+and host checks make **Fix PDF tool** eligible. When Hermes records a missing merge
+capability, **Create merge tool** becomes eligible. Both require explicit action and
+show generation, verification, publication and recovery separately. Generated source,
+proofs and saved versions appear in expandable details. Rollback restores a prior
+bundle only while idle. CSV history is retained on disk but retired from execution.
+
+See [backend PDF setup](../backend/docs/PDF_WORKSHOP.md) for the required local image.
+The browser request journal preserves the exact endpoint and payload. Old pending CSV
+requests are archived rather than replayed as PDF requests. Desktop/mobile HTTP tests
+are in `tests/pdf-http.browser.mjs`; they need the separate local test API on port
+8011 and the normal frontend server. These browser tests disable models; the backend
+acceptance harness separately executes real Hermes and Luna.
+
+## Separate release evaluation
+
+Open `/debugger?mode=release`, enter the request and release value, choose a
+sandbox scenario, then select **Run release evaluation**.
 The release workflow creates a ticket, attaches the required checklist and notifies
 QA with both links. Luna supervision defaults on and interprets supported additions
 from the request. Direct execution remains available. Arbitrary workflows are not inferred.
@@ -42,7 +90,7 @@ The backend uses its existing Hermes configuration; no credentials come from the
 browser. Business objects are local simulations. The server's configured model
 provider receives the execution inputs when you explicitly start a run.
 
-Both chat and debugger show the selected run's backend checkpoints, source and
+The release evaluation view shows the selected run's backend checkpoints, source and
 evidence references, trusted verification, final executor text, missing evidence,
 and partial objects. **Run history** selects earlier attempts. **Request
 cancellation** waits for the backend's terminal status. **Start another release
@@ -98,7 +146,7 @@ Use **Explore release demo**. It starts at the existing interrupted Atlas releas
 
 The debugger stages are Failure → Diagnosis → Candidate change → Verification → Publish → Resume task. Each derives its status from fixture evidence. Rejected candidates, partial artifacts, original intent, clarification, sourced checkpoints, and prior revisions remain inspectable. Repair activation does not complete the task. Feedback creates a new fixture revision without inherited passes.
 
-All displayed execution, diagnoses, diffs, tests and artifacts are authored UI fixtures. JSON inspection and downloads preserve that label. No real business services, live model, secure repair runner, or persistent environment change is represented as implemented. Only the existing release example is included.
+On the fixture demo pages, all displayed execution, diagnoses, diffs, tests and artifacts are authored UI fixtures. JSON inspection and downloads preserve that label. No real business services, live model, secure repair runner, or persistent environment change is represented as implemented. Only the existing release example is included.
 
 Demo state exists in page memory. Reload resets it. The existing ID-only pending marker reports lost-submission uncertainty after an unresolved reload and never silently repeats a command. Read-only acknowledgement lookup and the existing evidence/scope guards remain in place. The [future contract proposal](CONTRACT-PROPOSAL.md) remains unagreed; it is not an implemented API.
 

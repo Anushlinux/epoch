@@ -1,0 +1,1280 @@
+{
+  "live": true,
+  "completed": true,
+  "full_evidence": "../../data/pdf-acceptance-02/acceptance.json",
+  "first_project_evidence": "../../data/pdf-acceptance-01/acceptance.json",
+  "runtime": {
+    "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+    "runner_version": "pdf-tools-v1",
+    "dependencies_and_worker": "cffi==2.1.1\ncharset-normalizer==3.5.1\ncryptography==50.0.1\npdfminer.six==20250506\npdfplumber==0.11.7\npillow==12.3.0\npycparser==3.0\npypdf==6.0.0\npypdfium2==5.13.0\nreportlab==4.4.3\nfonts-dejavu-core\t2.37-8\npoppler-utils\t25.03.0-5+deb13u4\n54a6f177d5d9830d5a25e8928fe8d0cdc0be09339bb5db5cd9f7a2b91da1850f  /opt/pdf-worker.py\n"
+  },
+  "steps": {
+    "baseline": {
+      "chat_id": "24898954-f5b4-4c90-a9dd-f208ada57f5b",
+      "broken_assets": [
+        "7989dd28-eea3-4a7d-832a-1eb0ae949e24"
+      ]
+    },
+    "renderer_repair": {
+      "version": "54ffc2c0-d590-4f21-83fa-b56506f5ce6e",
+      "operation_id": "5e2f91c9-f383-4050-a4b2-e42192eefbd7"
+    },
+    "fresh_document": {
+      "chat_id": "294cc46c-44b1-44c4-ac02-31d1c459b4e4",
+      "assets": [
+        "428d2459-d7ec-4564-9650-773ea96e1014"
+      ]
+    },
+    "missing_merge": {
+      "chat_id": "24898954-f5b4-4c90-a9dd-f208ada57f5b",
+      "message": "Combine the proposal PDF with asset ID ad14bc24-5aab-4889-a8dd-3cf690ea4518, hotel-brochure.pdf, and venue-map.pdf into one client-pack.pdf, in that exact order. Preserve all pages."
+    },
+    "merge_creation": {
+      "version": "f621139d-fdcc-4363-90f5-1557e09f52d5",
+      "operation_id": "5e74d36a-2d85-4f7e-84f6-d8b0bae86826"
+    },
+    "restart_reuse": {
+      "chat_id": "8291b651-b6ec-4174-82a7-fa934a8440e0",
+      "assets": [
+        "5b1f12a9-9aac-41e5-916a-c871fa67213c"
+      ],
+      "after_restart": true
+    },
+    "rollback": {
+      "isolated_data_dir": "/Users/bhaskarpandit/Documents/epoch/backend/data/pdf-acceptance-02/rollback-7dcbcb327d2e48b7846d826b76eba243",
+      "first": {
+        "type": "environment.rolled_back",
+        "project": "pdf-acceptance",
+        "previous": "f621139d-fdcc-4363-90f5-1557e09f52d5",
+        "version_id": "54ffc2c0-d590-4f21-83fa-b56506f5ce6e",
+        "created_at": "2026-09-06T20:07:12.859201+00:00"
+      },
+      "second": {
+        "type": "environment.rolled_back",
+        "project": "pdf-acceptance",
+        "previous": "54ffc2c0-d590-4f21-83fa-b56506f5ce6e",
+        "version_id": "builtin",
+        "created_at": "2026-09-06T20:07:14.775610+00:00"
+      }
+    },
+    "process_restart_reuse": {
+      "chat_id": "a43d6a14-6381-4723-914f-b3c991c379c5",
+      "assets": [
+        "880ca344-6d34-45d2-8692-945af98ae76e"
+      ],
+      "after_restart": true,
+      "process_id": 22905
+    }
+  },
+  "files": [
+    {
+      "id": "7989dd28-eea3-4a7d-832a-1eb0ae949e24",
+      "name": "Northstar Studio Retreat Brief.pdf",
+      "page_count": 1,
+      "sha256": "035fb46c4dbf60e288268db7aa3f271b013d76b899c78f322bf257266317111c",
+      "source_assets": [],
+      "tool_name": "pdf.create",
+      "implementation_version": "builtin",
+      "source_sha256": "ff8190e4cf52ba172842a612df4120f8882076cec20d34456037b130aa230886",
+      "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+      "verification": {
+        "passed": false,
+        "checks": [
+          {
+            "name": "all_content_in_order",
+            "passed": false,
+            "missing": [
+              "Day 2, session 7: Reflection and quiet working time. Allocate 60 minutes; the retreat coordinator confirms attendance and accessibility requirements before the ",
+              "Day 2, session 8: Dinner and evening conversation. Allocate 60 minutes; the retreat coordinator confirms attendance and accessibility requirements before the se",
+              "Day 3 itinerary",
+              "Day 3, session 1: Breakfast and arrival check-in. Allocate 60 minutes; the retreat coordinator confirms attendance and accessibility requirements before the ses",
+              "Day 3, session 2: Team strategy workshop. Allocate 60 minutes; the retreat coordinator confirms attendance and accessibility requirements before the session.",
+              "Day 3, session 3: Coffee and collaboration break. Allocate 60 minutes; the retreat coordinator confirms attendance and accessibility requirements before the ses",
+              "Day 3, session 4: Product planning session. Allocate 60 minutes; the retreat coordinator confirms attendance and accessibility requirements before the session.",
+              "Day 3, session 5: Lunch with dietary options. Allocate 60 minutes; the retreat coordinator confirms attendance and accessibility requirements before the session",
+              "Day 3, session 6: Guided outdoor team challenge. Allocate 60 minutes; the retreat coordinator confirms attendance and accessibility requirements before the sess",
+              "Day 3, session 7: Reflection and quiet working time. Allocate 60 minutes; the retreat coordinator confirms attendance and accessibility requirements before the ",
+              "Day 3, session 8: Dinner and evening conversation. Allocate 60 minutes; the retreat coordinator confirms attendance and accessibility requirements before the se",
+              "Accommodation options",
+              "Option A: 24 twin rooms, two nights, INR 288000 total, breakfast included.",
+              "Option B: 16 triple rooms, two nights, INR 240000 total, breakfast included.",
+              "Reserve two accessible rooms within the chosen option; step-free access is required.",
+              "Budget breakdown",
+              "Item",
+              "Amount",
+              "Accommodation option A",
+              "INR 288000",
+              "Meals",
+              "INR 172800",
+              "Transport",
+              "INR 72000",
+              "Venue and equipment",
+              "INR 60000",
+              "Activities",
+              "INR 48000",
+              "Contingency",
+              "INR 79200",
+              "Total",
+              "INR 720000",
+              "Cancellation terms",
+              "Cancel at least 30 days before arrival: 90 percent refund.",
+              "Cancel 15-29 days before arrival: 50 percent refund.",
+              "Cancel fewer than 15 days before arrival: no refund.",
+              "Guest substitutions are permitted until 48 hours before arrival.",
+              "Final confirmation must include dietary requirements and accessibility arrangements."
+            ]
+          },
+          {
+            "name": "within_page_bounds",
+            "passed": false
+          },
+          {
+            "name": "readable_text",
+            "passed": true
+          },
+          {
+            "name": "a4_pages",
+            "passed": true
+          },
+          {
+            "name": "complete_inspection",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "ad14bc24-5aab-4889-a8dd-3cf690ea4518",
+      "name": "Northstar Studio Retreat Brief Complete.pdf",
+      "page_count": 2,
+      "sha256": "03af6946fb926a1305a19500e664ae01d3f728fae065870b957a34748f776dfe",
+      "source_assets": [],
+      "tool_name": "pdf.create",
+      "implementation_version": "54ffc2c0-d590-4f21-83fa-b56506f5ce6e",
+      "source_sha256": "6e2d3980b4fec8f387f07d3cbebedd82844154fb2e00e18a74bb2c7e05ce5654",
+      "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+      "verification": {
+        "passed": true,
+        "checks": [
+          {
+            "name": "all_content_in_order",
+            "passed": true,
+            "missing": []
+          },
+          {
+            "name": "within_page_bounds",
+            "passed": true
+          },
+          {
+            "name": "readable_text",
+            "passed": true
+          },
+          {
+            "name": "a4_pages",
+            "passed": true
+          },
+          {
+            "name": "complete_inspection",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "71108864-2b1b-4c5b-b879-731860204742",
+      "name": "client-pack.pdf",
+      "page_count": 4,
+      "sha256": "0ee1f2368442db99e57b417e40a9f74df710dcc0b60aed31df75b5d10632b935",
+      "source_assets": [
+        "ad14bc24-5aab-4889-a8dd-3cf690ea4518",
+        "a1d635ed-d13b-4544-a8d1-d0b6d54b7db0",
+        "c124a2f9-b62c-4b5b-9e86-78a0753309ca"
+      ],
+      "tool_name": "pdf.merge",
+      "implementation_version": "f621139d-fdcc-4363-90f5-1557e09f52d5",
+      "source_sha256": "c716c9948663e50aecfadac023165e60aa4a44f0478a92f81e890d85c7cd853b",
+      "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+      "verification": {
+        "passed": true,
+        "checks": [
+          {
+            "name": "all_pages_preserved_in_order",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "5b1f12a9-9aac-41e5-916a-c871fa67213c",
+      "name": "event-pack.pdf",
+      "page_count": 3,
+      "sha256": "3d14656f9cae62eed385f0500c51dcfd00825f897f89362c2e3679a18cbc3c52",
+      "source_assets": [
+        "7c714f48-34da-40bd-8a8f-7eb438b6e2d9",
+        "f11e6b0a-bc84-4c2e-a254-96cbfe9f5244",
+        "dd36a24a-f0aa-4e11-9b2e-6e57aeaf46af"
+      ],
+      "tool_name": "pdf.merge",
+      "implementation_version": "f621139d-fdcc-4363-90f5-1557e09f52d5",
+      "source_sha256": "c716c9948663e50aecfadac023165e60aa4a44f0478a92f81e890d85c7cd853b",
+      "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+      "verification": {
+        "passed": true,
+        "checks": [
+          {
+            "name": "all_pages_preserved_in_order",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "428d2459-d7ec-4564-9650-773ea96e1014",
+      "name": "Horizon Festival Sponsorship Brief.pdf",
+      "page_count": 2,
+      "sha256": "603f84e3eae2abf7e444d9a717629a511df22baa911715264e74549ca2d2a353",
+      "source_assets": [],
+      "tool_name": "pdf.create",
+      "implementation_version": "54ffc2c0-d590-4f21-83fa-b56506f5ce6e",
+      "source_sha256": "6e2d3980b4fec8f387f07d3cbebedd82844154fb2e00e18a74bb2c7e05ce5654",
+      "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+      "verification": {
+        "passed": true,
+        "checks": [
+          {
+            "name": "all_content_in_order",
+            "passed": true,
+            "missing": []
+          },
+          {
+            "name": "within_page_bounds",
+            "passed": true
+          },
+          {
+            "name": "readable_text",
+            "passed": true
+          },
+          {
+            "name": "a4_pages",
+            "passed": true
+          },
+          {
+            "name": "complete_inspection",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "880ca344-6d34-45d2-8692-945af98ae76e",
+      "name": "event-pack.pdf",
+      "page_count": 3,
+      "sha256": "3d14656f9cae62eed385f0500c51dcfd00825f897f89362c2e3679a18cbc3c52",
+      "source_assets": [
+        "5de16caa-56e6-424c-9ab1-6ac82cf33dba",
+        "decaa3f3-92f7-4257-ad4f-e1e5e56ad7b5",
+        "bb3cd169-f3da-49b0-ac5f-74c892c1d717"
+      ],
+      "tool_name": "pdf.merge",
+      "implementation_version": "f621139d-fdcc-4363-90f5-1557e09f52d5",
+      "source_sha256": "c716c9948663e50aecfadac023165e60aa4a44f0478a92f81e890d85c7cd853b",
+      "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+      "verification": {
+        "passed": true,
+        "checks": [
+          {
+            "name": "all_pages_preserved_in_order",
+            "passed": true
+          }
+        ]
+      }
+    }
+  ],
+  "versions": [
+    {
+      "id": "54ffc2c0-d590-4f21-83fa-b56506f5ce6e",
+      "project": "pdf-acceptance",
+      "parent": "builtin",
+      "source": "def render_pdf(document: dict) -> bytes:\n    import io\n    from xml.sax.saxutils import escape\n\n    from reportlab.lib import colors\n    from reportlab.lib.enums import TA_LEFT\n    from reportlab.lib.pagesizes import A4\n    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet\n    from reportlab.lib.units import inch\n    from reportlab.pdfbase import pdfmetrics\n    from reportlab.pdfbase.ttfonts import TTFont\n    from reportlab.platypus import LongTable, Paragraph, SimpleDocTemplate, Spacer, TableStyle\n\n    try:\n        pdfmetrics.getFont(\"DejaVuSans\")\n    except KeyError:\n        pdfmetrics.registerFont(\n            TTFont(\"DejaVuSans\", \"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf\")\n        )\n    try:\n        pdfmetrics.getFont(\"DejaVuSans-Bold\")\n    except KeyError:\n        pdfmetrics.registerFont(\n            TTFont(\"DejaVuSans-Bold\", \"/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf\")\n        )\n\n    styles = getSampleStyleSheet()\n    title_style = ParagraphStyle(\n        \"DocumentTitle\",\n        parent=styles[\"Title\"],\n        fontName=\"DejaVuSans-Bold\",\n        fontSize=18,\n        leading=23,\n        alignment=TA_LEFT,\n        spaceAfter=14,\n    )\n    heading_style = ParagraphStyle(\n        \"SectionHeading\",\n        parent=styles[\"Heading2\"],\n        fontName=\"DejaVuSans-Bold\",\n        fontSize=14,\n        leading=18,\n        spaceBefore=8,\n        spaceAfter=8,\n    )\n    body_style = ParagraphStyle(\n        \"BodyTextDejaVu\",\n        parent=styles[\"BodyText\"],\n        fontName=\"DejaVuSans\",\n        fontSize=10,\n        leading=14,\n        spaceAfter=7,\n    )\n    table_style = ParagraphStyle(\n        \"TableTextDejaVu\",\n        parent=body_style,\n        fontSize=10,\n        leading=13,\n        spaceAfter=0,\n    )\n    table_header_style = ParagraphStyle(\n        \"TableHeaderDejaVu\",\n        parent=table_style,\n        fontName=\"DejaVuSans-Bold\",\n    )\n\n    def paragraph(text, style=body_style):\n        value = \"\" if text is None else str(text)\n        return Paragraph(escape(value).replace(\"\\n\", \"<br/>\"), style)\n\n    story = [paragraph(document[\"title\"], title_style)]\n    for block in document[\"blocks\"]:\n        kind = block[\"kind\"]\n        if kind == \"heading\":\n            story.append(paragraph(block.get(\"text\", \"\"), heading_style))\n        elif kind == \"paragraph\":\n            story.append(paragraph(block.get(\"text\", \"\"), body_style))\n        elif kind == \"bullets\":\n            for item in block.get(\"items\", []):\n                story.append(paragraph(\"\u2022 \" + str(item), body_style))\n        elif kind == \"table\":\n            rows = block.get(\"rows\", [])\n            if not rows:\n                continue\n            column_count = max(len(row) for row in rows)\n            if column_count == 0:\n                continue\n            cells = []\n            for row_index, row in enumerate(rows):\n                normalized = list(row) + [\"\"] * (column_count - len(row))\n                style = table_header_style if row_index == 0 else table_style\n                cells.append([paragraph(cell, style) for cell in normalized])\n            table = LongTable(\n                cells,\n                colWidths=[(A4[0] - 72) / column_count] * column_count,\n                repeatRows=1,\n                hAlign=\"LEFT\",\n                splitByRow=1,\n            )\n            table.setStyle(TableStyle([\n                (\"BACKGROUND\", (0, 0), (-1, 0), colors.HexColor(\"#E8EEF5\")),\n                (\"TEXTCOLOR\", (0, 0), (-1, 0), colors.black),\n                (\"GRID\", (0, 0), (-1, -1), 0.5, colors.HexColor(\"#9AA7B2\")),\n                (\"VALIGN\", (0, 0), (-1, -1), \"TOP\"),\n                (\"LEFTPADDING\", (0, 0), (-1, -1), 6),\n                (\"RIGHTPADDING\", (0, 0), (-1, -1), 6),\n                (\"TOPPADDING\", (0, 0), (-1, -1), 5),\n                (\"BOTTOMPADDING\", (0, 0), (-1, -1), 5),\n            ]))\n            story.append(table)\n            story.append(Spacer(1, 8))\n\n    output = io.BytesIO()\n    document_template = SimpleDocTemplate(\n        output,\n        pagesize=A4,\n        rightMargin=36,\n        leftMargin=36,\n        topMargin=36,\n        bottomMargin=36,\n        title=str(document.get(\"title\", \"\")),\n        author=\"\",\n    )\n    document_template.build(story)\n    return output.getvalue()\n",
+      "artifact_sha256": "6e2d3980b4fec8f387f07d3cbebedd82844154fb2e00e18a74bb2c7e05ce5654",
+      "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+      "runner_version": "pdf-tools-v1",
+      "status": "published",
+      "created_at": "2026-09-06T19:55:10.013403+00:00",
+      "diagnosis": {
+        "outcome": "repair",
+        "diagnosis": "The existing renderer draws flowables directly onto a canvas without handling page breaks. Once the cursor moves below the bottom margin, later blocks are rendered outside the page and are lost from verification. It also does not split long tables across pages. Replace the manual canvas placement with ReportLab Platypus pagination and a splittable LongTable.",
+        "evidence_ids": [
+          "dd762e1f-e939-4dce-a698-c199e80a960f"
+        ],
+        "target": "render_pdf",
+        "source": "def render_pdf(document: dict) -> bytes:\n    import io\n    from xml.sax.saxutils import escape\n\n    from reportlab.lib import colors\n    from reportlab.lib.enums import TA_LEFT\n    from reportlab.lib.pagesizes import A4\n    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet\n    from reportlab.lib.units import inch\n    from reportlab.pdfbase import pdfmetrics\n    from reportlab.pdfbase.ttfonts import TTFont\n    from reportlab.platypus import LongTable, Paragraph, SimpleDocTemplate, Spacer, TableStyle\n\n    try:\n        pdfmetrics.getFont(\"DejaVuSans\")\n    except KeyError:\n        pdfmetrics.registerFont(\n            TTFont(\"DejaVuSans\", \"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf\")\n        )\n    try:\n        pdfmetrics.getFont(\"DejaVuSans-Bold\")\n    except KeyError:\n        pdfmetrics.registerFont(\n            TTFont(\"DejaVuSans-Bold\", \"/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf\")\n        )\n\n    styles = getSampleStyleSheet()\n    title_style = ParagraphStyle(\n        \"DocumentTitle\",\n        parent=styles[\"Title\"],\n        fontName=\"DejaVuSans-Bold\",\n        fontSize=18,\n        leading=23,\n        alignment=TA_LEFT,\n        spaceAfter=14,\n    )\n    heading_style = ParagraphStyle(\n        \"SectionHeading\",\n        parent=styles[\"Heading2\"],\n        fontName=\"DejaVuSans-Bold\",\n        fontSize=14,\n        leading=18,\n        spaceBefore=8,\n        spaceAfter=8,\n    )\n    body_style = ParagraphStyle(\n        \"BodyTextDejaVu\",\n        parent=styles[\"BodyText\"],\n        fontName=\"DejaVuSans\",\n        fontSize=10,\n        leading=14,\n        spaceAfter=7,\n    )\n    table_style = ParagraphStyle(\n        \"TableTextDejaVu\",\n        parent=body_style,\n        fontSize=10,\n        leading=13,\n        spaceAfter=0,\n    )\n    table_header_style = ParagraphStyle(\n        \"TableHeaderDejaVu\",\n        parent=table_style,\n        fontName=\"DejaVuSans-Bold\",\n    )\n\n    def paragraph(text, style=body_style):\n        value = \"\" if text is None else str(text)\n        return Paragraph(escape(value).replace(\"\\n\", \"<br/>\"), style)\n\n    story = [paragraph(document[\"title\"], title_style)]\n    for block in document[\"blocks\"]:\n        kind = block[\"kind\"]\n        if kind == \"heading\":\n            story.append(paragraph(block.get(\"text\", \"\"), heading_style))\n        elif kind == \"paragraph\":\n            story.append(paragraph(block.get(\"text\", \"\"), body_style))\n        elif kind == \"bullets\":\n            for item in block.get(\"items\", []):\n                story.append(paragraph(\"\u2022 \" + str(item), body_style))\n        elif kind == \"table\":\n            rows = block.get(\"rows\", [])\n            if not rows:\n                continue\n            column_count = max(len(row) for row in rows)\n            if column_count == 0:\n                continue\n            cells = []\n            for row_index, row in enumerate(rows):\n                normalized = list(row) + [\"\"] * (column_count - len(row))\n                style = table_header_style if row_index == 0 else table_style\n                cells.append([paragraph(cell, style) for cell in normalized])\n            table = LongTable(\n                cells,\n                colWidths=[(A4[0] - 72) / column_count] * column_count,\n                repeatRows=1,\n                hAlign=\"LEFT\",\n                splitByRow=1,\n            )\n            table.setStyle(TableStyle([\n                (\"BACKGROUND\", (0, 0), (-1, 0), colors.HexColor(\"#E8EEF5\")),\n                (\"TEXTCOLOR\", (0, 0), (-1, 0), colors.black),\n                (\"GRID\", (0, 0), (-1, -1), 0.5, colors.HexColor(\"#9AA7B2\")),\n                (\"VALIGN\", (0, 0), (-1, -1), \"TOP\"),\n                (\"LEFTPADDING\", (0, 0), (-1, -1), 6),\n                (\"RIGHTPADDING\", (0, 0), (-1, -1), 6),\n                (\"TOPPADDING\", (0, 0), (-1, -1), 5),\n                (\"BOTTOMPADDING\", (0, 0), (-1, -1), 5),\n            ]))\n            story.append(table)\n            story.append(Spacer(1, 8))\n\n    output = io.BytesIO()\n    document_template = SimpleDocTemplate(\n        output,\n        pagesize=A4,\n        rightMargin=36,\n        leftMargin=36,\n        topMargin=36,\n        bottomMargin=36,\n        title=str(document.get(\"title\", \"\")),\n        author=\"\",\n    )\n    document_template.build(story)\n    return output.getvalue()\n",
+        "description": "A repaired in-memory PDF renderer that converts document headings, paragraphs, bullet items, and tables into an A4 PDF using ReportLab Platypus. It uses embedded DejaVu Sans fonts, margins of 36 points, readable 10-point text, automatic pagination for paragraphs and bullet items, and LongTable row splitting with repeated headers so content remains complete and in order across pages.",
+        "input_schema_json": "",
+        "uncertainty": "The implementation assumes the runtime font paths and ReportLab behavior specified by the environment remain available. Table cells are evenly sized across the available width; unusually wide or complex cell content may produce additional page breaks, but is retained."
+      },
+      "diff": "--- before/pdf_renderer.py\n+++ after/pdf_renderer.py\n@@ -1,50 +1,125 @@\n-def render_pdf(document):\n+def render_pdf(document: dict) -> bytes:\n     import io\n     from xml.sax.saxutils import escape\n \n+    from reportlab.lib import colors\n+    from reportlab.lib.enums import TA_LEFT\n     from reportlab.lib.pagesizes import A4\n-    from reportlab.lib.styles import ParagraphStyle\n+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet\n+    from reportlab.lib.units import inch\n     from reportlab.pdfbase import pdfmetrics\n     from reportlab.pdfbase.ttfonts import TTFont\n-    from reportlab.pdfgen.canvas import Canvas\n-    from reportlab.platypus import Paragraph, Table, TableStyle\n+    from reportlab.platypus import LongTable, Paragraph, SimpleDocTemplate, Spacer, TableStyle\n \n-    pdfmetrics.registerFont(TTFont(\"Body\", \"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf\"))\n-    pdfmetrics.registerFont(\n-        TTFont(\"Strong\", \"/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf\")\n+    try:\n+        pdfmetrics.getFont(\"DejaVuSans\")\n+    except KeyError:\n+        pdfmetrics.registerFont(\n+            TTFont(\"DejaVuSans\", \"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf\")\n+        )\n+    try:\n+        pdfmetrics.getFont(\"DejaVuSans-Bold\")\n+    except KeyError:\n+        pdfmetrics.registerFont(\n+            TTFont(\"DejaVuSans-Bold\", \"/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf\")\n+        )\n+\n+    styles = getSampleStyleSheet()\n+    title_style = ParagraphStyle(\n+        \"DocumentTitle\",\n+        parent=styles[\"Title\"],\n+        fontName=\"DejaVuSans-Bold\",\n+        fontSize=18,\n+        leading=23,\n+        alignment=TA_LEFT,\n+        spaceAfter=14,\n     )\n-    out = io.BytesIO()\n-    canvas = Canvas(out, pagesize=A4)\n-    width, height = A4\n-    left, available, y = 42, width - 84, height - 42\n-    normal = ParagraphStyle(\"normal\", fontName=\"Body\", fontSize=11, leading=16, spaceAfter=10)\n-    heading = ParagraphStyle(\"heading\", fontName=\"Strong\", fontSize=16, leading=22, spaceAfter=12)\n-    parts = [(\"heading\", document[\"title\"])]\n+    heading_style = ParagraphStyle(\n+        \"SectionHeading\",\n+        parent=styles[\"Heading2\"],\n+        fontName=\"DejaVuSans-Bold\",\n+        fontSize=14,\n+        leading=18,\n+        spaceBefore=8,\n+        spaceAfter=8,\n+    )\n+    body_style = ParagraphStyle(\n+        \"BodyTextDejaVu\",\n+        parent=styles[\"BodyText\"],\n+        fontName=\"DejaVuSans\",\n+        fontSize=10,\n+        leading=14,\n+        spaceAfter=7,\n+    )\n+    table_style = ParagraphStyle(\n+        \"TableTextDejaVu\",\n+        parent=body_style,\n+        fontSize=10,\n+        leading=13,\n+        spaceAfter=0,\n+    )\n+    table_header_style = ParagraphStyle(\n+        \"TableHeaderDejaVu\",\n+        parent=table_style,\n+        fontName=\"DejaVuSans-Bold\",\n+    )\n+\n+    def paragraph(text, style=body_style):\n+        value = \"\" if text is None else str(text)\n+        return Paragraph(escape(value).replace(\"\\n\", \"<br/>\"), style)\n+\n+    story = [paragraph(document[\"title\"], title_style)]\n     for block in document[\"blocks\"]:\n-        if block[\"kind\"] in (\"heading\", \"paragraph\"):\n-            parts.append((block[\"kind\"], block[\"text\"]))\n-        elif block[\"kind\"] == \"bullets\":\n-            parts.extend((\"paragraph\", \"\u2022 \" + text) for text in block[\"items\"])\n-        else:\n-            parts.append((\"table\", block[\"rows\"]))\n-    for kind, value in parts:\n-        if kind == \"table\":\n-            flow = Table(\n-                [[Paragraph(escape(cell), normal) for cell in row] for row in value],\n-                colWidths=[available / len(value[0])] * len(value[0]),\n+        kind = block[\"kind\"]\n+        if kind == \"heading\":\n+            story.append(paragraph(block.get(\"text\", \"\"), heading_style))\n+        elif kind == \"paragraph\":\n+            story.append(paragraph(block.get(\"text\", \"\"), body_style))\n+        elif kind == \"bullets\":\n+            for item in block.get(\"items\", []):\n+                story.append(paragraph(\"\u2022 \" + str(item), body_style))\n+        elif kind == \"table\":\n+            rows = block.get(\"rows\", [])\n+            if not rows:\n+                continue\n+            column_count = max(len(row) for row in rows)\n+            if column_count == 0:\n+                continue\n+            cells = []\n+            for row_index, row in enumerate(rows):\n+                normalized = list(row) + [\"\"] * (column_count - len(row))\n+                style = table_header_style if row_index == 0 else table_style\n+                cells.append([paragraph(cell, style) for cell in normalized])\n+            table = LongTable(\n+                cells,\n+                colWidths=[(A4[0] - 72) / column_count] * column_count,\n+                repeatRows=1,\n+                hAlign=\"LEFT\",\n+                splitByRow=1,\n             )\n-            flow.setStyle(\n-                TableStyle(\n-                    [(\"VALIGN\", (0, 0), (-1, -1), \"TOP\"), (\"BOTTOMPADDING\", (0, 0), (-1, -1), 8)]\n-                )\n-            )\n-        else:\n-            flow = Paragraph(\n-                escape(value).replace(\"\\n\", \"<br/>\"), heading if kind == \"heading\" else normal\n-            )\n-        _, used = flow.wrap(available, 100000)\n-        y -= used\n-        flow.drawOn(canvas, left, y)\n-        y -= 12\n-    canvas.save()\n-    return out.getvalue()\n+            table.setStyle(TableStyle([\n+                (\"BACKGROUND\", (0, 0), (-1, 0), colors.HexColor(\"#E8EEF5\")),\n+                (\"TEXTCOLOR\", (0, 0), (-1, 0), colors.black),\n+                (\"GRID\", (0, 0), (-1, -1), 0.5, colors.HexColor(\"#9AA7B2\")),\n+                (\"VALIGN\", (0, 0), (-1, -1), \"TOP\"),\n+                (\"LEFTPADDING\", (0, 0), (-1, -1), 6),\n+                (\"RIGHTPADDING\", (0, 0), (-1, -1), 6),\n+                (\"TOPPADDING\", (0, 0), (-1, -1), 5),\n+                (\"BOTTOMPADDING\", (0, 0), (-1, -1), 5),\n+            ]))\n+            story.append(table)\n+            story.append(Spacer(1, 8))\n+\n+    output = io.BytesIO()\n+    document_template = SimpleDocTemplate(\n+        output,\n+        pagesize=A4,\n+        rightMargin=36,\n+        leftMargin=36,\n+        topMargin=36,\n+        bottomMargin=36,\n+        title=str(document.get(\"title\", \"\")),\n+        author=\"\",\n+    )\n+    document_template.build(story)\n+    return output.getvalue()\n",
+      "proofs": [
+        {
+          "kind": "isolation",
+          "passed": true,
+          "artifact_sha256": "6e2d3980b4fec8f387f07d3cbebedd82844154fb2e00e18a74bb2c7e05ce5654",
+          "bundle_sha256": "c5e58b139d0469957f0e242a21e102218632eb54b3a7e8746c4ef42f4ad593fe",
+          "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+          "verifier_sha256": "1834b704195b97a86e5efd7efdd9b080dab563d71a0a04675a6e81bc77739bec",
+          "checks": {
+            "nonroot": true,
+            "credentials_absent": true,
+            "host_absent": true,
+            "root_read_only": true,
+            "network_denied": true
+          }
+        },
+        {
+          "kind": "component",
+          "passed": true,
+          "artifact_sha256": "6e2d3980b4fec8f387f07d3cbebedd82844154fb2e00e18a74bb2c7e05ce5654",
+          "bundle_sha256": "c5e58b139d0469957f0e242a21e102218632eb54b3a7e8746c4ef42f4ad593fe",
+          "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+          "verifier_sha256": "1834b704195b97a86e5efd7efdd9b080dab563d71a0a04675a6e81bc77739bec",
+          "cases": [
+            {
+              "case": 0,
+              "passed": true,
+              "checks": [
+                {
+                  "name": "all_content_in_order",
+                  "passed": true,
+                  "missing": []
+                },
+                {
+                  "name": "within_page_bounds",
+                  "passed": true
+                },
+                {
+                  "name": "readable_text",
+                  "passed": true
+                },
+                {
+                  "name": "a4_pages",
+                  "passed": true
+                },
+                {
+                  "name": "complete_inspection",
+                  "passed": true
+                }
+              ],
+              "pdf_sha256": "db2fc4f3f231b787422de73b6a03e4a089086a7fc824e8781270adccc50479ab",
+              "page_count": 2
+            },
+            {
+              "case": 1,
+              "passed": true,
+              "checks": [
+                {
+                  "name": "all_content_in_order",
+                  "passed": true,
+                  "missing": []
+                },
+                {
+                  "name": "within_page_bounds",
+                  "passed": true
+                },
+                {
+                  "name": "readable_text",
+                  "passed": true
+                },
+                {
+                  "name": "a4_pages",
+                  "passed": true
+                },
+                {
+                  "name": "complete_inspection",
+                  "passed": true
+                }
+              ],
+              "pdf_sha256": "2ebc6a67af03294de6227809e512297a19617218efff2dfc5ecf60b3ff865941",
+              "page_count": 1
+            },
+            {
+              "case": 2,
+              "passed": true,
+              "checks": [
+                {
+                  "name": "all_content_in_order",
+                  "passed": true,
+                  "missing": []
+                },
+                {
+                  "name": "within_page_bounds",
+                  "passed": true
+                },
+                {
+                  "name": "readable_text",
+                  "passed": true
+                },
+                {
+                  "name": "a4_pages",
+                  "passed": true
+                },
+                {
+                  "name": "complete_inspection",
+                  "passed": true
+                }
+              ],
+              "pdf_sha256": "0ccef520bbd6f5096987c9fcee18220b77a0650f463314869ace59d49d230c6e",
+              "page_count": 2
+            },
+            {
+              "case": 3,
+              "passed": true,
+              "checks": [
+                {
+                  "name": "all_content_in_order",
+                  "passed": true,
+                  "missing": []
+                },
+                {
+                  "name": "within_page_bounds",
+                  "passed": true
+                },
+                {
+                  "name": "readable_text",
+                  "passed": true
+                },
+                {
+                  "name": "a4_pages",
+                  "passed": true
+                },
+                {
+                  "name": "complete_inspection",
+                  "passed": true
+                }
+              ],
+              "pdf_sha256": "ac171b77dd3e9df45d602fb9609c19f6ba4e11277968f384c14356d9128aabf6",
+              "page_count": 4
+            }
+          ]
+        },
+        {
+          "kind": "regression",
+          "passed": true,
+          "artifact_sha256": "6e2d3980b4fec8f387f07d3cbebedd82844154fb2e00e18a74bb2c7e05ce5654",
+          "bundle_sha256": "c5e58b139d0469957f0e242a21e102218632eb54b3a7e8746c4ef42f4ad593fe",
+          "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+          "verifier_sha256": "1834b704195b97a86e5efd7efdd9b080dab563d71a0a04675a6e81bc77739bec",
+          "cases": [
+            {
+              "case": 0,
+              "passed": true,
+              "checks": [
+                {
+                  "name": "all_content_in_order",
+                  "passed": true,
+                  "missing": []
+                },
+                {
+                  "name": "within_page_bounds",
+                  "passed": true
+                },
+                {
+                  "name": "readable_text",
+                  "passed": true
+                },
+                {
+                  "name": "a4_pages",
+                  "passed": true
+                },
+                {
+                  "name": "complete_inspection",
+                  "passed": true
+                }
+              ],
+              "pdf_sha256": "db2fc4f3f231b787422de73b6a03e4a089086a7fc824e8781270adccc50479ab",
+              "page_count": 2
+            },
+            {
+              "case": 1,
+              "passed": true,
+              "checks": [
+                {
+                  "name": "all_content_in_order",
+                  "passed": true,
+                  "missing": []
+                },
+                {
+                  "name": "within_page_bounds",
+                  "passed": true
+                },
+                {
+                  "name": "readable_text",
+                  "passed": true
+                },
+                {
+                  "name": "a4_pages",
+                  "passed": true
+                },
+                {
+                  "name": "complete_inspection",
+                  "passed": true
+                }
+              ],
+              "pdf_sha256": "2ebc6a67af03294de6227809e512297a19617218efff2dfc5ecf60b3ff865941",
+              "page_count": 1
+            },
+            {
+              "case": 2,
+              "passed": true,
+              "checks": [
+                {
+                  "name": "all_content_in_order",
+                  "passed": true,
+                  "missing": []
+                },
+                {
+                  "name": "within_page_bounds",
+                  "passed": true
+                },
+                {
+                  "name": "readable_text",
+                  "passed": true
+                },
+                {
+                  "name": "a4_pages",
+                  "passed": true
+                },
+                {
+                  "name": "complete_inspection",
+                  "passed": true
+                }
+              ],
+              "pdf_sha256": "0ccef520bbd6f5096987c9fcee18220b77a0650f463314869ace59d49d230c6e",
+              "page_count": 2
+            },
+            {
+              "case": 3,
+              "passed": true,
+              "checks": [
+                {
+                  "name": "all_content_in_order",
+                  "passed": true,
+                  "missing": []
+                },
+                {
+                  "name": "within_page_bounds",
+                  "passed": true
+                },
+                {
+                  "name": "readable_text",
+                  "passed": true
+                },
+                {
+                  "name": "a4_pages",
+                  "passed": true
+                },
+                {
+                  "name": "complete_inspection",
+                  "passed": true
+                }
+              ],
+              "pdf_sha256": "ac171b77dd3e9df45d602fb9609c19f6ba4e11277968f384c14356d9128aabf6",
+              "page_count": 4
+            }
+          ],
+          "protected_unchanged": true
+        },
+        {
+          "kind": "original_replay",
+          "passed": true,
+          "artifact_sha256": "6e2d3980b4fec8f387f07d3cbebedd82844154fb2e00e18a74bb2c7e05ce5654",
+          "bundle_sha256": "c5e58b139d0469957f0e242a21e102218632eb54b3a7e8746c4ef42f4ad593fe",
+          "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+          "verifier_sha256": "1834b704195b97a86e5efd7efdd9b080dab563d71a0a04675a6e81bc77739bec",
+          "executor": {
+            "success": true,
+            "final_response": "Created Northstar Studio Retreat Complete.pdf \u2014 2 A4 pages, 45,939 bytes.\n\nVerified the saved PDF preserves the complete supplied content in order, without shortening: every section, itinerary entry, accommodation benefit, budget figure, and cancellation condition. Independent checks passed for completeness, readable text, and content within page bounds.\n\nPDF:\n /api/chats/24898954-f5b4-4c90-a9dd-f208ada57f5b/assets/bba11e6e-7959-4e02-9677-79eace704115/content",
+            "baseline": {
+              "implementation_commit": "0edab1ac4d4f72f489945edbb62a34f69e6864b3",
+              "implementation_sha256": "670756d1111f2d0a43b032ead71a77d8712b3e38747664e4908def7af6fe7144",
+              "model": "gpt-6-astra",
+              "provider": "openai-codex",
+              "base_url": "",
+              "effective_base_url": "https://chatgpt.com/backend-api/codex",
+              "model_configuration_sha256": "c1bc308a059ca8d974389034da6e3fd82d1a237d0ba6d75302022c4128959a4c",
+              "inference_options": {
+                "reasoning_effort": "medium",
+                "service_tier": ""
+              },
+              "user_settings_sha256": {
+                "config.yaml": "589769199b6ea84493645f657b4eaef38139561508afec3de8ac180cf0325274",
+                "auth.json": "ff6f9845e3130cca44ea37e3af0e5f774d599c367cfa239f459846d594cb4374",
+                ".env": "ac1e755781f085d3eb6d0ed94de046dc50bde2c0a24cff3c9e978a98a3f08c09",
+                "SOUL.md": "3bd38ef92efb90d0fdda1bb73036185d4a4bc11079963cb0e2db71c84281e64e"
+              },
+              "discovery_sha256": "ec980f9d342cf9dc56e6df6fa1e0dcb094b84bf62d89c47e31c7870ba7342574",
+              "tool_names": [
+                "mcp__epoch__describe_tool",
+                "mcp__epoch__discover_tools",
+                "mcp__epoch__invoke_tool"
+              ],
+              "memory_state": "fresh_empty_home_memory_disabled",
+              "logical_workspace": "/Users/bhaskarpandit/Documents/epoch/backend",
+              "home_display": "hermes-home (relative to isolated run directory)",
+              "coding_context": "off",
+              "context_files": "disabled",
+              "background_review": "disabled",
+              "brief_sha256": "de7620079444973b3f2bb4e8d6c8b6e3b17d4b819c3e03773dc35d5207420c96",
+              "bridge_sha256": "279900912dae23e09d18f15e8b49e7cdea7df293e1af7678a09e899bdd067190",
+              "system_prompt_initial_sha256": "6790cb9dee2344989bb5ee70597235a9e5079f4ccfc3e5128683115b2b810bc5",
+              "system_prompt_sha256": "6790cb9dee2344989bb5ee70597235a9e5079f4ccfc3e5128683115b2b810bc5",
+              "system_prompt_unchanged": true,
+              "system_prompt_static_sha256": "98d0ab6eaa1669fc285064fb75f6a26519f2d055a9a1a86fcf40f3cd71c1250c",
+              "system_prompt_static_unchanged": true,
+              "implementation_unchanged": true,
+              "user_settings_unchanged": true,
+              "discovery_unchanged": true,
+              "request_gate": "parent_ack_before_httpx_model_request",
+              "api_max_retries": 1,
+              "stream_retries": 0
+            },
+            "missing_evidence": [],
+            "api_calls": 7,
+            "turns_used": 7,
+            "session_turns_used": 7,
+            "history_retained": true,
+            "segment": 1
+          },
+          "verification": {
+            "passed": true,
+            "asset_ids": [
+              "bba11e6e-7959-4e02-9677-79eace704115"
+            ],
+            "new_outputs": [
+              "bba11e6e-7959-4e02-9677-79eace704115"
+            ]
+          }
+        },
+        {
+          "kind": "fresh_task",
+          "passed": true,
+          "artifact_sha256": "6e2d3980b4fec8f387f07d3cbebedd82844154fb2e00e18a74bb2c7e05ce5654",
+          "bundle_sha256": "c5e58b139d0469957f0e242a21e102218632eb54b3a7e8746c4ef42f4ad593fe",
+          "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+          "verifier_sha256": "1834b704195b97a86e5efd7efdd9b080dab563d71a0a04675a6e81bc77739bec",
+          "executor": {
+            "success": true,
+            "final_response": "Created Horizon Festival Sponsorship Brief.pdf \u2014 2 A4 pages.\n\nPreserved the complete supplied text without shortening, including all five packages, every benefit and repeated approval condition, all budget figures, and payment and cancellation terms.\n\nThe saved PDF passed independent checks for complete content in order, readable text, and no content outside page bounds.\n\nPDF download endpoint:\n/api/chats/d6c284c9-52f9-4d7a-adfa-99cbffd193bf/assets/71565614-703b-4890-9c11-e7c14b40881f/content",
+            "baseline": {
+              "implementation_commit": "0edab1ac4d4f72f489945edbb62a34f69e6864b3",
+              "implementation_sha256": "670756d1111f2d0a43b032ead71a77d8712b3e38747664e4908def7af6fe7144",
+              "model": "gpt-6-astra",
+              "provider": "openai-codex",
+              "base_url": "",
+              "effective_base_url": "https://chatgpt.com/backend-api/codex",
+              "model_configuration_sha256": "c1bc308a059ca8d974389034da6e3fd82d1a237d0ba6d75302022c4128959a4c",
+              "inference_options": {
+                "reasoning_effort": "medium",
+                "service_tier": ""
+              },
+              "user_settings_sha256": {
+                "config.yaml": "589769199b6ea84493645f657b4eaef38139561508afec3de8ac180cf0325274",
+                "auth.json": "ff6f9845e3130cca44ea37e3af0e5f774d599c367cfa239f459846d594cb4374",
+                ".env": "ac1e755781f085d3eb6d0ed94de046dc50bde2c0a24cff3c9e978a98a3f08c09",
+                "SOUL.md": "3bd38ef92efb90d0fdda1bb73036185d4a4bc11079963cb0e2db71c84281e64e"
+              },
+              "discovery_sha256": "ec980f9d342cf9dc56e6df6fa1e0dcb094b84bf62d89c47e31c7870ba7342574",
+              "tool_names": [
+                "mcp__epoch__describe_tool",
+                "mcp__epoch__discover_tools",
+                "mcp__epoch__invoke_tool"
+              ],
+              "memory_state": "fresh_empty_home_memory_disabled",
+              "logical_workspace": "/Users/bhaskarpandit/Documents/epoch/backend",
+              "home_display": "hermes-home (relative to isolated run directory)",
+              "coding_context": "off",
+              "context_files": "disabled",
+              "background_review": "disabled",
+              "brief_sha256": "56a7927275a20b645ecd8900b56440e96f1e36b0c998babb0a4cc859405b1b58",
+              "bridge_sha256": "279900912dae23e09d18f15e8b49e7cdea7df293e1af7678a09e899bdd067190",
+              "system_prompt_initial_sha256": "6790cb9dee2344989bb5ee70597235a9e5079f4ccfc3e5128683115b2b810bc5",
+              "system_prompt_sha256": "6790cb9dee2344989bb5ee70597235a9e5079f4ccfc3e5128683115b2b810bc5",
+              "system_prompt_unchanged": true,
+              "system_prompt_static_sha256": "98d0ab6eaa1669fc285064fb75f6a26519f2d055a9a1a86fcf40f3cd71c1250c",
+              "system_prompt_static_unchanged": true,
+              "implementation_unchanged": true,
+              "user_settings_unchanged": true,
+              "discovery_unchanged": true,
+              "request_gate": "parent_ack_before_httpx_model_request",
+              "api_max_retries": 1,
+              "stream_retries": 0
+            },
+            "missing_evidence": [],
+            "api_calls": 7,
+            "turns_used": 7,
+            "session_turns_used": 7,
+            "history_retained": true,
+            "segment": 1
+          },
+          "verification": {
+            "passed": true,
+            "asset_ids": [
+              "71565614-703b-4890-9c11-e7c14b40881f"
+            ],
+            "new_outputs": [
+              "71565614-703b-4890-9c11-e7c14b40881f"
+            ]
+          }
+        }
+      ],
+      "target": "pdf_renderer.py",
+      "artifacts": {
+        "pdf_renderer.py": {
+          "source": "def render_pdf(document: dict) -> bytes:\n    import io\n    from xml.sax.saxutils import escape\n\n    from reportlab.lib import colors\n    from reportlab.lib.enums import TA_LEFT\n    from reportlab.lib.pagesizes import A4\n    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet\n    from reportlab.lib.units import inch\n    from reportlab.pdfbase import pdfmetrics\n    from reportlab.pdfbase.ttfonts import TTFont\n    from reportlab.platypus import LongTable, Paragraph, SimpleDocTemplate, Spacer, TableStyle\n\n    try:\n        pdfmetrics.getFont(\"DejaVuSans\")\n    except KeyError:\n        pdfmetrics.registerFont(\n            TTFont(\"DejaVuSans\", \"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf\")\n        )\n    try:\n        pdfmetrics.getFont(\"DejaVuSans-Bold\")\n    except KeyError:\n        pdfmetrics.registerFont(\n            TTFont(\"DejaVuSans-Bold\", \"/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf\")\n        )\n\n    styles = getSampleStyleSheet()\n    title_style = ParagraphStyle(\n        \"DocumentTitle\",\n        parent=styles[\"Title\"],\n        fontName=\"DejaVuSans-Bold\",\n        fontSize=18,\n        leading=23,\n        alignment=TA_LEFT,\n        spaceAfter=14,\n    )\n    heading_style = ParagraphStyle(\n        \"SectionHeading\",\n        parent=styles[\"Heading2\"],\n        fontName=\"DejaVuSans-Bold\",\n        fontSize=14,\n        leading=18,\n        spaceBefore=8,\n        spaceAfter=8,\n    )\n    body_style = ParagraphStyle(\n        \"BodyTextDejaVu\",\n        parent=styles[\"BodyText\"],\n        fontName=\"DejaVuSans\",\n        fontSize=10,\n        leading=14,\n        spaceAfter=7,\n    )\n    table_style = ParagraphStyle(\n        \"TableTextDejaVu\",\n        parent=body_style,\n        fontSize=10,\n        leading=13,\n        spaceAfter=0,\n    )\n    table_header_style = ParagraphStyle(\n        \"TableHeaderDejaVu\",\n        parent=table_style,\n        fontName=\"DejaVuSans-Bold\",\n    )\n\n    def paragraph(text, style=body_style):\n        value = \"\" if text is None else str(text)\n        return Paragraph(escape(value).replace(\"\\n\", \"<br/>\"), style)\n\n    story = [paragraph(document[\"title\"], title_style)]\n    for block in document[\"blocks\"]:\n        kind = block[\"kind\"]\n        if kind == \"heading\":\n            story.append(paragraph(block.get(\"text\", \"\"), heading_style))\n        elif kind == \"paragraph\":\n            story.append(paragraph(block.get(\"text\", \"\"), body_style))\n        elif kind == \"bullets\":\n            for item in block.get(\"items\", []):\n                story.append(paragraph(\"\u2022 \" + str(item), body_style))\n        elif kind == \"table\":\n            rows = block.get(\"rows\", [])\n            if not rows:\n                continue\n            column_count = max(len(row) for row in rows)\n            if column_count == 0:\n                continue\n            cells = []\n            for row_index, row in enumerate(rows):\n                normalized = list(row) + [\"\"] * (column_count - len(row))\n                style = table_header_style if row_index == 0 else table_style\n                cells.append([paragraph(cell, style) for cell in normalized])\n            table = LongTable(\n                cells,\n                colWidths=[(A4[0] - 72) / column_count] * column_count,\n                repeatRows=1,\n                hAlign=\"LEFT\",\n                splitByRow=1,\n            )\n            table.setStyle(TableStyle([\n                (\"BACKGROUND\", (0, 0), (-1, 0), colors.HexColor(\"#E8EEF5\")),\n                (\"TEXTCOLOR\", (0, 0), (-1, 0), colors.black),\n                (\"GRID\", (0, 0), (-1, -1), 0.5, colors.HexColor(\"#9AA7B2\")),\n                (\"VALIGN\", (0, 0), (-1, -1), \"TOP\"),\n                (\"LEFTPADDING\", (0, 0), (-1, -1), 6),\n                (\"RIGHTPADDING\", (0, 0), (-1, -1), 6),\n                (\"TOPPADDING\", (0, 0), (-1, -1), 5),\n                (\"BOTTOMPADDING\", (0, 0), (-1, -1), 5),\n            ]))\n            story.append(table)\n            story.append(Spacer(1, 8))\n\n    output = io.BytesIO()\n    document_template = SimpleDocTemplate(\n        output,\n        pagesize=A4,\n        rightMargin=36,\n        leftMargin=36,\n        topMargin=36,\n        bottomMargin=36,\n        title=str(document.get(\"title\", \"\")),\n        author=\"\",\n    )\n    document_template.build(story)\n    return output.getvalue()\n",
+          "artifact_sha256": "6e2d3980b4fec8f387f07d3cbebedd82844154fb2e00e18a74bb2c7e05ce5654",
+          "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+          "runner_version": "pdf-tools-v1",
+          "origin_version": "54ffc2c0-d590-4f21-83fa-b56506f5ce6e",
+          "origin_project": "pdf-acceptance",
+          "tool_contract": null,
+          "portable": false
+        }
+      },
+      "bundle_sha256": "c5e58b139d0469957f0e242a21e102218632eb54b3a7e8746c4ef42f4ad593fe",
+      "published_at": "2026-09-06T19:57:52.916987+00:00"
+    },
+    {
+      "id": "f621139d-fdcc-4363-90f5-1557e09f52d5",
+      "project": "pdf-acceptance",
+      "parent": "54ffc2c0-d590-4f21-83fa-b56506f5ce6e",
+      "source": "import io\nfrom pypdf import PdfReader, PdfWriter\n\n\ndef merge_pdfs(inputs: list[bytes]) -> bytes:\n    \"\"\"Merge PDF byte strings while preserving page order, appearance, size, and rotation.\"\"\"\n    writer = PdfWriter()\n    for data in inputs:\n        reader = PdfReader(io.BytesIO(data))\n        for page in reader.pages:\n            writer.add_page(page)\n    output = io.BytesIO()\n    writer.write(output)\n    return output.getvalue()\n",
+      "artifact_sha256": "c716c9948663e50aecfadac023165e60aa4a44f0478a92f81e890d85c7cd853b",
+      "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+      "runner_version": "pdf-tools-v1",
+      "status": "published",
+      "created_at": "2026-09-06T20:04:05.094233+00:00",
+      "diagnosis": {
+        "outcome": "repair",
+        "diagnosis": "The authorized pdf.merge capability is absent, and the prior generation attempt failed before producing an implementation. Creating the merge tool from scratch is supported by the capability-request event.",
+        "evidence_ids": [
+          "4178f863-5114-400b-96e6-237703ca53d1"
+        ],
+        "target": "merge_pdfs",
+        "source": "import io\nfrom pypdf import PdfReader, PdfWriter\n\n\ndef merge_pdfs(inputs: list[bytes]) -> bytes:\n    \"\"\"Merge PDF byte strings while preserving page order, appearance, size, and rotation.\"\"\"\n    writer = PdfWriter()\n    for data in inputs:\n        reader = PdfReader(io.BytesIO(data))\n        for page in reader.pages:\n            writer.add_page(page)\n    output = io.BytesIO()\n    writer.write(output)\n    return output.getvalue()\n",
+        "description": "Merges two or more PDF byte inputs in the supplied order into one PDF. Pages are copied with pypdf so their original appearance, dimensions, rotation, and duplicate occurrences are preserved. The operation is entirely in memory.",
+        "input_schema_json": "",
+        "input_schema": {
+          "additionalProperties": false,
+          "properties": {
+            "asset_ids": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "maxItems": 5,
+              "minItems": 2,
+              "title": "Asset Ids",
+              "type": "array"
+            },
+            "output_name": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9 _.-]{0,119}\\.pdf$",
+              "title": "Output Name",
+              "type": "string"
+            },
+            "idempotency_key": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Idempotency Key",
+              "type": "string"
+            }
+          },
+          "required": [
+            "asset_ids",
+            "output_name",
+            "idempotency_key"
+          ],
+          "title": "MergePdf",
+          "type": "object"
+        },
+        "uncertainty": "Low uncertainty. The implementation relies on pypdf's page-copy behavior and does not inspect or rewrite page content; independent verification should confirm preservation for PDFs with unusual annotations, encryption, or malformed structures."
+      },
+      "diff": "--- before/pdf_merge.py\n+++ after/pdf_merge.py\n@@ -0,0 +1,14 @@\n+import io\n+from pypdf import PdfReader, PdfWriter\n+\n+\n+def merge_pdfs(inputs: list[bytes]) -> bytes:\n+    \"\"\"Merge PDF byte strings while preserving page order, appearance, size, and rotation.\"\"\"\n+    writer = PdfWriter()\n+    for data in inputs:\n+        reader = PdfReader(io.BytesIO(data))\n+        for page in reader.pages:\n+            writer.add_page(page)\n+    output = io.BytesIO()\n+    writer.write(output)\n+    return output.getvalue()\n",
+      "proofs": [
+        {
+          "kind": "isolation",
+          "passed": true,
+          "artifact_sha256": "c716c9948663e50aecfadac023165e60aa4a44f0478a92f81e890d85c7cd853b",
+          "bundle_sha256": "97192cbad744c2fb6ac6d9f532ce266ebeb858202b2e8b43a01da648f5cbe993",
+          "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+          "verifier_sha256": "47764b65705fe4ce2e2eb321fa04fcfa824075b4c92bc7e921a7377c57a99880",
+          "checks": {
+            "nonroot": true,
+            "credentials_absent": true,
+            "host_absent": true,
+            "root_read_only": true,
+            "network_denied": true
+          }
+        },
+        {
+          "kind": "component",
+          "passed": true,
+          "artifact_sha256": "c716c9948663e50aecfadac023165e60aa4a44f0478a92f81e890d85c7cd853b",
+          "bundle_sha256": "97192cbad744c2fb6ac6d9f532ce266ebeb858202b2e8b43a01da648f5cbe993",
+          "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+          "verifier_sha256": "47764b65705fe4ce2e2eb321fa04fcfa824075b4c92bc7e921a7377c57a99880",
+          "cases": [
+            {
+              "case": 0,
+              "passed": true,
+              "checks": [
+                {
+                  "name": "all_pages_preserved_in_order",
+                  "passed": true
+                }
+              ],
+              "pdf_sha256": "0ee1f2368442db99e57b417e40a9f74df710dcc0b60aed31df75b5d10632b935",
+              "input_hashes": [
+                "03af6946fb926a1305a19500e664ae01d3f728fae065870b957a34748f776dfe",
+                "c1e1dd964dd463b25a85b8e1bbed76a5a3ee392e094d46e852c4b3fa3dda3546",
+                "6cc773e72533e72fd7416220b67a0e065e9c6f5d47d592f92a6e5a4de0bd4785"
+              ]
+            },
+            {
+              "case": 1,
+              "passed": true,
+              "checks": [
+                {
+                  "name": "all_pages_preserved_in_order",
+                  "passed": true
+                }
+              ],
+              "pdf_sha256": "91da90fab269ebe176f94f682eaff1c3c2a9b59b1e66f4dfaea2e545db9bb254",
+              "input_hashes": [
+                "ed7b10d1c56b2c261a4676a0617be6de5635f0398092f9f9c37a7b51c312bd57",
+                "360940d3249812538503e7266a2be444488be35633152926e5a00c1ba9323234"
+              ]
+            },
+            {
+              "case": 2,
+              "passed": true,
+              "checks": [
+                {
+                  "name": "all_pages_preserved_in_order",
+                  "passed": true
+                }
+              ],
+              "pdf_sha256": "ffe05bc946b805d5c6b7c99c593adfc32b6172567870653ba7fd86288ef47f7b",
+              "input_hashes": [
+                "360940d3249812538503e7266a2be444488be35633152926e5a00c1ba9323234",
+                "ed7b10d1c56b2c261a4676a0617be6de5635f0398092f9f9c37a7b51c312bd57",
+                "360940d3249812538503e7266a2be444488be35633152926e5a00c1ba9323234"
+              ]
+            },
+            {
+              "case": 3,
+              "passed": true,
+              "checks": [
+                {
+                  "name": "all_pages_preserved_in_order",
+                  "passed": true
+                }
+              ],
+              "pdf_sha256": "070de899c7cbd218ebe097e7e9431cab0e766609d8e1fe3cedc0ffa84d8a3d39",
+              "input_hashes": [
+                "fb1317dd17c9a1f92f3fb23e91a1e8dc88ff0fe5af9089db1e238644531baac2",
+                "ec269a6605a2aab038e3057062aca680a99fa7bc849c08bc8152dd7e0ad2b715",
+                "ed7b10d1c56b2c261a4676a0617be6de5635f0398092f9f9c37a7b51c312bd57",
+                "fb1317dd17c9a1f92f3fb23e91a1e8dc88ff0fe5af9089db1e238644531baac2"
+              ]
+            },
+            {
+              "case": "renderer_regression",
+              "passed": true,
+              "checks": [
+                {
+                  "name": "all_content_in_order",
+                  "passed": true,
+                  "missing": []
+                },
+                {
+                  "name": "within_page_bounds",
+                  "passed": true
+                },
+                {
+                  "name": "readable_text",
+                  "passed": true
+                },
+                {
+                  "name": "a4_pages",
+                  "passed": true
+                },
+                {
+                  "name": "complete_inspection",
+                  "passed": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "regression",
+          "passed": true,
+          "artifact_sha256": "c716c9948663e50aecfadac023165e60aa4a44f0478a92f81e890d85c7cd853b",
+          "bundle_sha256": "97192cbad744c2fb6ac6d9f532ce266ebeb858202b2e8b43a01da648f5cbe993",
+          "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+          "verifier_sha256": "47764b65705fe4ce2e2eb321fa04fcfa824075b4c92bc7e921a7377c57a99880",
+          "cases": [
+            {
+              "case": 0,
+              "passed": true,
+              "checks": [
+                {
+                  "name": "all_pages_preserved_in_order",
+                  "passed": true
+                }
+              ],
+              "pdf_sha256": "0ee1f2368442db99e57b417e40a9f74df710dcc0b60aed31df75b5d10632b935",
+              "input_hashes": [
+                "03af6946fb926a1305a19500e664ae01d3f728fae065870b957a34748f776dfe",
+                "c1e1dd964dd463b25a85b8e1bbed76a5a3ee392e094d46e852c4b3fa3dda3546",
+                "6cc773e72533e72fd7416220b67a0e065e9c6f5d47d592f92a6e5a4de0bd4785"
+              ]
+            },
+            {
+              "case": 1,
+              "passed": true,
+              "checks": [
+                {
+                  "name": "all_pages_preserved_in_order",
+                  "passed": true
+                }
+              ],
+              "pdf_sha256": "91da90fab269ebe176f94f682eaff1c3c2a9b59b1e66f4dfaea2e545db9bb254",
+              "input_hashes": [
+                "ed7b10d1c56b2c261a4676a0617be6de5635f0398092f9f9c37a7b51c312bd57",
+                "360940d3249812538503e7266a2be444488be35633152926e5a00c1ba9323234"
+              ]
+            },
+            {
+              "case": 2,
+              "passed": true,
+              "checks": [
+                {
+                  "name": "all_pages_preserved_in_order",
+                  "passed": true
+                }
+              ],
+              "pdf_sha256": "ffe05bc946b805d5c6b7c99c593adfc32b6172567870653ba7fd86288ef47f7b",
+              "input_hashes": [
+                "360940d3249812538503e7266a2be444488be35633152926e5a00c1ba9323234",
+                "ed7b10d1c56b2c261a4676a0617be6de5635f0398092f9f9c37a7b51c312bd57",
+                "360940d3249812538503e7266a2be444488be35633152926e5a00c1ba9323234"
+              ]
+            },
+            {
+              "case": 3,
+              "passed": true,
+              "checks": [
+                {
+                  "name": "all_pages_preserved_in_order",
+                  "passed": true
+                }
+              ],
+              "pdf_sha256": "070de899c7cbd218ebe097e7e9431cab0e766609d8e1fe3cedc0ffa84d8a3d39",
+              "input_hashes": [
+                "fb1317dd17c9a1f92f3fb23e91a1e8dc88ff0fe5af9089db1e238644531baac2",
+                "ec269a6605a2aab038e3057062aca680a99fa7bc849c08bc8152dd7e0ad2b715",
+                "ed7b10d1c56b2c261a4676a0617be6de5635f0398092f9f9c37a7b51c312bd57",
+                "fb1317dd17c9a1f92f3fb23e91a1e8dc88ff0fe5af9089db1e238644531baac2"
+              ]
+            },
+            {
+              "case": "renderer_regression",
+              "passed": true,
+              "checks": [
+                {
+                  "name": "all_content_in_order",
+                  "passed": true,
+                  "missing": []
+                },
+                {
+                  "name": "within_page_bounds",
+                  "passed": true
+                },
+                {
+                  "name": "readable_text",
+                  "passed": true
+                },
+                {
+                  "name": "a4_pages",
+                  "passed": true
+                },
+                {
+                  "name": "complete_inspection",
+                  "passed": true
+                }
+              ]
+            }
+          ],
+          "protected_unchanged": true
+        },
+        {
+          "kind": "original_replay",
+          "passed": true,
+          "artifact_sha256": "c716c9948663e50aecfadac023165e60aa4a44f0478a92f81e890d85c7cd853b",
+          "bundle_sha256": "97192cbad744c2fb6ac6d9f532ce266ebeb858202b2e8b43a01da648f5cbe993",
+          "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+          "verifier_sha256": "47764b65705fe4ce2e2eb321fa04fcfa824075b4c92bc7e921a7377c57a99880",
+          "executor": {
+            "success": true,
+            "final_response": "Created client-pack.pdf. Verified all 4 pages are preserved in the requested order:\n\n1. Proposal \u2014 pages 1\u20132\n2. hotel-brochure.pdf \u2014 page 3\n3. venue-map.pdf \u2014 page 4\n\nPDF:\n/api/chats/24898954-f5b4-4c90-a9dd-f208ada57f5b/assets/8bb28528-9d16-4712-bbb5-3402e82cd4d5/content",
+            "baseline": {
+              "implementation_commit": "0edab1ac4d4f72f489945edbb62a34f69e6864b3",
+              "implementation_sha256": "670756d1111f2d0a43b032ead71a77d8712b3e38747664e4908def7af6fe7144",
+              "model": "gpt-6-astra",
+              "provider": "openai-codex",
+              "base_url": "",
+              "effective_base_url": "https://chatgpt.com/backend-api/codex",
+              "model_configuration_sha256": "c1bc308a059ca8d974389034da6e3fd82d1a237d0ba6d75302022c4128959a4c",
+              "inference_options": {
+                "reasoning_effort": "medium",
+                "service_tier": ""
+              },
+              "user_settings_sha256": {
+                "config.yaml": "589769199b6ea84493645f657b4eaef38139561508afec3de8ac180cf0325274",
+                "auth.json": "ff6f9845e3130cca44ea37e3af0e5f774d599c367cfa239f459846d594cb4374",
+                ".env": "ac1e755781f085d3eb6d0ed94de046dc50bde2c0a24cff3c9e978a98a3f08c09",
+                "SOUL.md": "3bd38ef92efb90d0fdda1bb73036185d4a4bc11079963cb0e2db71c84281e64e"
+              },
+              "discovery_sha256": "ec980f9d342cf9dc56e6df6fa1e0dcb094b84bf62d89c47e31c7870ba7342574",
+              "tool_names": [
+                "mcp__epoch__describe_tool",
+                "mcp__epoch__discover_tools",
+                "mcp__epoch__invoke_tool"
+              ],
+              "memory_state": "fresh_empty_home_memory_disabled",
+              "logical_workspace": "/Users/bhaskarpandit/Documents/epoch/backend",
+              "home_display": "hermes-home (relative to isolated run directory)",
+              "coding_context": "off",
+              "context_files": "disabled",
+              "background_review": "disabled",
+              "brief_sha256": "8992373d48a2dae0eef1f346a6fdc74d34da1083039596ce7a69af43cc32eada",
+              "bridge_sha256": "279900912dae23e09d18f15e8b49e7cdea7df293e1af7678a09e899bdd067190",
+              "system_prompt_initial_sha256": "6790cb9dee2344989bb5ee70597235a9e5079f4ccfc3e5128683115b2b810bc5",
+              "system_prompt_sha256": "6790cb9dee2344989bb5ee70597235a9e5079f4ccfc3e5128683115b2b810bc5",
+              "system_prompt_unchanged": true,
+              "system_prompt_static_sha256": "98d0ab6eaa1669fc285064fb75f6a26519f2d055a9a1a86fcf40f3cd71c1250c",
+              "system_prompt_static_unchanged": true,
+              "implementation_unchanged": true,
+              "user_settings_unchanged": true,
+              "discovery_unchanged": true,
+              "request_gate": "parent_ack_before_httpx_model_request",
+              "api_max_retries": 1,
+              "stream_retries": 0
+            },
+            "missing_evidence": [],
+            "api_calls": 6,
+            "turns_used": 6,
+            "session_turns_used": 6,
+            "history_retained": true,
+            "segment": 1
+          },
+          "verification": {
+            "passed": true,
+            "asset_ids": [
+              "8bb28528-9d16-4712-bbb5-3402e82cd4d5"
+            ],
+            "new_outputs": [
+              "8bb28528-9d16-4712-bbb5-3402e82cd4d5"
+            ]
+          }
+        },
+        {
+          "kind": "fresh_task",
+          "passed": true,
+          "artifact_sha256": "c716c9948663e50aecfadac023165e60aa4a44f0478a92f81e890d85c7cd853b",
+          "bundle_sha256": "97192cbad744c2fb6ac6d9f532ce266ebeb858202b2e8b43a01da648f5cbe993",
+          "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+          "verifier_sha256": "47764b65705fe4ce2e2eb321fa04fcfa824075b4c92bc7e921a7377c57a99880",
+          "executor": {
+            "success": true,
+            "final_response": "Created event-pack.pdf. Verified all 3 pages are preserved in the exact requested order, with original appearance and dimensions intact.\n\nDownload: /api/chats/8d51023c-813e-479e-b803-19fad1f088e3/assets/02a355b1-48e2-4030-971e-16ad88a493c0/content",
+            "baseline": {
+              "implementation_commit": "0edab1ac4d4f72f489945edbb62a34f69e6864b3",
+              "implementation_sha256": "670756d1111f2d0a43b032ead71a77d8712b3e38747664e4908def7af6fe7144",
+              "model": "gpt-6-astra",
+              "provider": "openai-codex",
+              "base_url": "",
+              "effective_base_url": "https://chatgpt.com/backend-api/codex",
+              "model_configuration_sha256": "c1bc308a059ca8d974389034da6e3fd82d1a237d0ba6d75302022c4128959a4c",
+              "inference_options": {
+                "reasoning_effort": "medium",
+                "service_tier": ""
+              },
+              "user_settings_sha256": {
+                "config.yaml": "589769199b6ea84493645f657b4eaef38139561508afec3de8ac180cf0325274",
+                "auth.json": "ff6f9845e3130cca44ea37e3af0e5f774d599c367cfa239f459846d594cb4374",
+                ".env": "ac1e755781f085d3eb6d0ed94de046dc50bde2c0a24cff3c9e978a98a3f08c09",
+                "SOUL.md": "3bd38ef92efb90d0fdda1bb73036185d4a4bc11079963cb0e2db71c84281e64e"
+              },
+              "discovery_sha256": "ec980f9d342cf9dc56e6df6fa1e0dcb094b84bf62d89c47e31c7870ba7342574",
+              "tool_names": [
+                "mcp__epoch__describe_tool",
+                "mcp__epoch__discover_tools",
+                "mcp__epoch__invoke_tool"
+              ],
+              "memory_state": "fresh_empty_home_memory_disabled",
+              "logical_workspace": "/Users/bhaskarpandit/Documents/epoch/backend",
+              "home_display": "hermes-home (relative to isolated run directory)",
+              "coding_context": "off",
+              "context_files": "disabled",
+              "background_review": "disabled",
+              "brief_sha256": "1d03b261e5b7cd479a87e2760ab29373c23a3aef5b5ee23e359be1050f34ef16",
+              "bridge_sha256": "279900912dae23e09d18f15e8b49e7cdea7df293e1af7678a09e899bdd067190",
+              "system_prompt_initial_sha256": "6790cb9dee2344989bb5ee70597235a9e5079f4ccfc3e5128683115b2b810bc5",
+              "system_prompt_sha256": "6790cb9dee2344989bb5ee70597235a9e5079f4ccfc3e5128683115b2b810bc5",
+              "system_prompt_unchanged": true,
+              "system_prompt_static_sha256": "98d0ab6eaa1669fc285064fb75f6a26519f2d055a9a1a86fcf40f3cd71c1250c",
+              "system_prompt_static_unchanged": true,
+              "implementation_unchanged": true,
+              "user_settings_unchanged": true,
+              "discovery_unchanged": true,
+              "request_gate": "parent_ack_before_httpx_model_request",
+              "api_max_retries": 1,
+              "stream_retries": 0
+            },
+            "missing_evidence": [],
+            "api_calls": 6,
+            "turns_used": 6,
+            "session_turns_used": 6,
+            "history_retained": true,
+            "segment": 1
+          },
+          "verification": {
+            "passed": true,
+            "asset_ids": [
+              "02a355b1-48e2-4030-971e-16ad88a493c0"
+            ],
+            "new_outputs": [
+              "02a355b1-48e2-4030-971e-16ad88a493c0"
+            ]
+          }
+        }
+      ],
+      "target": "pdf_merge.py",
+      "artifacts": {
+        "pdf_renderer.py": {
+          "source": "def render_pdf(document: dict) -> bytes:\n    import io\n    from xml.sax.saxutils import escape\n\n    from reportlab.lib import colors\n    from reportlab.lib.enums import TA_LEFT\n    from reportlab.lib.pagesizes import A4\n    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet\n    from reportlab.lib.units import inch\n    from reportlab.pdfbase import pdfmetrics\n    from reportlab.pdfbase.ttfonts import TTFont\n    from reportlab.platypus import LongTable, Paragraph, SimpleDocTemplate, Spacer, TableStyle\n\n    try:\n        pdfmetrics.getFont(\"DejaVuSans\")\n    except KeyError:\n        pdfmetrics.registerFont(\n            TTFont(\"DejaVuSans\", \"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf\")\n        )\n    try:\n        pdfmetrics.getFont(\"DejaVuSans-Bold\")\n    except KeyError:\n        pdfmetrics.registerFont(\n            TTFont(\"DejaVuSans-Bold\", \"/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf\")\n        )\n\n    styles = getSampleStyleSheet()\n    title_style = ParagraphStyle(\n        \"DocumentTitle\",\n        parent=styles[\"Title\"],\n        fontName=\"DejaVuSans-Bold\",\n        fontSize=18,\n        leading=23,\n        alignment=TA_LEFT,\n        spaceAfter=14,\n    )\n    heading_style = ParagraphStyle(\n        \"SectionHeading\",\n        parent=styles[\"Heading2\"],\n        fontName=\"DejaVuSans-Bold\",\n        fontSize=14,\n        leading=18,\n        spaceBefore=8,\n        spaceAfter=8,\n    )\n    body_style = ParagraphStyle(\n        \"BodyTextDejaVu\",\n        parent=styles[\"BodyText\"],\n        fontName=\"DejaVuSans\",\n        fontSize=10,\n        leading=14,\n        spaceAfter=7,\n    )\n    table_style = ParagraphStyle(\n        \"TableTextDejaVu\",\n        parent=body_style,\n        fontSize=10,\n        leading=13,\n        spaceAfter=0,\n    )\n    table_header_style = ParagraphStyle(\n        \"TableHeaderDejaVu\",\n        parent=table_style,\n        fontName=\"DejaVuSans-Bold\",\n    )\n\n    def paragraph(text, style=body_style):\n        value = \"\" if text is None else str(text)\n        return Paragraph(escape(value).replace(\"\\n\", \"<br/>\"), style)\n\n    story = [paragraph(document[\"title\"], title_style)]\n    for block in document[\"blocks\"]:\n        kind = block[\"kind\"]\n        if kind == \"heading\":\n            story.append(paragraph(block.get(\"text\", \"\"), heading_style))\n        elif kind == \"paragraph\":\n            story.append(paragraph(block.get(\"text\", \"\"), body_style))\n        elif kind == \"bullets\":\n            for item in block.get(\"items\", []):\n                story.append(paragraph(\"\u2022 \" + str(item), body_style))\n        elif kind == \"table\":\n            rows = block.get(\"rows\", [])\n            if not rows:\n                continue\n            column_count = max(len(row) for row in rows)\n            if column_count == 0:\n                continue\n            cells = []\n            for row_index, row in enumerate(rows):\n                normalized = list(row) + [\"\"] * (column_count - len(row))\n                style = table_header_style if row_index == 0 else table_style\n                cells.append([paragraph(cell, style) for cell in normalized])\n            table = LongTable(\n                cells,\n                colWidths=[(A4[0] - 72) / column_count] * column_count,\n                repeatRows=1,\n                hAlign=\"LEFT\",\n                splitByRow=1,\n            )\n            table.setStyle(TableStyle([\n                (\"BACKGROUND\", (0, 0), (-1, 0), colors.HexColor(\"#E8EEF5\")),\n                (\"TEXTCOLOR\", (0, 0), (-1, 0), colors.black),\n                (\"GRID\", (0, 0), (-1, -1), 0.5, colors.HexColor(\"#9AA7B2\")),\n                (\"VALIGN\", (0, 0), (-1, -1), \"TOP\"),\n                (\"LEFTPADDING\", (0, 0), (-1, -1), 6),\n                (\"RIGHTPADDING\", (0, 0), (-1, -1), 6),\n                (\"TOPPADDING\", (0, 0), (-1, -1), 5),\n                (\"BOTTOMPADDING\", (0, 0), (-1, -1), 5),\n            ]))\n            story.append(table)\n            story.append(Spacer(1, 8))\n\n    output = io.BytesIO()\n    document_template = SimpleDocTemplate(\n        output,\n        pagesize=A4,\n        rightMargin=36,\n        leftMargin=36,\n        topMargin=36,\n        bottomMargin=36,\n        title=str(document.get(\"title\", \"\")),\n        author=\"\",\n    )\n    document_template.build(story)\n    return output.getvalue()\n",
+          "artifact_sha256": "6e2d3980b4fec8f387f07d3cbebedd82844154fb2e00e18a74bb2c7e05ce5654",
+          "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+          "runner_version": "pdf-tools-v1",
+          "origin_version": "54ffc2c0-d590-4f21-83fa-b56506f5ce6e",
+          "origin_project": "pdf-acceptance",
+          "tool_contract": null,
+          "portable": false
+        },
+        "pdf_merge.py": {
+          "source": "import io\nfrom pypdf import PdfReader, PdfWriter\n\n\ndef merge_pdfs(inputs: list[bytes]) -> bytes:\n    \"\"\"Merge PDF byte strings while preserving page order, appearance, size, and rotation.\"\"\"\n    writer = PdfWriter()\n    for data in inputs:\n        reader = PdfReader(io.BytesIO(data))\n        for page in reader.pages:\n            writer.add_page(page)\n    output = io.BytesIO()\n    writer.write(output)\n    return output.getvalue()\n",
+          "artifact_sha256": "c716c9948663e50aecfadac023165e60aa4a44f0478a92f81e890d85c7cd853b",
+          "image_id": "sha256:4bf2d98f3bb6f2c8ce710ae7e0d3b50e61cd51fc726c6c2778d7de9e5785a362",
+          "runner_version": "pdf-tools-v1",
+          "origin_version": "f621139d-fdcc-4363-90f5-1557e09f52d5",
+          "origin_project": "pdf-acceptance",
+          "tool_contract": {
+            "name": "pdf.merge",
+            "description": "Merges two or more PDF byte inputs in the supplied order into one PDF. Pages are copied with pypdf so their original appearance, dimensions, rotation, and duplicate occurrences are preserved. The operation is entirely in memory.",
+            "input_schema": {
+              "additionalProperties": false,
+              "properties": {
+                "asset_ids": {
+                  "items": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "maxItems": 5,
+                  "minItems": 2,
+                  "title": "Asset Ids",
+                  "type": "array"
+                },
+                "output_name": {
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9 _.-]{0,119}\\.pdf$",
+                  "title": "Output Name",
+                  "type": "string"
+                },
+                "idempotency_key": {
+                  "maxLength": 200,
+                  "minLength": 1,
+                  "title": "Idempotency Key",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "asset_ids",
+                "output_name",
+                "idempotency_key"
+              ],
+              "title": "MergePdf",
+              "type": "object"
+            }
+          },
+          "portable": false
+        }
+      },
+      "bundle_sha256": "97192cbad744c2fb6ac6d9f532ce266ebeb858202b2e8b43a01da648f5cbe993",
+      "published_at": "2026-09-06T20:05:45.264252+00:00"
+    }
+  ],
+  "failed_operations": [
+    {
+      "project": "first",
+      "operation_id": "ed0e9609-a6b9-46f8-bd93-c09210d5a29f",
+      "error": {
+        "code": "proposal_invalid",
+        "message": "Proposal did not match the supported source, evidence and interface."
+      }
+    },
+    {
+      "project": "first",
+      "operation_id": "b17f8b70-bf98-4659-a450-c10d373f1e30",
+      "error": {
+        "code": "proposal_invalid",
+        "message": "Proposal did not match the supported source, evidence and interface."
+      }
+    },
+    {
+      "project": "first",
+      "operation_id": "253ec111-b91c-45f0-ab46-3f60aefd698d",
+      "error": {
+        "code": "proposal_invalid",
+        "message": "Proposal did not match the supported source, evidence and interface."
+      }
+    },
+    {
+      "project": "accepted",
+      "operation_id": "dc85143d-a33e-437d-9b5d-51d419553873",
+      "error": {
+        "code": "proposal_failed",
+        "message": "{'code': 'openai_http_error', 'message': 'OpenAI returned HTTP 400; no retry or model fallback'}"
+      }
+    }
+  ],
+  "source_brief_coverage": [
+    {
+      "asset_id": "7989dd28-eea3-4a7d-832a-1eb0ae949e24",
+      "pack": "retreat",
+      "passed": true,
+      "missing": []
+    },
+    {
+      "asset_id": "ad14bc24-5aab-4889-a8dd-3cf690ea4518",
+      "pack": "retreat",
+      "passed": true,
+      "missing": []
+    },
+    {
+      "asset_id": "428d2459-d7ec-4564-9650-773ea96e1014",
+      "pack": "festival",
+      "passed": true,
+      "missing": []
+    }
+  ]
+}

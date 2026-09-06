@@ -10,13 +10,14 @@
     <meta name="theme-color" content="#1d1f20" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src http://127.0.0.1:* http://localhost:*; object-src 'none'; base-uri 'none'; form-action 'none'"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data: http://127.0.0.1:* http://localhost:*; connect-src http://127.0.0.1:* http://localhost:*; object-src 'none'; base-uri 'none'; form-action 'none'"
     />
     <title>Epoch · Chat</title>
     <link rel="icon" href="/mark.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/src/styles.css" />
     <link rel="stylesheet" href="/src/execution.css" />
-    <script type="module" src="/src/intake.mjs"></script>
+    <link rel="stylesheet" href="/src/chat.css" />
+    <script type="module" src="/src/workspace.mjs"></script>
   </head>
   <body>
     <a class="skip-link" href="#workspace">Skip to workspace</a>
@@ -42,8 +43,7 @@
       ><main>
         <h1>Epoch</h1>
         <p>
-          Enable JavaScript to use this local workspace. Saving a request does
-          not start execution.
+          Enable JavaScript to chat with Hermes or open the debugger.
         </p>
       </main></noscript
     >

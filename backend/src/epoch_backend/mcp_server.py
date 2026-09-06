@@ -9,6 +9,8 @@ from uuid import UUID
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel, ConfigDict, ValidationError
 
+from epoch_backend.csv_sandbox import CsvRegistry, CsvSandbox
+from epoch_backend.pdf_sandbox import PdfRegistry, PdfSandbox
 from epoch_backend.sandbox import Sandbox, SandboxError
 from epoch_backend.tool_registry import ToolRegistry
 
@@ -68,12 +70,12 @@ class ScopedMCP(FastMCP):
         return await super().call_tool(name, arguments)
 
 
-def create_server(sandbox: Sandbox) -> FastMCP:
-    registry = ToolRegistry(sandbox)
+def create_server(sandbox: Sandbox | CsvSandbox) -> FastMCP:
+    registry = PdfRegistry(sandbox) if isinstance(sandbox, PdfSandbox) else CsvRegistry(sandbox) if isinstance(sandbox, CsvSandbox) else ToolRegistry(sandbox)
     server = ScopedMCP(
         sandbox,
         instructions=(
-            "Tools perform simulated business actions only in this run's project. "
+            "Tools perform authorized local actions only in this run's project. "
             "Discover the available tools, describe each operation before invoking it, "
             "then inspect actual results. Tool success does not establish task completion."
         ),
@@ -103,12 +105,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--database", type=Path, required=True)
     parser.add_argument("--task-id", type=UUID, required=True)
     parser.add_argument("--run-id", type=UUID, required=True)
+    parser.add_argument("--environment", choices=["release", "pdf_workshop"], default="release")
     args = parser.parse_args(argv)
     if not args.database.is_file():
         print("MCP startup failed: sandbox database must already exist.", file=sys.stderr)
         return 2
     try:
-        sandbox = Sandbox(args.database, str(args.task_id), str(args.run_id))
+        sandbox_type = PdfSandbox if args.environment == "pdf_workshop" else Sandbox
+        sandbox = sandbox_type(args.database, str(args.task_id), str(args.run_id))
         server = create_server(sandbox)
     except SandboxError as exc:
         print(f"MCP startup failed: {exc.code}.", file=sys.stderr)

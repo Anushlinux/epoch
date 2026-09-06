@@ -1,0 +1,33 @@
+// Read-only visual capture of actual saved live evidence. No intercepted APIs/models.
+import { test, expect } from '@playwright/test';
+test('loaded PDF file and debugger evidence', async ({page},info)=>{
+ test.skip(!process.env.EPOCH_PDF_REVIEW_CHAT,'Requires an actual saved acceptance conversation');
+ test.setTimeout(90000);
+ await page.addInitScript(()=>sessionStorage.setItem('epoch.intake.origin.v1','http://127.0.0.1:8012'));
+ const id=process.env.EPOCH_PDF_REVIEW_CHAT;
+ await page.goto(`http://127.0.0.1:5173/chat?chat=${id}`);
+ await expect(page.locator('.pdf-files')).toContainText('Complete.pdf',{timeout:30000});
+ await page.locator('.pdf-environment h2').evaluate(el=>el.scrollIntoView({block:'start'}));
+ await page.screenshot({path:`evidence/pdf-files-top-${info.project.name}.png`});
+ await page.locator('.pdf-file').filter({hasText:'Complete.pdf'}).evaluate(el=>el.scrollIntoView({block:'center'}));
+ await page.screenshot({path:`evidence/pdf-corrected-row-${info.project.name}.png`});
+ await page.locator('.pdf-environment').screenshot({path:`evidence/pdf-files-${info.project.name}.png`});
+ await page.locator('.pdf-file').filter({hasText:'Complete.pdf'}).getByRole('button',{name:'Preview'}).click();
+ const image=page.locator('.pdf-preview img');
+ await expect.poll(()=>image.evaluate(el=>el.complete&&el.naturalWidth>0),{timeout:30000}).toBe(true);
+ await page.locator('.pdf-preview').screenshot({path:`evidence/pdf-controls-${info.project.name}.png`});
+ await page.locator('.pdf-preview-toolbar').last().evaluate(el=>el.scrollIntoView({block:'center'}));
+ await page.screenshot({path:`evidence/pdf-navigation-${info.project.name}.png`});
+ await page.getByRole('button',{name:'Next page',exact:true}).click();
+ await expect(page.locator('.pdf-preview-toolbar').last()).toContainText('Page 2 of 2');
+ await page.goto(`http://127.0.0.1:5173/debugger?chat=${id}`);
+ await expect(page.locator('.pdf-files')).toContainText('Complete.pdf',{timeout:30000});
+ await expect(page.locator('.pdf-repair-action')).toBeVisible();
+ await page.locator('.pdf-repair-action').screenshot({path:`evidence/pdf-actions-${info.project.name}.png`});
+ await page.locator('.investigation-result').first().screenshot({path:`evidence/pdf-result-${info.project.name}.png`});
+ const evidence=page.locator('.investigation-result').nth(1).locator('summary');
+ await evidence.click();
+ await evidence.evaluate(el=>el.scrollIntoView({block:'start'}));
+ await page.screenshot({path:`evidence/pdf-expanded-evidence-${info.project.name}.png`});
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});

@@ -1,5 +1,361 @@
 # Current implementation status
 
+## Direct PDF debugger action — September 7, 2026
+
+The PDF debugger now places its eligible repair/creation action first and removes
+the optional question form and separate investigation button. It uses the existing
+saved conversation, captured tool input and trusted findings; no backend repair logic
+changed. Requirements remain expandable, prior evidence is preserved, and running
+operations retain Stop. Debugger no longer scrolls to the bottom when messages load.
+Standard-chat investigation and the read-only API remain available. Frontend unit
+checks passed **74 tests**; real HTTP desktop/mobile checks verify that the action is
+visible without a context form or any model-triggering POST request.
+
+## PDF executor response boundary — September 7, 2026
+
+Hermes now receives a fixed PDF-only system instruction to report actions, output
+files and observed failures, without diagnosing causes or suggesting repairs or
+next steps. Debugger remains responsible for that work. Original execution,
+verification and recovery use the same instruction through the existing Hermes
+system-message parameter; task text, tool checks and historical evidence are unchanged.
+No configuration or credential change is required. Re-run a task after this bridge
+update before repairing it so its executor baseline reflects the current instructions.
+
+Focused checks: **53 passed, 3 Docker-only tests skipped**, including PDF continuation
+and probe instructions and unchanged standard-chat behavior. A real Hermes baseline
+run in `backend/data/pdf-response-acceptance-01` produced the one-page clipped PDF,
+reported missing content and 2,436 out-of-bounds characters, linked the actual file,
+and gave no repair recommendation. Its prompt invariants passed. This follow-up
+verified the failure response, not a new full repair/merge acceptance sequence.
+
+## PDF workshop — September 7, 2026
+
+Active CSV routing is retired. New chat defaults to the PDF workshop; standard chat
+and release evaluation remain available. Historical CSV records, fixtures and
+evidence are retained. The CSV sections below describe historical results, not the
+currently selectable environment. Work is on `testing`, preserving the dirty checkout
+and the original direction document unchanged.
+
+Implemented: conversation-scoped immutable PDF storage, bounded uploads, source
+packs, actual page previews and downloads, an intentionally defective ReportLab
+renderer, generated renderer repair, and constrained generation/registration of
+`pdf.merge`. Investigation stays read-only. Explicit actions gate code generation,
+five verification stages, publication and separately recorded Hermes recovery.
+Published bundles are project-scoped and retain the prior renderer when adding a
+tool. Rollback uses expected-version checks and durable retry receipts.
+
+The separate PDF image runs without network, credentials, host mounts or a Docker
+socket; non-root/read-only filesystem, 1 GiB memory, one CPU, 60-second invocation,
+bounded temporary storage and 25 MiB output limits are enforced by the host. The
+immutable image and actual installed dependency/worker versions are recorded by
+setup. Existing release configuration and model credentials are unchanged.
+
+Demonstrated validation:
+
+- Focused backend tests: **47 passed, 3 opt-in Docker tests skipped**.
+- Explicit real Docker PDF tests: **13 passed**, including baseline clipping,
+  short controls, invalid/encrypted/interactive/signed files, timeout, cancellation,
+  isolation and asset integrity.
+- Full backend run: **337 passed, 12 skipped,
+  1 failed**. The failure is the unchanged release test
+  `test_updates_cannot_override_scope_links_identity_or_criteria_through_registry`:
+  existing code returns `access_denied` where its older test expects
+  `invalid_arguments`. Its registry/service/test files were not changed by this work.
+- Frontend unit suite: **74 passed**. Real HTTP desktop/mobile file tests: **2 passed**;
+  loaded live-evidence/page-navigation captures: **2 passed**. Browser tests disable
+  models explicitly. [Scoped UI review](../frontend/evidence/PDF_UI_REVIEW.md) approved
+  the presentation; this is not backend acceptance.
+- Acceptance project `backend/data/pdf-acceptance-01` proved real Hermes clipping,
+  a real Luna renderer repair, real Hermes recovery and fresh-chat reuse. Both
+  corrected documents contain two readable pages. Its merge metadata attempts were
+  rejected and exhausted; no merger was published there. All attempts remain saved.
+- The complete required sequence passed in `backend/data/pdf-acceptance-02`:
+  actual Hermes clipping, Luna-generated renderer repair, Hermes recovery, a fresh
+  two-page festival document, missing-capability discovery, a Luna-generated merger,
+  and a four-page retreat pack. The merger retained the repaired renderer.
+- A backend restart and an additional entirely new Python process each reused the
+  published merger in a fresh chat, producing a three-page event pack in a different
+  order. Two rollback steps in an isolated copy removed merging while retaining the
+  renderer repair, then restored the original clipping defect. Source-brief coverage
+  passed, and every main output page was rendered and visually inspected.
+- Failed attempts remain evidence. A provider rejected quoted JSON in a strict
+  string-enum schema; generating constrained structured metadata resolved it without
+  a fallback tool or reset of the attempt counter. See the [actual acceptance
+  record and PDFs](../backend/fixtures/pdf/README.md) for generated source, gate
+  results, hashes, restart and rollback evidence.
+
+The normal local backend was restarted with its same `.env` configuration and
+preserved databases. See [PDF setup, migration and commands](../backend/docs/PDF_WORKSHOP.md).
+Required setup is the local PDF image plus backend restart. `EPOCH_PDF_IMAGE_ID` is
+optional in the explicitly loaded app file or process environment; no new credential
+is needed. `create_pdf_demo.py` creates a fresh project without any model calls or
+deletion. No push, merge or video was performed.
+
+## Explicit CSV repair control — September 7, 2026
+
+The reported frontend showed updated repair copy while the running Python server
+still exposed no CSV repair routes. Its saved investigation explicitly came from
+the earlier diagnosis-only implementation. The idle local backend was gracefully
+restarted with its existing `.env` command; all **4** conversations and runtime
+enablement settings were retained. The real connected conversation now reports
+repair support and eligibility, and its **Verify and apply fix** button was
+confirmed enabled in Helium. No new model repair was executed on that conversation
+during this UI follow-up; the previous live repair proof remains below.
+
+Investigation and execution are now separate actions. `/debugger` saves analysis
+without applying a candidate; the new `/csv-repair` route starts the bounded
+verification/publication/recovery loop. Operations retain `kind: debugger` and
+add `action: repair`. Lost acknowledgements retain the exact endpoint and request
+identity, including across browser reloads. The server enforces eligibility and
+rejects conflicting IDs or unsupported repair scope. Existing operation records
+load without manual migration.
+
+The repair panel shows current activity even when diagnosis text is already
+available, proposed mapping, verification results, publication and recovery
+separately. Older servers lacking `repair_capability` show an explicit restart
+message and disabled repair button. Host eligibility reasons explain other blocked
+states. Historical diagnoses remain unchanged.
+
+Checks: **74 backend tests passed** across `test_csv_repair.py`, `test_csv_chat.py`,
+`test_chat.py`, `test_csv_sandbox.py` and `test_api.py`; **77 frontend state tests
+passed**; **12 desktop/mobile chat browser tests passed**. Model calls in these
+tests are explicit doubles and browser HTTP is mocked. Desktop/mobile action
+screenshots were inspected; the Impeccable detector reported no findings. The
+real local backend route, saved-chat continuity and enabled browser control were
+also inspected. No new settings, credentials or dependencies were introduced.
+
+The interaction described below is historical: automatic repair within
+Investigate is superseded by the separate execution control above.
+
+## CSV verified repair follow-up — September 6, 2026
+
+The [repair assignment](CSV_REPAIR_PLAN.md) extends explicit CSV investigation
+into a bounded repair loop. Luna may propose outgoing field names based on an
+observed sample `missing_email` failure. Host code interprets that mapping; there
+is no generated-code execution, healthy-control switch, source rewrite, or
+candidate access to criteria. Semantically identical CSV quoting/line-ending
+retries are eligible; different customer data and unsupported failures are not.
+
+The host stages each candidate separately, checks original/fresh mappings,
+invalid-input atomicity, deduplication and the healthy control, then has Hermes
+verify original and fresh tasks against protected state expectations. Recorded
+executor implementation, settings, model configuration, static prompt and discovery
+hashes must match the original run. Only the verified artifact is published per
+project. A separately recorded continuation lets Hermes retry; rejected receipts
+remain immutable. Repair publication and live recovery are distinct outcomes.
+
+Published/rejected artifacts and evidence persist in `csv-repairs/`; new broken
+CSV chats load the active version through normal discovery. Existing broken chats
+select it on their next send. Healthy controls and unrelated projects remain
+independent. The host rollback endpoint requires an idle controller and the exact
+expected active version; it preserves prior versions, customers and receipts.
+See [setup and limits](../backend/fixtures/csv/README.md).
+
+Validation completed:
+
+- From `backend/`, `.venv/bin/python -m pytest tests/test_csv_repair.py
+  tests/test_csv_sandbox.py tests/test_csv_chat.py tests/test_chat.py
+  tests/test_mcp_server.py tests/test_api.py -q`: **76 passed**, two upstream
+  deprecation warnings. Model calls are explicit doubles in these tests. The
+  formatting-retry correction subsequently passed all **10 repair tests**.
+- `npm test --prefix frontend`: **75 passed**.
+- From `frontend/`, `npx playwright test tests/chat.browser.mjs`: **10 passed**
+  on desktop/mobile after allowing Chromium outside the macOS sandbox. Browser
+  HTTP is mocked; these checks do not prove provider behavior.
+- Focused Ruff lint, JavaScript syntax and `git diff --check` passed. All **82**
+  local links in the edited guides resolve. The direction file matches its
+  original SHA-256; its three original Markdown hard breaks remain untouched.
+  AO preview is unavailable in this terminal; no dependency was added.
+
+Actual live acceptance passed with `.venv/bin/python scripts/verify_csv_repair.py
+--live --data-dir data/csv-repair-live-20260906-c` (from `backend/`, with network
+access). [Retained evidence](../backend/fixtures/csv/repair-live-evidence.json)
+records actual `gpt-5.6-luna` proposal generation and configured `gpt-6-astra`
+Hermes execution. The initial failed import saved **0** customers. All **9**
+candidate gates passed, including the original three-customer task and a fresh
+two-customer CSV with quoted/non-ASCII names. Both Hermes verification runs used
+**6 turns** and matched the original executor baseline. Luna used **2,866 input /
+508 output tokens**. The exact mapping was published as version
+`6d87af27-1bbf-4a4d-804a-128aac664583`.
+
+Hermes recovery used **6 turns**, saved **3** customers and passed the original
+checks while retaining the earlier rejected receipts. A separate new chat loaded
+the persisted version, saved **3** customers and passed the same checks with
+**zero debugger operations**. Full records remain in the separate ignored
+acceptance directory; this did not modify the user's ordinary runtime database.
+Business effects were local simulations. General-purpose repair, model training,
+live customer services and a live-model browser walkthrough are not claimed.
+
+The first restricted-network attempt could not reach the model provider. The
+second real attempt exposed the raw-text eligibility bug: Hermes changed CSV
+formatting while preserving customers, so repair was incorrectly skipped. Both
+remain under `backend/data/csv-repair-live-20260906-{a,b}/`; neither published a
+repair. The passing run uses the corrected parsed-customer comparison.
+
+Required setup: restart the backend and refresh the frontend. Optional: run the
+explicit `--live` acceptance harness in a new data directory. No new environment
+variables, credentials, dependencies, Docker setup or manual migration are needed;
+existing app-file and process-only settings retain their meanings. Triggering
+remains explicit through Investigate. This is scoped environment adaptation,
+not unrestricted self-modification or model training.
+
+## CSV import test environment — September 6, 2026
+
+Historical initial assignment below; its diagnosis-only limitation is superseded
+by the verified repair follow-up above.
+
+The user-assigned [CSV plan](CSV_ENVIRONMENT_PLAN.md) is implemented. New chats can
+select a broken CSV adapter or a healthy control. Each uses a separate customer
+SQLite database and four customer tools through the unchanged three-function MCP
+facade. Release tools are absent from this environment. Existing chats default to
+standard tools and retain their original state.
+
+The broken adapter actually maps `email` to `emailAddress`. The strict simulated
+service rejects the resulting request and saves zero customers. The healthy
+control saves the three original sample customers. Input validation, atomic rejected
+imports, case-insensitive email deduplication, exact retry receipts and conflicting
+retry rejection are implemented. Mode and trusted criteria are immutable to runtime
+tools. Healthy control is developer-written; no generated CSV repair is claimed.
+
+The UI includes an explicit environment selector, a sample-task button and actual
+customer/check/evidence panels in chat and debugger. Only Send starts Hermes; only
+Investigate starts Luna. The host supplies immutable sample criteria and actual
+verification to debugger analysis, retaining the last service failures even after
+subsequent inspection calls. It does not expose the seeded mode as a diagnosis to
+Luna. Recorded request payloads and required service fields provide the evidence.
+
+Validation:
+
+- From `backend/`, `.venv/bin/python -m pytest tests/test_csv_sandbox.py
+  tests/test_csv_chat.py tests/test_chat.py tests/test_mcp_server.py tests/test_api.py
+  -q` passed **66 tests**. These include real MCP subprocess calls and restart,
+  default release regression, CSV isolation, API creation identity and debugger
+  evidence. Hermes/Luna are replaced only in the chat orchestration tests.
+- `.venv/bin/python scripts/verify_csv_environment.py --output
+  fixtures/csv/local-evidence.json` reproduced **broken: 0 saved; healthy: 3 saved**
+  with exact retry identities preserved. The [retained JSON](../backend/fixtures/csv/local-evidence.json)
+  contains actual simulated tool effects and traces, not a prerecorded diagnosis.
+- `npm test --prefix frontend` passed **75 tests**. From `frontend/`,
+  `npx playwright test tests/chat.browser.mjs` passed **10 desktop/mobile tests**;
+  the four CSV cases passed again after the mobile inset fix and adoption of the
+  actual sandbox snapshots. Browser transport remains mocked; these are UI checks,
+  not live provider acceptance.
+- Ruff lint/format, JavaScript syntax, the Impeccable detector and
+  `git diff --check` passed. Desktop/mobile screenshots were inspected. The preserved
+  direction is unchanged, including its original Markdown hard breaks.
+
+[Testing instructions](../backend/fixtures/csv/README.md) and the supplied
+[customer CSV](../backend/fixtures/csv/customers.csv) are available. Restart the
+backend and refresh the frontend; no new settings, dependencies, credentials,
+Docker setup or manual migration are required. Existing app/process settings keep
+working unchanged. No live model calls or new automatic repair acceptance were
+performed for this assignment.
+
+
+## Hermes startup and polling correction — September 6, 2026
+
+The reported chat RuntimeError occurred during installed Hermes initialization,
+before model inference. With an omitted configured base URL, Epoch passed an
+explicit credential but `base_url=None`. The installed Hermes initializer requires
+both values to use that credential; otherwise it attempts credential discovery in
+the deliberately empty isolated home. The bridge now supplies the standard Codex
+endpoint when omitted, preserves explicit URLs and records the effective endpoint.
+Initialization failures now have a sanitized stage-specific diagnostic.
+
+The chat controller also unconditionally refreshed chat list/detail/runtime every
+1.5 seconds after failures. Runtime inspection checks both agent installations.
+It now polls only selected chat detail while running, refreshes runtime once at
+completion/failure, and stops while idle. If another operation is active, shared
+availability is checked at five-second intervals. Hidden tabs pause polling;
+returning to the page reads current state once. Failed active reads back off up to
+30 seconds, and overlapping refreshes share or serialize requests. No write retry
+or model execution is caused by polling.
+
+Validation: **54 focused backend tests** (Hermes bridge, chat and operation budget),
+Ruff, **71 frontend unit tests**, and **6 desktop/mobile chat browser tests** passed.
+A probe against the actual installed Hermes passed initialization and discovered
+exactly the three permitted Epoch MCP tools. It used a placeholder credential,
+blocked outbound non-loopback sockets, and exited before inference. Local probe
+output is retained at `/private/tmp/epoch-chat-startup-probe.txt`.
+This establishes startup/discovery, not authenticated live model completion.
+`git diff --check` passes. Existing failure records remain unchanged.
+
+Restart the backend and refresh the frontend to load the fixes. No environment
+settings, credentials, database migration or personal Hermes changes are needed.
+
+
+## Hermes chat and manual debugger — September 6, 2026
+
+The latest user correction replaces release intake as the default conversation.
+Ordinary messages use durable `/api/chats` operations and call Hermes directly.
+Opening Debugger only reads the selected conversation; **Investigate conversation**
+explicitly invokes one bounded Luna analysis. Original user requests remain
+verbatim requirements evidence. The debugger retains citations, observations,
+hypotheses and missing information. It neither starts a release run nor replays
+Hermes, changes trusted criteria or publishes repairs. Debugger findings are labeled
+separately and excluded from Hermes's subsequent visible history.
+
+Release evaluation remains a separate example at `/debugger?mode=release`, with
+historical `/debugger?task=UUID` links retained. The original release evaluator and
+repair controller remain limited to their supported workflows. A general
+conversation investigation is not a generic trusted outcome checker or arbitrary
+repair implementation. No new live-service or Phase 6/7 acceptance is claimed.
+
+Implemented with the [assigned plan](CHAT_DEBUGGER_PLAN.md). Existing uncommitted
+chat work and unrelated telemetry configuration changes were preserved. Restart
+the backend and refresh the frontend to use the new routes; no new settings or
+manual migration are needed. A separate `chats.sqlite3` is initialized under the
+configured data directory. Existing task/run data remains intact.
+
+Validation:
+
+- From `backend/`, `.venv/bin/python -m pytest tests/test_chat.py
+  tests/test_hermes_bridge.py tests/test_incidents.py tests/test_api.py -q` passed
+  **74 tests** using local bridge doubles; Ruff checks passed. These cover isolated
+  chat, explicit investigation, citations, retained requirements, request identity,
+  interruption/cancellation and strict visible-history boundaries.
+- `npm test --prefix frontend` passed **69 tests**, including an exact debugger
+  retry after reload with an optional blank question.
+- From `frontend/`, `npx playwright test tests/chat.browser.mjs
+  tests/workspace.browser.mjs` passed **38 desktop/mobile tests** initially; a
+  final focused rerun passed all **6 chat tests**, bringing coverage to **40 unique
+  desktop/mobile tests** with the unchanged 34 fixture cases. These use intercepted
+  API responses. New chat/manual-debugger screenshots were visually inspected;
+  see [desktop debugger](../frontend/evidence/manual-debugger-desktop.png) and
+  [mobile debugger](../frontend/evidence/manual-debugger-mobile.png).
+- `npm run test:execution --prefix frontend`, filtered to desktop and
+  `explicit release, named SSE`, passed the selected direct-release
+  HTTP/browser case with an explicit test executor. The runner also checked
+  intake request identity, error responses, CORS and restart persistence.
+  Remaining historical execution/supervision/incident HTTP browser cases were
+  not rerun.
+- JavaScript syntax, `git diff --check` and the Impeccable mechanical detector
+  passed. Documentation paths resolve and `docs/direction.md` remains byte-for-byte
+  identical to HEAD, SHA-256
+  `791826322bab72f3198c862cad796e2c5298c1ed5801fb8db8bd70a6101e3df5`.
+  Its original Markdown hard breaks remain intact. AO preview is unavailable;
+  no preview dependency was added.
+
+No live Hermes/Luna calls were made for this change. The historical intake browser
+suite expects the removed one-request release-chat form and was not run; the new
+chat browser coverage verifies the replacement interaction.
+
+
+## Neatlogs configuration fix — September 6, 2026
+
+The backend now accepts optional `NEATLOGS_API_KEY` in an explicitly loaded `.env`
+file as well as the process environment. Process values take precedence; the key
+is excluded from settings serialization and representation. Telemetry consumes the
+resolved key. Unknown file settings remain rejected, and cloud forwarding remains
+explicitly opt-in. Existing setups need no database migration; see
+[setup and restart instructions](../backend/docs/INCIDENTS_SETUP.md).
+
+Validation from `backend/`: `.venv/bin/python -m pytest tests/test_config_cli.py
+tests/test_telemetry.py -q` passed **25 tests** with two dependency deprecation
+warnings. Ruff lint and format checks passed for the changed Python files. The
+existing local `.env` also validated without displaying credentials. These checks
+do not establish authenticated Neatlogs cloud delivery or new model execution.
+
 **Current integration connects the frontend to Phase 7 and adds incidents plus Neatlogs.**
 Focused integration checks are recorded below. Full Phase 6/7 live repair acceptance
 remains pending; earlier Phase 5 results do not validate those paths. API health/runtime

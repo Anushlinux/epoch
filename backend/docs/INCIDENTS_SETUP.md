@@ -20,15 +20,22 @@ are added to [.env.example](../.env.example):
 | `EPOCH_TELEMETRY_ENABLED` | `true` | Enable the telemetry service; a token is still required for SDK ingestion |
 | `EPOCH_NEATLOGS_CLOUD_ENABLED` | `false` | Explicitly enable cloud forwarding when a cloud key is present |
 
-These credentials belong only in the backend **process environment**, not the
-strict app `.env` file or browser:
+`NEATLOGS_API_KEY` is optional and accepted in the backend `.env` file or process
+environment. Process values take precedence. To load the file, start from `backend/`
+with `uv run --frozen epoch-backend --env-file .env serve`. Existing process-based
+setups need no changes. If the key previously caused an "Extra inputs are not
+permitted" error, keep it in `.env` and restart with this command after updating.
+The key is excluded from configuration output. Cloud forwarding still requires
+`EPOCH_NEATLOGS_CLOUD_ENABLED=true`; no database migration is needed.
+
+These other credentials belong only in the backend **process environment**, not the
+app `.env` file or browser:
 
 - `EPOCH_TELEMETRY_TOKEN`: a local token you choose for SDK-to-Epoch ingestion.
-- `NEATLOGS_API_KEY`: your Neatlogs project key, needed only for cloud forwarding.
 - `OPENAI_API_KEY`: optional alternative to the existing configured Hermes/Codex
   route; see [debugger setup](DEBUGGER_SETUP.md).
 
-Configure secrets through your terminal or secret manager without committing them.
+Keep all credentials out of the browser and never commit them.
 The local token and cloud key are different credentials. Incoming authentication
 headers are never reused for cloud requests.
 

@@ -13,7 +13,7 @@ from epoch_backend.config import Settings
 @pytest.fixture(autouse=True)
 def clear_epoch_environment(monkeypatch):
     for key in tuple(os.environ):
-        if key.startswith("EPOCH_"):
+        if key.startswith("EPOCH_") or key == "NEATLOGS_API_KEY":
             monkeypatch.delenv(key)
 
 
@@ -54,6 +54,34 @@ def test_prefixed_environment_and_explicit_env_file_are_supported(tmp_path, monk
     assert settings.port == 8123
     monkeypatch.setenv("EPOCH_PORT", "8124")
     assert Settings(_env_file=env_file).port == 8124
+
+
+def test_neatlogs_file_key_reaches_telemetry_without_config_disclosure(tmp_path, monkeypatch):
+    from epoch_backend.telemetry import TelemetryService
+
+    env_file = tmp_path / "backend.env"
+    file_key = "test-file-cloud-credential"
+    env_file.write_text(f"NEATLOGS_API_KEY={file_key}\n", encoding="utf-8")
+    settings = Settings(_env_file=env_file)
+    assert TelemetryService(settings, None)._key == file_key
+    assert not settings.neatlogs_cloud_enabled
+    assert "neatlogs_api_key" not in settings.model_dump()
+    assert file_key not in repr(settings)
+    result = run_cli(tmp_path, "--env-file", str(env_file), "check-config")
+    assert result.returncode == 0, result.stderr
+    assert file_key not in result.stdout + result.stderr
+    monkeypatch.setenv("NEATLOGS_API_KEY", "test-process-cloud-credential")
+    overridden = Settings(_env_file=env_file)
+    assert TelemetryService(overridden, None)._key == "test-process-cloud-credential"
+    monkeypatch.setenv("NEATLOGS_API_KEY", "")
+    assert TelemetryService(Settings(_env_file=env_file), None)._key == ""
+
+
+def test_unknown_env_file_settings_still_rejected(tmp_path):
+    env_file = tmp_path / "backend.env"
+    env_file.write_text("EPOCH_UNKNOWN_SETTING=true\n", encoding="utf-8")
+    with pytest.raises(ValidationError):
+        Settings(_env_file=env_file)
 
 
 @pytest.mark.parametrize("host", ["0.0.0.0", "192.168.1.9", "example.com"])

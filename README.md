@@ -2,11 +2,17 @@
 
 **Current integration:** the frontend connects to the Phase 7 backend. Incident grouping, on-demand Luna investigation, JSON evidence imports and local Neatlogs ingestion with optional cloud export extend the existing repair flow. See [setup](backend/docs/INCIDENTS_SETUP.md) and [validation status](docs/status.md). Full Phase 6/7 model-backed repair acceptance remains pending; the API still reports phase 7.
 
-Epoch is a task supervisor with an environment-repair debugger. The user describes the desired result in the interface; Epoch turns that request into verifiable checkpoints, gives Hermes a structured task brief, monitors execution, and directs corrections until the checks pass or a clear limit is reached. Phase 5 verifies and publishes checklist-adapter repairs for later tasks; missing-tool and context repairs remain later phases.
+Epoch pairs Hermes chat with an explicitly invoked debugger. The user chats with Hermes normally, then opens **Debugger** for that conversation and starts an investigation when they want to understand a failure. The debugger uses saved requests and observed execution evidence. Release supervision and verified environment repair remain separate, supported example workflows; they are not prerequisites for chatting. See the [current change plan](docs/CHAT_DEBUGGER_PLAN.md).
 
 **Current state: backend Phases 1–5 are implemented and verified.** OpenAI `gpt-5.6-luna` plans sourced checkpoints and generates serializer corrections; the existing Hermes executor performs the work. Phase 5 adds opt-in Docker-isolated checks, original/fresh task verification, durable versions and rollback. Normal operations share 20 model requests/600 seconds; each repair verification gets its own 20/600 limit, with a 60-request/1,800-second overall repair ceiling and two candidate attempts. See [repair setup](backend/docs/REPAIR_SETUP.md) and [implementation status](docs/status.md).
 
 The [frontend workspace](frontend/README.md) connects intake, supervised execution, feedback, all three repair views and artifact provenance to the current backend. The Incidents view groups related evidence and exposes explicit investigation actions. Fixture pages remain separately labelled; UI checkmarks still come from trusted backend checks.
+
+The active demo environment is the [PDF workshop](backend/docs/PDF_WORKSHOP.md):
+real files, an initially broken pagination tool, and explicit generated repair or
+merge-tool creation. Standard chat and release evaluation remain available. CSV
+conversations are hidden from active use; their records and evidence are retained.
+See [current validation](docs/status.md) before making live acceptance claims.
 
 ## Start here
 
@@ -17,25 +23,22 @@ The [frontend workspace](frontend/README.md) connects intake, supervised executi
 
 ## User flow
 
-1. **Request:** the user describes the work in the Epoch interface. Epoch asks only for missing details that materially affect the result.
-2. **Checkpoints:** Epoch creates a structured brief with deliverables, constraints, dependencies, and evidence required for completion. Explicit requirements and inferred defaults remain distinguishable.
-3. **Execution:** Hermes receives that brief, plans the operational steps, discovers tools, and performs the business work.
-4. **Monitoring:** Epoch observes tool calls, results, retrieved context, artifacts, and explicit progress summaries. It evaluates at meaningful execution events; it does not depend on private model reasoning or inspecting every token.
-5. **Recovery:** for an omitted or incorrect step, Epoch sends Hermes a targeted continuation instruction that identifies the unmet checkpoint and preserves completed work. For the supported checklist serializer defect, opt-in Phase 5 stages and verifies an executable repair before activation. Missing-tool and context repair paths are implemented, with live acceptance still pending.
-6. **Delivery:** independent checks verify the actual result. Epoch reports completed deliverables, supporting links/artifacts, and any remaining limitations. Retry, time, and access limits can stop an unresolved task.
-7. **User feedback:** if the checks pass but the user is dissatisfied, their feedback identifies a missed requirement, evaluation mistake, or new preference. Epoch records the revised intent and directs Hermes to revise the work; it does not automatically treat every preference as a shared-tool defect.
+1. **Chat:** send a message to Hermes and continue the saved conversation. Sending does not create a release task or start debugger analysis.
+2. **Inspect:** select **Debugger** to open the current conversation's investigation view. Opening it only reads saved records.
+3. **Investigate:** explicitly start an investigation, optionally describing what went wrong. Luna compares the original requests with visible responses, recorded errors and tool evidence. It reports supported findings, hypotheses and missing evidence.
+4. **Apply:** click **Verify and apply fix** for a supported CSV sample mapping failure. This separate action verifies and publishes a proposed adapter repair, then lets Hermes retry. Investigation alone remains diagnosis-only. Later CSV chats in the same project discover the saved mapping. Original requirements stay unchanged. See [CSV repair setup](backend/fixtures/csv/README.md).
+5. **Supported evaluation:** separately open the release example to exercise its existing sourced checkpoints, trusted checks and opt-in generated repairs. Those checks cover that workflow; they do not certify arbitrary chat outcomes.
 
 ```text
-User -> Epoch interface -> Supervisor: brief + checkpoints -> Hermes
-                              ^                              |
-                              |     observable execution     v
-                              +---- trusted outcome checks <- tools/context
-                              |
-                   unmet checkpoint or user feedback
-                              |
-                   targeted instruction to Hermes
-                              or
-                   isolated environment repair -> verify -> publish
+User -> Hermes chat -> saved messages and observable tool evidence
+                            |
+                   user opens Debugger
+                            |
+                   explicit investigation -> Luna -> findings and evidence gaps
+                                              |
+                     supported CSV mapping -> verify -> publish -> Hermes retry
+
+Separate release example -> supervisor -> trusted checks -> opt-in verified repair
 ```
 
 **Task recovery and learning are different claims.** A better instruction may complete this task. Learning requires a persistent tool or retrieval change that improves a meaningful fresh task. Keep Hermes' implementation, system prompt, model, and discovery interface fixed. Compare environment versions using equivalent initial briefs and checks; record supervisory interventions separately.
@@ -68,13 +71,13 @@ The 10-hour target is: agree contracts and smoke-test integrations in hour 1; co
 
 ## Working with this repository
 
-Run `npm run dev --prefix frontend` and open `http://127.0.0.1:5173/chat`. In **Connection settings**, connect to the backend's local origin. Saving a request leaves it pending; **Start release run** explicitly starts execution when the server reports availability. Run state tests with `npm test --prefix frontend`, actual intake browser checks with `npm run test:integration --prefix frontend`, and execution browser checks with `npm run test:execution --prefix frontend`. The execution test runner uses an explicit test executor with real HTTP/storage/checks; it does not prove live model execution. See the [frontend verification record](frontend/evidence/README.md).
+Run `npm run dev --prefix frontend` and open `http://127.0.0.1:5173/chat`. In **Connection settings**, connect to the backend's local origin. Sending a chat message explicitly starts Hermes. Opening **Debugger** only reads evidence; its investigation action explicitly starts Luna. Release execution lives in the separate release example. Run state tests with `npm test --prefix frontend`, actual intake browser checks with `npm run test:integration --prefix frontend`, and execution browser checks with `npm run test:execution --prefix frontend`. The execution test runner uses an explicit test executor with real HTTP/storage/checks; it does not prove live model execution. See the [frontend verification record](frontend/evidence/README.md).
 
 From `backend/`, run `uv sync --frozen`, then `uv run --frozen epoch-backend serve`. The health check is at `http://127.0.0.1:8000/api/health`; API docs are at `/docs`. Follow the [backend README](backend/README.md) for Python/uv prerequisites, local cache setup, configuration, tests and the live-server smoke check. Claude and Copilot point to [AGENTS.md](AGENTS.md) for shared rules.
 
 For documentation changes, check relative links and anchors, preserve the exact direction source, inspect the diff for scope, and run `git diff --check`. The [documentation validation notes](docs/status.md#documentation-validation) describe the handoff checks and their limits.
 
-The preserved direction remains unchanged. The supervisor flow and named work split above record the user's later decision and supersede the earlier passive-debugger/CLI-only presentation. The implemented supervisor is limited to the release workflow and additive feedback. The repair controller supports the checklist serializer, missing lookup and context selector; the latter two still await live acceptance. Incident evidence does not expand its permissions or trigger rules.
+The preserved direction remains unchanged. The current chat/manual-debugger flow records the user's latest interaction decision and supersedes the earlier default release-intake presentation. The separately available supervisor remains limited to the release workflow and additive feedback. The repair controller supports the checklist serializer, missing lookup and context selector; the latter two still await live acceptance. Incident evidence does not expand its permissions or trigger rules.
 
 ## Generic agent startup prompt
 

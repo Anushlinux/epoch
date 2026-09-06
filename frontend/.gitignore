@@ -3,3 +3,5 @@ test-results/
 playwright-report/
 intake-test-results/
 execution-test-results/
+
+/.env

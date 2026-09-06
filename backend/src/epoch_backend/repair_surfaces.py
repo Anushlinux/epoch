@@ -10,6 +10,7 @@ LOOKUP = "qa_lookup.py"
 CONTEXT = "runbook_selector.py"
 LOOKUP_NAME = "directory.lookup_qa_owner"
 ENTRYPOINTS = {SERIALIZER: "serialize_checklist", LOOKUP: "lookup_owner", CONTEXT: "select_runbook"}
+ENTRYPOINTS.update({"pdf_renderer.py": "render_pdf", "pdf_merge.py": "merge_pdfs"})
 LOOKUP_INPUT = {
     "type": "object",
     "properties": {"project_id": {"type": "string", "minLength": 1, "maxLength": 100}},
@@ -51,6 +52,18 @@ def artifacts(manifest):
             raise CandidateError("artifact_changed", "Unknown or changed environment artifact.")
         if target == LOOKUP:
             validate_lookup_contract(artifact.get("tool_contract"))
+        if target == "pdf_merge.py":
+            from epoch_backend.pdf_contracts import MergePdf
+
+            contract = artifact.get("tool_contract") or {}
+            if (
+                contract.get("name") != "pdf.merge"
+                or contract.get("input_schema") != MergePdf.model_json_schema()
+                or not contract.get("description")
+            ):
+                raise CandidateError(
+                    "invalid_tool_contract", "PDF merge contract exceeds its authorized interface."
+                )
     return values
 
 

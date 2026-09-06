@@ -306,7 +306,10 @@ def test_parent_kills_slow_network_worker_on_limit(monkeypatch, cancel):
     assert processes[0].poll() is not None
 
 
-def test_worker_http_error_never_retries_or_returns_error_body(monkeypatch):
+@pytest.mark.parametrize(
+    "body", [b"secret-value", b'{"error":{"message":"Unsupported secret-value"}}']
+)
+def test_worker_http_error_never_retries_or_returns_error_body(monkeypatch, body):
     import urllib.error
     import urllib.request
 
@@ -315,9 +318,7 @@ def test_worker_http_error_never_retries_or_returns_error_body(monkeypatch):
 
     def open_error(*args, **kwargs):
         calls.append((args, kwargs))
-        raise urllib.error.HTTPError(
-            bridge.API_ENDPOINT, 403, "secret-value", {}, io.BytesIO(b"secret-value")
-        )
+        raise urllib.error.HTTPError(bridge.API_ENDPOINT, 403, "secret-value", {}, io.BytesIO(body))
 
     monkeypatch.setattr(
         urllib.request, "build_opener", lambda *args: SimpleNamespace(open=open_error)

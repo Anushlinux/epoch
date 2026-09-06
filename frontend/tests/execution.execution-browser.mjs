@@ -5,27 +5,27 @@ const api = process.env.EPOCH_INTAKE_TEST_ORIGIN;
 const origin = process.env.EPOCH_INTAKE_FRONTEND_ORIGIN;
 const pendingKey = 'epoch.execution.pending.v1';
 async function connect(page) {
-  await page.locator('.topbar').getByRole('button', { name: 'Connection settings' }).click();
-  const field = page.getByRole('textbox', { name: 'API origin' });
-  if (await field.isEnabled()) await field.fill(api);
-  await page.getByRole('button', { name: 'Connect / reconnect' }).click();
+  // The origin is saved by setup; startup and reload reconnect without a write.
   await expect(page.locator('.connection-state')).toHaveAttribute('title', 'Connected · local API');
 }
 async function create(page, message = 'Prepare the demo release <script>unsafe()</script>') {
-  await page.goto(`${origin}/chat`);
+  // Saved task is setup for this execution test; generic chat no longer doubles as intake.
+  const response = await fetch(`${api}/api/tasks`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ client_request_id: crypto.randomUUID(), message, project_id: 'demo' }) });
+  expect(response.status).toBe(201);
+  const task = await response.json();
+  await page.addInitScript(value => sessionStorage.setItem('epoch.intake.origin.v1', value), api);
+  await page.goto(`${origin}/debugger?task=${task.id}`);
+  await expect(page.locator('.connection-state')).toHaveAttribute('title', 'Connected · local API');
   await connect(page);
-  await page.getByRole('textbox', { name: 'What needs to be done?' }).fill(message);
-  await page.getByRole('button', { name: 'Save request', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Saved request detail' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Start release run' })).toBeEnabled();
-  return new URL(page.url()).searchParams.get('task');
+  await expect(page.locator('#start-release')).toBeEnabled();
+  return task.id;
 }
 async function start(page, scenario = 'control', release = '2.4') {
   if (!(await page.getByRole('textbox', { name: 'Release', exact: true }).isVisible())) await page.locator('[data-key=another-release]>summary').click();
   await page.getByRole('textbox', { name: 'Release', exact: true }).fill(release);
   await page.getByLabel('Sandbox scenario').selectOption(scenario);
   await page.locator('#release-supervised').uncheck();
-  await page.getByRole('button', { name: 'Start release run' }).click();
+  await page.getByRole('button', { name: 'Run release evaluation' }).click();
   await expect(page.locator('[data-run-id]')).toBeVisible();
   return page.locator('[data-run-id]').getAttribute('data-run-id');
 }
@@ -43,8 +43,7 @@ test('explicit release, named SSE, sourced checks, simulation objects, history a
   const runId = await start(page);
   await expect(page.locator('[data-run-status]')).toHaveText('running');
   await expect(page.locator('.live-checkpoints .badge')).toHaveText(['pending', 'pending', 'pending']);
-  await page.getByRole('link', { name: 'Open debugger', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Release execution evidence' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Release 2.4', exact: true })).toBeVisible();
   await finish(page, 'completed');
   expect(streams).toBeGreaterThan(0);
   await expect(page.locator('[data-verdict]')).toHaveText('Trusted checks: passed');
@@ -60,7 +59,7 @@ test('explicit release, named SSE, sourced checks, simulation objects, history a
   expect(sequences.length).toBeGreaterThan(10);
   expect(errors).toEqual([]);
   await expect(page.getByText('Request saved. It is pending; execution has not started.', { exact: true })).toHaveCount(0);
-  await expect(page.locator('.statusbar')).toContainText('Explicit release runs');
+  await expect(page.locator('.statusbar')).toContainText('Debugger');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.evaluate(() => { document.querySelector('#page-scroll').scrollTop = 0; });
   await page.screenshot({ path: `evidence/phase7-direct-execution-${info.project.name}.png`, fullPage: true });
@@ -104,7 +103,7 @@ test('lost run acknowledgement survives reload, no automatic POST and exact retr
     await route.abort('failed');
   }, { times: 1 });
   await page.getByRole('textbox', { name: 'Release', exact: true }).fill('3.0');
-  await page.getByRole('button', { name: 'Start release run' }).click();
+  await page.getByRole('button', { name: 'Run release evaluation' }).click();
   await expect(page.locator('.execution-panel [role=alert]')).toContainText('acknowledgement unknown');
   expect((await page.evaluate((key) => JSON.parse(sessionStorage.getItem(key)), pendingKey)).payload).toEqual(sent);
   let posts = 0; page.on('request', (r) => { if (r.method() === 'POST') posts++; });
@@ -139,7 +138,6 @@ test('offline stream recovers authoritative final state and contiguous trace wit
   await context.setOffline(false);
   await finish(page, 'completed');
   expect(await runs(taskId)).toHaveLength(1);
-  await page.getByRole('link', { name: 'Open debugger', exact: true }).click();
   const sequences = await page.locator('[data-sequence]').evaluateAll((els) => els.map((el) => Number(el.dataset.sequence)));
   expect(sequences).toEqual(Array.from({ length: sequences.length }, (_, i) => i + 1));
   await expect(page.locator('.live-run')).toContainText('activity finished');

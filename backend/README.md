@@ -26,9 +26,49 @@ The server listens at `http://127.0.0.1:8000`. Open `/docs` for the API explorer
 
 Defaults require no configuration file. To customize them, copy `.env.example` to `.env`, edit it, then use `uv run --frozen epoch-backend --env-file .env serve`. Environment variables override that file. Relative `EPOCH_DATA_DIR` paths resolve against the backend package root; the default database is `backend/data/epoch.sqlite3`. Generated data, `.env`, local caches and virtual environments are ignored by Git. Configuration validation does not create the data directory.
 
+Optional Neatlogs cloud forwarding accepts `NEATLOGS_API_KEY` in this backend `.env`
+or the process environment, with process values taking precedence. The key is excluded
+from configuration output. Enable forwarding separately with
+`EPOCH_NEATLOGS_CLOUD_ENABLED=true`. Existing process-based setups need no migration;
+file-based setups must use `--env-file .env`. See [incident setup](docs/INCIDENTS_SETUP.md).
+
 **Phase 5 adds optional `EPOCH_REPAIR_IMAGE`; existing files need no edits. Linux Docker and a locally pulled pinned image are required for repair.** See [repair setup and migration](docs/REPAIR_SETUP.md). Phase 4 needs no new environment settings on the verified existing Hermes/OpenAI setup. The app `.env` file accepts the app settings in [.env.example](.env.example). If you choose the separate API-key debugger route, set `OPENAI_API_KEY` in the terminal/process environment, not in that file; see [debugger setup](docs/DEBUGGER_SETUP.md). Optional `EPOCH_HERMES_HOME` and `EPOCH_HERMES_CHECKOUT` overrides also belong in the process environment and are needed only when automatic discovery cannot find your installation. The Luna model and maximum 20 turns/600 seconds need no environment variables. Future configuration changes must update the example/setup docs and be listed as required or optional in the handoff.
 
 This is an unauthenticated local development service. The CLI accepts loopback bind addresses only; CORS permits the frontend's localhost and 127.0.0.1 ports 5173. Set `EPOCH_CORS_ORIGINS` to an explicit JSON list of local origins if your UI uses a different port. Unexpected browser origins cannot submit tasks or start runs. Deployment, authentication and multiple workers remain outside scope.
+
+## PDF workshop
+
+New chats default to the PDF workshop in the frontend. See [PDF setup and acceptance](docs/PDF_WORKSHOP.md) for the required isolated image, uploads, generated pagination repair, generated merge tool, evidence and rollback. CSV is retired from active execution; its historical records remain on disk.
+
+## Chat and explicit debugger
+
+The normal frontend uses `/api/chats`, separate from release tasks and runs.
+Create a conversation with `client_request_id` and optional `project_id`, then
+POST `{client_request_id, content}` to `/api/chats/{chat_id}/messages` to start
+Hermes. Read the conversation or its operation endpoint for saved results.
+Follow-up messages retain visible user/Hermes history. Chat uses the existing
+Hermes configuration and authorized simulated tools.
+
+POST `{client_request_id, question}` to `/api/chats/{chat_id}/debugger` only when
+an investigation is requested; `question` is optional. This starts one bounded
+Luna analysis using the existing debugger connection, independently of Hermes
+availability. Opening or refreshing a conversation never starts analysis.
+Operations distinguish `kind: chat` from `kind: debugger`; debugger results retain
+requirements, supplied evidence, citations and missing information. This endpoint
+only investigates. `POST /api/chats/{chat_id}/environment-actions` explicitly starts
+the authorized PDF repair or tool creation. Debugger
+answers are labeled separately and are not silently injected into Hermes history.
+
+Use the same request ID and payload for an uncertain retry. Restarted operations
+are marked interrupted and never automatically resumed. Both operation types
+share the existing single-operation lock and cancellation endpoint.
+
+**Setup:** restart the backend to load these routes. No new environment settings,
+credentials or manual migration are required. The additive `chats.sqlite3` store
+is initialized inside `EPOCH_DATA_DIR`; historical task/run storage is preserved.
+Hermes chat requires the existing Hermes setup; investigation requires the
+existing [debugger setup](docs/DEBUGGER_SETUP.md). No Docker invocation is needed for investigation. PDF execution and verification
+require the separate PDF runtime image.
 
 ## Try task intake
 

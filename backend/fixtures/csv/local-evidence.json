@@ -1,0 +1,684 @@
+{
+  "proof": "Actual local simulated tool execution; no model inference",
+  "results": [
+    {
+      "mode": "broken",
+      "first_import": {
+        "ok": true,
+        "result": {
+          "id": "6e00af45-a130-494a-b071-f7d995d4dd48",
+          "simulated": true,
+          "status": "rejected",
+          "created_count": 0,
+          "customer_count_before": 0,
+          "customer_count_after": 0,
+          "input_sha256": "a86171bc2b48d81e71811ea0a307b61777a32a9543dd1a6ce604e229cbea4e38",
+          "error": {
+            "code": "missing_email",
+            "message": "Customer 1: email is required."
+          }
+        }
+      },
+      "exact_retry": {
+        "ok": true,
+        "result": {
+          "created_count": 0,
+          "customer_count_after": 0,
+          "customer_count_before": 0,
+          "error": {
+            "code": "missing_email",
+            "message": "Customer 1: email is required."
+          },
+          "id": "6e00af45-a130-494a-b071-f7d995d4dd48",
+          "input_sha256": "a86171bc2b48d81e71811ea0a307b61777a32a9543dd1a6ce604e229cbea4e38",
+          "simulated": true,
+          "status": "rejected"
+        }
+      },
+      "simulated": true,
+      "environment": "csv_import",
+      "adapter_mode": "broken",
+      "customers": [],
+      "imports": [
+        {
+          "created_count": 0,
+          "customer_count_after": 0,
+          "customer_count_before": 0,
+          "error": {
+            "code": "missing_email",
+            "message": "Customer 1: email is required."
+          },
+          "id": "6e00af45-a130-494a-b071-f7d995d4dd48",
+          "input_sha256": "a86171bc2b48d81e71811ea0a307b61777a32a9543dd1a6ce604e229cbea4e38",
+          "simulated": true,
+          "status": "rejected"
+        }
+      ],
+      "imports_total": 1,
+      "sample_csv": "name,email\nAsha,asha@example.test\nRavi,ravi@example.test\nMeera,meera@example.test\n",
+      "expected_count": 3,
+      "events": [
+        {
+          "emitted_at": "2026-09-06T18:01:11.971654+00:00",
+          "id": "d1e10243-2061-4488-a46d-c80dd942e79e",
+          "payload": {
+            "adapter_mode": "broken",
+            "environment": "csv_import"
+          },
+          "run_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "sequence": 1,
+          "task_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "type": "sandbox.initialized"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.971763+00:00",
+          "id": "7e32cabd-ff31-4738-8736-95e349290171",
+          "payload": {
+            "csv_text": "name,email\nAsha,asha@example.test\nRavi,ravi@example.test\nMeera,meera@example.test\n",
+            "source_id": "builtin-customer-csv-v1"
+          },
+          "run_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "sequence": 2,
+          "task_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "type": "context.source"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.971782+00:00",
+          "id": "d168901b-c2b9-4288-ab44-fdfff8a68fbb",
+          "payload": {
+            "evaluator_version": "customer-csv-v1",
+            "expected_customers": [
+              {
+                "email": "asha@example.test",
+                "name": "Asha"
+              },
+              {
+                "email": "ravi@example.test",
+                "name": "Ravi"
+              },
+              {
+                "email": "meera@example.test",
+                "name": "Meera"
+              }
+            ],
+            "original_request": "Import the supplied customer CSV into the simulated customer service. Preserve each customer's name and email, create exactly three customers without duplicates, and confirm the saved customers by listing them.",
+            "requirements": [
+              "Save exactly the three supplied customers with their original names and emails.",
+              "Do not create duplicate customers or partial writes after a rejected import."
+            ],
+            "source_id": "builtin-customer-csv-v1",
+            "source_sha256": "a86171bc2b48d81e71811ea0a307b61777a32a9543dd1a6ce604e229cbea4e38",
+            "trusted": true
+          },
+          "run_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "sequence": 3,
+          "task_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "type": "criteria.recorded"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.972801+00:00",
+          "id": "00d232f8-d75c-4df9-9b93-665fb86cd914",
+          "payload": {
+            "arguments": {
+              "csv_text": "name,email\nAsha,asha@example.test\nRavi,ravi@example.test\nMeera,meera@example.test\n",
+              "idempotency_key": "sample-import"
+            },
+            "tool_name": "customers.import"
+          },
+          "run_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "sequence": 4,
+          "task_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.973457+00:00",
+          "id": "903764f7-a429-48e3-a88f-d2c9ef3dda56",
+          "payload": {
+            "csv_text": "name,email\nAsha,asha@example.test\nRavi,ravi@example.test\nMeera,meera@example.test\n",
+            "idempotency_key": "sample-import",
+            "import_id": "6e00af45-a130-494a-b071-f7d995d4dd48"
+          },
+          "run_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "sequence": 5,
+          "task_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "type": "tool.import_input"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.973727+00:00",
+          "id": "147d5952-9493-4aea-9035-d51817929b94",
+          "payload": {
+            "customers": [
+              {
+                "emailAddress": "asha@example.test",
+                "name": "Asha"
+              },
+              {
+                "emailAddress": "ravi@example.test",
+                "name": "Ravi"
+              },
+              {
+                "emailAddress": "meera@example.test",
+                "name": "Meera"
+              }
+            ],
+            "import_id": "6e00af45-a130-494a-b071-f7d995d4dd48"
+          },
+          "run_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "sequence": 6,
+          "task_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "type": "tool.adapter_output"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.973881+00:00",
+          "id": "2e45bfb2-c4ec-4133-8784-4644d2311f6f",
+          "payload": {
+            "created_count": 0,
+            "customer_count_after": 0,
+            "customer_count_before": 0,
+            "error": {
+              "code": "missing_email",
+              "message": "Customer 1: email is required."
+            },
+            "expected_fields": [
+              "name",
+              "email"
+            ],
+            "id": "6e00af45-a130-494a-b071-f7d995d4dd48",
+            "input_sha256": "a86171bc2b48d81e71811ea0a307b61777a32a9543dd1a6ce604e229cbea4e38",
+            "outgoing_customers": [
+              {
+                "emailAddress": "asha@example.test",
+                "name": "Asha"
+              },
+              {
+                "emailAddress": "ravi@example.test",
+                "name": "Ravi"
+              },
+              {
+                "emailAddress": "meera@example.test",
+                "name": "Meera"
+              }
+            ],
+            "simulated": true,
+            "status": "rejected"
+          },
+          "run_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "sequence": 7,
+          "task_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "type": "tool.service_error"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.973903+00:00",
+          "id": "8087fa2d-2d84-4c27-94a5-e78631f7e0f3",
+          "payload": {
+            "customer_count": 0,
+            "import_id": "6e00af45-a130-494a-b071-f7d995d4dd48"
+          },
+          "run_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "sequence": 8,
+          "task_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "type": "state.observed"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.974664+00:00",
+          "id": "57d5c222-4b9c-4b27-b6a4-69276ceb72a1",
+          "payload": {
+            "result": {
+              "created_count": 0,
+              "customer_count_after": 0,
+              "customer_count_before": 0,
+              "error": {
+                "code": "missing_email",
+                "message": "Customer 1: email is required."
+              },
+              "id": "6e00af45-a130-494a-b071-f7d995d4dd48",
+              "input_sha256": "a86171bc2b48d81e71811ea0a307b61777a32a9543dd1a6ce604e229cbea4e38",
+              "simulated": true,
+              "status": "rejected"
+            },
+            "tool_name": "customers.import"
+          },
+          "run_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "sequence": 9,
+          "task_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "type": "tool.result"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.975375+00:00",
+          "id": "e31c9492-a5c7-4178-bc34-cb043ee32546",
+          "payload": {
+            "arguments": {
+              "csv_text": "name,email\nAsha,asha@example.test\nRavi,ravi@example.test\nMeera,meera@example.test\n",
+              "idempotency_key": "sample-import"
+            },
+            "tool_name": "customers.import"
+          },
+          "run_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "sequence": 10,
+          "task_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.975942+00:00",
+          "id": "22e2f56a-7e05-43f7-a8aa-090e8eb4d7db",
+          "payload": {
+            "import_id": "6e00af45-a130-494a-b071-f7d995d4dd48"
+          },
+          "run_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "sequence": 11,
+          "task_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "type": "tool.import_reused"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.977128+00:00",
+          "id": "c951ce02-4f5c-44cd-a498-a73cc54fa186",
+          "payload": {
+            "result": {
+              "created_count": 0,
+              "customer_count_after": 0,
+              "customer_count_before": 0,
+              "error": {
+                "code": "missing_email",
+                "message": "Customer 1: email is required."
+              },
+              "id": "6e00af45-a130-494a-b071-f7d995d4dd48",
+              "input_sha256": "a86171bc2b48d81e71811ea0a307b61777a32a9543dd1a6ce604e229cbea4e38",
+              "simulated": true,
+              "status": "rejected"
+            },
+            "tool_name": "customers.import"
+          },
+          "run_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "sequence": 12,
+          "task_id": "1ee5eebf-96ee-4034-945a-5bbed46e7457",
+          "type": "tool.result"
+        }
+      ],
+      "events_total": 12,
+      "criteria": {
+        "evaluator_version": "customer-csv-v1",
+        "expected_customers": [
+          {
+            "email": "asha@example.test",
+            "name": "Asha"
+          },
+          {
+            "email": "ravi@example.test",
+            "name": "Ravi"
+          },
+          {
+            "email": "meera@example.test",
+            "name": "Meera"
+          }
+        ],
+        "original_request": "Import the supplied customer CSV into the simulated customer service. Preserve each customer's name and email, create exactly three customers without duplicates, and confirm the saved customers by listing them.",
+        "requirements": [
+          "Save exactly the three supplied customers with their original names and emails.",
+          "Do not create duplicate customers or partial writes after a rejected import."
+        ],
+        "source_id": "builtin-customer-csv-v1",
+        "source_sha256": "a86171bc2b48d81e71811ea0a307b61777a32a9543dd1a6ce604e229cbea4e38"
+      },
+      "verification": {
+        "evaluator_version": "customer-csv-v1",
+        "passed": false,
+        "checks": [
+          {
+            "name": "source_customers_saved",
+            "passed": false,
+            "expected_count": 3,
+            "actual_count": 0
+          },
+          {
+            "name": "no_duplicate_emails",
+            "passed": true
+          },
+          {
+            "name": "rejected_imports_atomic",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "mode": "healthy",
+      "first_import": {
+        "ok": true,
+        "result": {
+          "id": "f35c9312-a904-4c3a-9006-bd024fa5ab59",
+          "simulated": true,
+          "status": "completed",
+          "created_count": 3,
+          "customer_count_before": 0,
+          "customer_count_after": 3,
+          "input_sha256": "a86171bc2b48d81e71811ea0a307b61777a32a9543dd1a6ce604e229cbea4e38",
+          "error": null
+        }
+      },
+      "exact_retry": {
+        "ok": true,
+        "result": {
+          "created_count": 3,
+          "customer_count_after": 3,
+          "customer_count_before": 0,
+          "error": null,
+          "id": "f35c9312-a904-4c3a-9006-bd024fa5ab59",
+          "input_sha256": "a86171bc2b48d81e71811ea0a307b61777a32a9543dd1a6ce604e229cbea4e38",
+          "simulated": true,
+          "status": "completed"
+        }
+      },
+      "simulated": true,
+      "environment": "csv_import",
+      "adapter_mode": "healthy",
+      "customers": [
+        {
+          "email": "asha@example.test",
+          "id": "fb9aeab5-89a6-48bb-baf4-9801c5b06323",
+          "name": "Asha",
+          "simulated": true
+        },
+        {
+          "email": "meera@example.test",
+          "id": "ee4273e0-fb56-4aa5-ac3e-77998f5d2397",
+          "name": "Meera",
+          "simulated": true
+        },
+        {
+          "email": "ravi@example.test",
+          "id": "5abecc66-122b-4353-ab86-062fec5170ad",
+          "name": "Ravi",
+          "simulated": true
+        }
+      ],
+      "imports": [
+        {
+          "created_count": 3,
+          "customer_count_after": 3,
+          "customer_count_before": 0,
+          "error": null,
+          "id": "f35c9312-a904-4c3a-9006-bd024fa5ab59",
+          "input_sha256": "a86171bc2b48d81e71811ea0a307b61777a32a9543dd1a6ce604e229cbea4e38",
+          "simulated": true,
+          "status": "completed"
+        }
+      ],
+      "imports_total": 1,
+      "sample_csv": "name,email\nAsha,asha@example.test\nRavi,ravi@example.test\nMeera,meera@example.test\n",
+      "expected_count": 3,
+      "events": [
+        {
+          "emitted_at": "2026-09-06T18:01:11.978174+00:00",
+          "id": "9bc29978-e48d-4c85-bd28-8fcf2eb524b2",
+          "payload": {
+            "adapter_mode": "healthy",
+            "environment": "csv_import"
+          },
+          "run_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "sequence": 1,
+          "task_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "type": "sandbox.initialized"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.978198+00:00",
+          "id": "ce547c4b-fe03-4c27-b10a-878cb5d553db",
+          "payload": {
+            "csv_text": "name,email\nAsha,asha@example.test\nRavi,ravi@example.test\nMeera,meera@example.test\n",
+            "source_id": "builtin-customer-csv-v1"
+          },
+          "run_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "sequence": 2,
+          "task_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "type": "context.source"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.978215+00:00",
+          "id": "81b33d8b-99b1-4a87-b525-bc97f9f7eea2",
+          "payload": {
+            "evaluator_version": "customer-csv-v1",
+            "expected_customers": [
+              {
+                "email": "asha@example.test",
+                "name": "Asha"
+              },
+              {
+                "email": "ravi@example.test",
+                "name": "Ravi"
+              },
+              {
+                "email": "meera@example.test",
+                "name": "Meera"
+              }
+            ],
+            "original_request": "Import the supplied customer CSV into the simulated customer service. Preserve each customer's name and email, create exactly three customers without duplicates, and confirm the saved customers by listing them.",
+            "requirements": [
+              "Save exactly the three supplied customers with their original names and emails.",
+              "Do not create duplicate customers or partial writes after a rejected import."
+            ],
+            "source_id": "builtin-customer-csv-v1",
+            "source_sha256": "a86171bc2b48d81e71811ea0a307b61777a32a9543dd1a6ce604e229cbea4e38",
+            "trusted": true
+          },
+          "run_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "sequence": 3,
+          "task_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "type": "criteria.recorded"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.979697+00:00",
+          "id": "c9658d5c-c1af-461b-addd-ffb0b06deff2",
+          "payload": {
+            "arguments": {
+              "csv_text": "name,email\nAsha,asha@example.test\nRavi,ravi@example.test\nMeera,meera@example.test\n",
+              "idempotency_key": "sample-import"
+            },
+            "tool_name": "customers.import"
+          },
+          "run_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "sequence": 4,
+          "task_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.980231+00:00",
+          "id": "9f41ec67-877a-469d-af59-1e358d11c4be",
+          "payload": {
+            "csv_text": "name,email\nAsha,asha@example.test\nRavi,ravi@example.test\nMeera,meera@example.test\n",
+            "idempotency_key": "sample-import",
+            "import_id": "f35c9312-a904-4c3a-9006-bd024fa5ab59"
+          },
+          "run_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "sequence": 5,
+          "task_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "type": "tool.import_input"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.980276+00:00",
+          "id": "7d79d2e7-3561-4a0c-88ae-c2cfd39bc0de",
+          "payload": {
+            "customers": [
+              {
+                "email": "asha@example.test",
+                "name": "Asha"
+              },
+              {
+                "email": "ravi@example.test",
+                "name": "Ravi"
+              },
+              {
+                "email": "meera@example.test",
+                "name": "Meera"
+              }
+            ],
+            "import_id": "f35c9312-a904-4c3a-9006-bd024fa5ab59"
+          },
+          "run_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "sequence": 6,
+          "task_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "type": "tool.adapter_output"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.980446+00:00",
+          "id": "4499e19d-08dd-445c-9b98-a8e49599132e",
+          "payload": {
+            "created_count": 3,
+            "customer_count_after": 3,
+            "customer_count_before": 0,
+            "error": null,
+            "expected_fields": [
+              "name",
+              "email"
+            ],
+            "id": "f35c9312-a904-4c3a-9006-bd024fa5ab59",
+            "input_sha256": "a86171bc2b48d81e71811ea0a307b61777a32a9543dd1a6ce604e229cbea4e38",
+            "outgoing_customers": [
+              {
+                "email": "asha@example.test",
+                "name": "Asha"
+              },
+              {
+                "email": "ravi@example.test",
+                "name": "Ravi"
+              },
+              {
+                "email": "meera@example.test",
+                "name": "Meera"
+              }
+            ],
+            "simulated": true,
+            "status": "completed"
+          },
+          "run_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "sequence": 7,
+          "task_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "type": "tool.service_result"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.980464+00:00",
+          "id": "0dac1555-6e51-41ca-a054-2f3dee573443",
+          "payload": {
+            "customer_count": 3,
+            "import_id": "f35c9312-a904-4c3a-9006-bd024fa5ab59"
+          },
+          "run_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "sequence": 8,
+          "task_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "type": "state.observed"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.980968+00:00",
+          "id": "f3a72ac9-48f7-444a-bb91-5a4ff877565d",
+          "payload": {
+            "result": {
+              "created_count": 3,
+              "customer_count_after": 3,
+              "customer_count_before": 0,
+              "error": null,
+              "id": "f35c9312-a904-4c3a-9006-bd024fa5ab59",
+              "input_sha256": "a86171bc2b48d81e71811ea0a307b61777a32a9543dd1a6ce604e229cbea4e38",
+              "simulated": true,
+              "status": "completed"
+            },
+            "tool_name": "customers.import"
+          },
+          "run_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "sequence": 9,
+          "task_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "type": "tool.result"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.981728+00:00",
+          "id": "528fde0d-8329-4993-9c24-1dcb66ad8c2f",
+          "payload": {
+            "arguments": {
+              "csv_text": "name,email\nAsha,asha@example.test\nRavi,ravi@example.test\nMeera,meera@example.test\n",
+              "idempotency_key": "sample-import"
+            },
+            "tool_name": "customers.import"
+          },
+          "run_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "sequence": 10,
+          "task_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.982242+00:00",
+          "id": "8a69f357-1df5-423c-9e4e-dc1c8be11387",
+          "payload": {
+            "import_id": "f35c9312-a904-4c3a-9006-bd024fa5ab59"
+          },
+          "run_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "sequence": 11,
+          "task_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "type": "tool.import_reused"
+        },
+        {
+          "emitted_at": "2026-09-06T18:01:11.982683+00:00",
+          "id": "9a4250e5-b26a-42be-bfe7-551847357e43",
+          "payload": {
+            "result": {
+              "created_count": 3,
+              "customer_count_after": 3,
+              "customer_count_before": 0,
+              "error": null,
+              "id": "f35c9312-a904-4c3a-9006-bd024fa5ab59",
+              "input_sha256": "a86171bc2b48d81e71811ea0a307b61777a32a9543dd1a6ce604e229cbea4e38",
+              "simulated": true,
+              "status": "completed"
+            },
+            "tool_name": "customers.import"
+          },
+          "run_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "sequence": 12,
+          "task_id": "56d30493-80aa-4c11-bd77-ab93524a6e53",
+          "type": "tool.result"
+        }
+      ],
+      "events_total": 12,
+      "criteria": {
+        "evaluator_version": "customer-csv-v1",
+        "expected_customers": [
+          {
+            "email": "asha@example.test",
+            "name": "Asha"
+          },
+          {
+            "email": "ravi@example.test",
+            "name": "Ravi"
+          },
+          {
+            "email": "meera@example.test",
+            "name": "Meera"
+          }
+        ],
+        "original_request": "Import the supplied customer CSV into the simulated customer service. Preserve each customer's name and email, create exactly three customers without duplicates, and confirm the saved customers by listing them.",
+        "requirements": [
+          "Save exactly the three supplied customers with their original names and emails.",
+          "Do not create duplicate customers or partial writes after a rejected import."
+        ],
+        "source_id": "builtin-customer-csv-v1",
+        "source_sha256": "a86171bc2b48d81e71811ea0a307b61777a32a9543dd1a6ce604e229cbea4e38"
+      },
+      "verification": {
+        "evaluator_version": "customer-csv-v1",
+        "passed": true,
+        "checks": [
+          {
+            "name": "source_customers_saved",
+            "passed": true,
+            "expected_count": 3,
+            "actual_count": 3
+          },
+          {
+            "name": "no_duplicate_emails",
+            "passed": true
+          },
+          {
+            "name": "rejected_imports_atomic",
+            "passed": true
+          }
+        ]
+      }
+    }
+  ]
+}

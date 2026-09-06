@@ -243,9 +243,16 @@ class EnvironmentStore:
                 raise CandidateError(
                     "publication_denied", "Candidate is not an intact staged artifact."
                 )
+            required = (REQUIRED_PROOFS - {"fresh_release"} | {"fresh_task"}) if record.get("target", "").startswith("pdf_") else REQUIRED_PROOFS
+            if record.get("target", "").startswith("pdf_") and any(
+                p.get("bundle_sha256") != record["bundle_sha256"]
+                or p.get("image_id") != record["image_id"]
+                or not p.get("verifier_sha256") for p in proofs
+            ):
+                raise CandidateError("publication_denied", "PDF proof does not match the complete verified bundle and runtime.")
             if (
-                len(proofs) != len(REQUIRED_PROOFS)
-                or {p.get("kind") for p in proofs} != REQUIRED_PROOFS
+                len(proofs) != len(required)
+                or {p.get("kind") for p in proofs} != required
                 or any(
                     p.get("passed") is not True
                     or p.get("artifact_sha256") != record["artifact_sha256"]

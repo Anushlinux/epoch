@@ -2,6 +2,23 @@
 
 **The broader architecture below remains the design; Phases 1–5 now implement its release/checklist path.** The backend includes sourced Luna planning, fixed Hermes execution, scoped MCP simulations, trusted checks, additive feedback and opt-in generated serializer repair. Phase 5 stages Python in restricted Linux Docker, verifies component/original/fresh/regression behavior, and persists project versions with rollback. Actual acceptance and remaining gaps are in [status](status.md); setup and limits are in [repair setup](../backend/docs/REPAIR_SETUP.md). Missing-tool/context code is implemented with acceptance pending. The additive incident/Neatlogs integration is described below. The original direction stays unchanged.
 
+## Current interaction boundary
+
+The latest user decision makes Hermes chat the default. Its durable conversations
+are separate from release task intake. Only an explicit debugger submission starts
+conversation analysis; navigation and read refreshes cannot start it. Analysis
+retains original user messages as requirements evidence and reports gaps where no
+trusted task-specific evaluator exists. Luna has no direct business tools. The
+later [CSV assignment](CSV_REPAIR_PLAN.md) permits a restricted mapping proposal
+for a captured sample import failure. Investigation saves the proposal; the separate
+Verify and apply fix action starts execution. Trusted host code stages it, tests component
+behavior and unchanged Hermes on original/fresh tasks, then publishes it and asks
+Hermes to continue. The proposal cannot edit service checks, source data, or the
+executor. Project mappings persist and are exposed through ordinary tool discovery;
+generic chat investigation remains diagnosis-only. See [CSV setup](../backend/fixtures/csv/README.md).
+The release supervisor described below remains a separate supported example.
+See the [change plan](CHAT_DEBUGGER_PLAN.md) and [validation status](status.md).
+
 ## Core idea
 
 Epoch supervises delivery: it converts a request into sourced checkpoints and a structured brief, delegates execution to Hermes, evaluates progress, directs targeted continuations, and reports results. Hermes performs the business work. When the cause is environmental, Epoch investigates and repairs the authorized tools or context. The executor stays fixed during a repair experiment; initial briefs/checks remain equivalent and supervisory interventions are recorded separately so a later improvement can be attributed correctly.
