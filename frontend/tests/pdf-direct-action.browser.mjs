@@ -8,7 +8,7 @@ test('PDF debugger uses saved context without an investigation form', async ({pa
   await page.goto(`http://127.0.0.1:5173/debugger?chat=${process.env.EPOCH_PDF_DIRECT_CHAT}`);
   const panel = page.locator('.pdf-repair-action');
   await expect(panel).toBeVisible({timeout:30000});
-  await expect(panel).toContainText('No additional description is needed');
+  await expect(panel.locator('h2')).toBeVisible();
   await expect(panel.getByRole('button', {name:'Fix PDF tool',exact:true})).toBeInViewport();
   await expect(page.locator('#debugger-question')).toHaveCount(0);
   await expect(page.locator('#investigate-chat')).toHaveCount(0);

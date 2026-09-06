@@ -71,3 +71,74 @@
  .pdf-file-controls { gap: 8px; }
  .pdf-upload { flex-wrap: wrap; }
 }
+
+/* Focus the workspace on the conversation and the current action. */
+.chat-welcome p { color: var(--muted, #a0a5ab); margin: 14px 0 24px; font-size: 15px; }
+.example-button { display: inline-flex; align-items: center; gap: 8px; padding: 11px 16px; border: 1px solid #3b4044; border-radius: 24px; background: #262a2d; font-size: 14px; }
+.example-button svg { width: 16px; height: 16px; }
+.composer-box { padding: 14px 16px 10px; border-radius: 18px; }
+.composer-box #chat-message { min-height: 40px; padding: 4px 0; font-size: 15px; }
+.composer-tools { gap: 12px; }
+.composer-caption:empty { display: none; }
+.composer-options { position: relative; }
+.composer-options > summary { list-style: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; }
+.composer-options > summary::-webkit-details-marker { display: none; }
+.composer-options summary svg { width: 18px; height: 18px; }
+.composer-options .popover { position: absolute; bottom: calc(100% + 12px); top: auto; left: 0; width: min(290px, calc(100vw - 64px)); display: grid; gap: 12px; padding: 16px; background: #25292c; border: 1px solid #454b50; border-radius: 14px; box-shadow: 0 12px 32px #0005; z-index: 25; transform-origin: bottom left; }
+.compact-field { display: grid; gap: 6px; font-size: 12px; color: #b9bec2; }
+.compact-field input, .compact-field select { width: 100%; min-width: 0; box-sizing: border-box; font-size: 13px; padding: 8px; }
+.composer-options button { text-align: left; padding: 9px 10px; }
+.pdf-upload input { min-width: 0; max-width: 100%; }
+.pdf-environment { margin-top: 20px; margin-bottom: 24px; }
+.file-library { border-bottom: 1px solid #343a3d; }
+.file-library > summary { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 14px 0; font-size: 13px; color: #b6bdc1; }
+.file-library > summary span { border-radius: 10px; padding: 1px 7px; background: #303639; font-size: 11px; }
+.file-result { display: flex; align-items: center; gap: 16px; border: 1px solid #3b4742; border-radius: 14px; padding: 17px 18px; margin-bottom: 8px; }
+.file-result > div { display: grid; gap: 6px; flex: 1; min-width: 0; }
+.file-result strong { font-size: 14px; font-weight: 550; overflow-wrap: anywhere; }
+.file-result span { font-size: 12px; color: #a9b3ad; }
+.file-result .result-state { color: #b3d4be; }
+.file-result.result-failed { border-color: #655143; }
+.file-result.result-failed .result-state { color: #e5ba93; }
+.file-result button, .file-result a { font-size: 13px; }
+.pdf-environment > .disclosure { margin-top: 0; font-size: 12px; color: #aab1b5; }
+.pdf-files { border-top: 0; }
+.pdf-file { padding: 12px 0; }
+.pdf-file-controls { margin: 8px 0 16px; padding: 10px 0; }
+.debug-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 36px; }
+.debug-heading h1 { font-size: 26px; letter-spacing: -.025em; margin: 0; }
+.debug-heading a { font-size: 13px; }
+.conversation-debugger { max-width: 780px; }
+.pdf-repair-action h2 { font-size: 23px; line-height: 1.25; letter-spacing: -.02em; margin-bottom: 10px; }
+.pdf-repair-action .repair-summary { font-size: 14px; color: #b6bdc1; margin: 0 0 18px; }
+.pdf-repair-choice { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 12px 0; }
+.pdf-repair-choice span { color: #b6bdc1; font-size: 13px; }
+.debugger-action .primary-action { background: #d5e7dc; border-color: #d5e7dc; color: #18251e; font-size: 14px; font-weight: 600; padding: 11px 18px; border-radius: 10px; }
+.debugger-action .primary-action:disabled { opacity: .45; }
+.conversation-debugger > .disclosure { margin: 0; padding: 17px 0; border-top: 1px solid #343a3d; }
+.conversation-debugger > .disclosure > summary { color: #b6bdc1; font-size: 13px; cursor: pointer; }
+.conversation-debugger .debugger-other { border-bottom: 0; }
+.chat-transcript { padding-top: 12px; }
+.chat-prose { line-height: 1.65; }
+.example-button, .primary-action, .composer-options summary, .file-result button { touch-action: manipulation; transition: transform 120ms cubic-bezier(.23,1,.32,1), background-color 120ms ease; }
+.example-button:active, .primary-action:active, .file-result button:active { transform: scale(.98); }
+button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px solid #a9cbb7; outline-offset: 3px; }
+@media (hover: hover) and (pointer: fine) { .example-button:hover, .composer-options summary:hover { background: #343a3e; } }
+@media (max-width: 760px) {
+  .composer-box { padding: 12px 14px 8px; }
+  .composer-hint { display: none; }
+  .file-result { flex-wrap: wrap; gap: 12px; padding: 14px; }
+  .file-result > div { flex-basis: 100%; }
+  .debug-heading { align-items: flex-start; gap: 12px; margin-bottom: 28px; }
+  .debug-heading a { max-width: 120px; text-align: right; }
+  .pdf-file-actions { width: auto; }
+}
+@media (prefers-reduced-motion: reduce) { .example-button, .primary-action, .composer-options summary, .file-result button { transition: none; transform: none; } }
+.composer-dock .composer-box { max-width: 780px; margin-inline: auto; width: 100%; box-sizing: border-box; }
+
+.chat-transcript .chat-working { margin: 12px 0 24px; }
+.chat-working { background: none; border: 0; padding: 0; position: static; border-radius: 0; }
+.chat-working span { min-width: 0; overflow-wrap: anywhere; }
+.chat-working svg { flex: 0 0 auto; }
+.chat-working button { margin-left: auto; font-size: 13px; }
+.pdf-repair-action .chat-working { margin: 16px 0; }

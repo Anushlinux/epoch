@@ -8,7 +8,7 @@ test('CSV pending writes retire without replay and PDF is offered in their place
  const storage=memory(); const p={version:1,kind:'repair',origin:'http://127.0.0.1:8000',chatId:crypto.randomUUID(),create:{client_request_id:crypto.randomUUID(),project_id:'demo'},message:{client_request_id:crypto.randomUUID(),content:'old repair'}};
  storage.setItem(CHAT_PENDING_KEY,JSON.stringify(p)); const w=new ChatWorkspace({storage});
  assert.equal(w.state.pending,null); assert.equal(storage.getItem(CHAT_PENDING_KEY),null); assert.ok(storage.getItem(CHAT_PENDING_KEY+'.retired'));
- assert.match(environmentPicker('pdf_workshop',false),/PDF workshop/); assert.doesNotMatch(environmentPicker('pdf_workshop',false),/CSV/);
+ assert.match(environmentPicker('pdf_workshop',false),/Documents/); assert.doesNotMatch(environmentPicker('pdf_workshop',false),/CSV/);
 });
 test('PDF actions retain the exact endpoint, source evidence and version across acknowledgement loss', async t => {
  const storage=memory(), id=crypto.randomUUID(), writes=[]; let lost=true;
@@ -33,6 +33,6 @@ test('PDF views use actual asset URLs, host verdicts and explicit repair control
  const html=environmentView({...state,previewAsset:asset,previewPage:1});
  assert.match(html,/Content checks failed/);assert.match(html,new RegExp(`/assets/${asset}/pages/1`));
  assert.match(repairView(state,false),/Fix PDF tool/);assert.doesNotMatch(repairView(state,false),/Repair published/);
- assert.match(repairView(state,false),/No additional description is needed/);
- assert.match(repairView({...state,chat:{...state.chat,operations:[{status:'running',action:'repair_tool',activity:'Testing'}]}},true),/Stop operation/);
+ assert.match(repairView(state,false),/Ready to fix/);
+ assert.match(repairView({...state,chat:{...state.chat,operations:[{status:'running',action:'repair_tool',activity:'Testing'}]}},true),/>Stop</);
 });

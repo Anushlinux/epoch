@@ -1,5 +1,30 @@
 # Current implementation status
 
+## Inline chat activity restored — September 7, 2026
+
+User feedback reversed the separate activity panel. Hermes now shows its working
+indicator inline at the end of the transcript; Debugger uses the same unboxed row.
+Chat replies remain full text. The duplicated latest-file card is removed from chat,
+with all assets available under Files; scrolling follows the latest message rather
+than the file controls. The compact composer, Northstar shortcut and collapsed
+technical controls remain. Backend results and execution logic are unchanged.
+Verification is limited to syntax/diff checks and a read-only local browser check;
+no model runs or full test suites were requested for this refinement.
+
+## Simplified chat and debugger — September 7, 2026
+
+The chat composer now uses a compact options control. One Northstar example button
+adds the bundled files and fills the draft without starting a model call. Source
+files/uploads and tool versions are collapsed; the latest generated result retains
+visible success/failure, preview and download controls. Debugger puts current work
+and its eligible action first, with context and historical evidence underneath.
+Activity uses recorded operation progress and scoped tool events, never fabricated
+thoughts. Agent execution, repair gates and request identity handling are unchanged.
+
+At the user's request, verification was limited to JavaScript syntax, diff checks
+and a single read-only desktop/mobile visual pass (no browser errors or horizontal
+overflow). No full test suite or new live model run was performed for this UI update.
+
 ## Direct PDF debugger action — September 7, 2026
 
 The PDF debugger now places its eligible repair/creation action first and removes

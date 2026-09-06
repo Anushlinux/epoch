@@ -31,8 +31,11 @@ overrides the recorded image identity. Existing model credentials and
 process-only. For a custom data directory, pass it to setup with `--data-dir` as well.
 No database reset or manual migration is needed. Startup adds PDF storage separately.
 
-The frontend defaults to PDF workshop for new chats. Add a retreat/festival pack or
-upload a static PDF. File selection, preview and opening Debugger make no model calls.
+The frontend defaults to document tools for new chats. **Try Northstar example**
+adds the retreat files and fills the message draft; press Send to start Hermes.
+Other examples and options are under the composer's plus control. In a saved chat,
+expand **Files** to upload PDFs or view all previous outputs. File selection,
+preview and opening Debugger make no model calls.
 The sample prompt asks Hermes to create the document from the supplied brief. Preview
 images are rendered from the saved PDF bytes. Failed outputs remain downloadable.
 Files are scoped to their conversation; published tools are shared within a project.
