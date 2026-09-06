@@ -24,6 +24,8 @@ The server listens at `http://127.0.0.1:8000`. Open `/docs` for the API explorer
 
 Defaults require no configuration file. To customize them, copy `.env.example` to `.env`, edit it, then use `uv run --frozen epoch-backend --env-file .env serve`. Environment variables override that file. Relative `EPOCH_DATA_DIR` paths resolve against the backend package root; the default database is `backend/data/epoch.sqlite3`. Generated data, `.env`, local caches and virtual environments are ignored by Git. Configuration validation does not create the data directory.
 
+**Phase 4 needs no new environment settings on the verified existing Hermes/OpenAI setup.** The app `.env` file accepts only the six settings in [.env.example](.env.example). If you choose the separate API-key debugger route, set `OPENAI_API_KEY` in the terminal/process environment, not in that file; see [debugger setup](docs/DEBUGGER_SETUP.md). Optional `EPOCH_HERMES_HOME` and `EPOCH_HERMES_CHECKOUT` overrides also belong in the process environment and are needed only when automatic discovery cannot find your installation. The Luna model and maximum 20 turns/600 seconds need no environment variables. Future configuration changes must update the example/setup docs and be listed as required or optional in the handoff.
+
 This is an unauthenticated local development service. The CLI accepts loopback bind addresses only; CORS permits the frontend's localhost and 127.0.0.1 ports 5173. Set `EPOCH_CORS_ORIGINS` to an explicit JSON list of local origins if your UI uses a different port. Unexpected browser origins cannot submit tasks or start runs. Deployment, authentication and multiple workers remain outside scope.
 
 ## Try task intake

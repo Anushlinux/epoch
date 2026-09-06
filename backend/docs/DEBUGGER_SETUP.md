@@ -10,7 +10,9 @@ The supervisor enforces the user's shared **20 agent turns and 600 seconds** per
 2. Otherwise, inspect the existing Hermes installation. If its configured provider is `openai-codex` at the official Codex endpoint and it has an existing access token, use `https://chatgpt.com/backend-api/codex/responses`.
 3. If neither route is configured, report `debugger_unavailable`. An error from the selected route never causes a switch to another route or model.
 
-Use the existing backend environment-variable setup for an API key; do not commit it. `OPENAI_BASE_URL` and model/endpoint values supplied in task text are not accepted as transport overrides. The debugger reads the selected credential only in the child process, does not refresh or copy tokens, and does not alter the user's Hermes or Codex settings. Authentication failures require the user to restore their existing credentials through their usual application.
+Set an optional API key in the **backend process environment**, not in the app's `.env` file. For PowerShell, use `$env:OPENAI_API_KEY = "your-api-key"` in the terminal that starts the backend, or supply it through your existing secret manager. The strict app settings file accepts only the settings listed in `.env.example`; putting `OPENAI_API_KEY` there is rejected and does not configure the debugger. The same process-environment rule applies to optional Hermes installation overrides. Never commit credential values.
+
+`OPENAI_BASE_URL` and model/endpoint values supplied in task text are not accepted as transport overrides. The debugger reads the selected credential only in the child process, does not refresh or copy tokens, and does not alter the user's Hermes or Codex settings. Authentication failures require the user to restore their existing credentials through their usual application.
 
 `detect_debugger()` checks local configuration and credential presence. Its `available` flag does not prove network connectivity, model entitlement or remaining account usage. Importing the module and checking availability never invoke the model.
 

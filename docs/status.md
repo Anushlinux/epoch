@@ -170,7 +170,7 @@ Against the merged checkout, 156 backend tests passed with the same two dependen
 
 ### Phase 4 validation record
 
-Implemented on local branch `codex/backend-phase-4` from pulled main `948ea47f1230ab16f960db3435dd0260f21cee37`, in an isolated worktree. The original checkout has an unfinished merge and frontend changes, so it was preserved. Three parallel agents owned the OpenAI transport, Hermes session/request gate, and state/criteria revisions; the primary agent integrated supervision/persistence and coordinated independent review. The [plan](../backend/PHASE_4_PLAN.md) preceded implementation. The user requested a report before push; this handoff remains unpublished.
+Implemented on local branch `codex/backend-phase-4` from pulled main `948ea47f1230ab16f960db3435dd0260f21cee37`, in an isolated worktree. The original checkout has an unfinished merge and frontend changes, so it was preserved. Three parallel agents owned the OpenAI transport, Hermes session/request gate, and state/criteria revisions; the primary agent integrated supervision/persistence and coordinated independent review. The [plan](../backend/PHASE_4_PLAN.md) preceded implementation. The user requested a report before push; the initial report was delivered while the handoff was unpublished. Publication was authorized in the subsequent request.
 
 #### Actual Luna and Hermes acceptance
 
@@ -209,3 +209,11 @@ Coverage includes sourced-plan rejection before effects, retained provenance, cl
 Local escalation was required for Windows temporary-directory/process ACLs and authorized actual inference. No remote CI, API-key-route live test, abrupt-crash model containment, frontend/browser integration, generated repair or live business-service check is claimed. Those limits are not substituted with test-double results.
 
 All frontend files remain identical to the base frontend tree `3257075284b67e7048b4b565a59f9b6ed07e71ef`. Direction Git/worktree hashes remain the values recorded under Phase 1, including original Markdown hard breaks. Final documentation checks passed across 34 Markdown files: 243 local links, 12 heading fragments, five footnotes, seven ordered task structures and both canonical agent entrypoints. Authored changes pass `git diff --check`. AO preview is unavailable on this host. See the [Phase 4 report](../backend/PHASE_4_REPORT.md) for the handoff and review location.
+
+### Phase 4 main integration and environment handoff
+
+After the user authorized pushing Phase 4, fetched main at `f16b1ef` and merged its new frontend work into the isolated Phase 4 checkout. The complete frontend tree remains exactly `1d6759bdf603aea8b5d7fffaa853b48c5f4bf14e`, matching fetched main; no frontend edits were authored. The original checkout's unfinished merge remains untouched.
+
+On this merged checkout, 264 backend tests passed with the same two upstream warnings; Ruff lint and formatting passed, exported schemas matched, and the actual no-model CLI HTTP/restart smoke passed. The supplied `.env.example` passed explicit `check-config`. No new inference was needed; the recorded Phase 4 actual-model evidence remains unchanged.
+
+No new environment variable is required for the verified existing Hermes/OpenAI credential route. The example file now clarifies its six app settings, optional process-only API-key/Hermes overrides, and fixed model/limit defaults. The backend README and debugger guide explain the distinction. AGENTS.md now requires future environment changes to update examples/setup and explicitly identify required/optional settings and migration steps in the user handoff.

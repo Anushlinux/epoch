@@ -28,6 +28,8 @@ Keep `docs/direction.md` byte-for-byte unchanged; record later decisions separat
 
 Run relevant checks and report actual commands, outcomes, evidence and unexecuted checks. Maintain [docs/status.md](docs/status.md) from demonstrated results; distinguish decisions, requirements, assumptions and implemented facts.
 
+For every backend environment change, update `backend/.env.example` and the relevant setup documentation, distinguish app-file settings from process-only variables, and explicitly report required versus optional changes and migration steps to the user. Never include secret values in examples or handoffs.
+
 For docs, check source identity, links/anchors, entrypoints, task structure, assigned scope and `git diff --check`. Preserve and report the source's original Markdown hard-break exception. Follow the AO preview guide when available; open `ao preview README.md` without adding a preview dependency.
 
 Use focused conventional commits. When a PR is required, include validation and limitations, address relevant review feedback, and do not merge without authorization.
