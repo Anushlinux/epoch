@@ -1,45 +1,49 @@
-# Task 01: Technical plan and contracts
+# Task 01: Technical selections and runtime foundation
 
-Status: unstarted. This task is planning only; it does not implement a runtime.
+Status: unstarted. This brief describes future implementation; no selection or runtime work is delivered by the documentation foundation.
 
-## Scope
+## Goal
 
-Translate the approved product direction into a small, buildable Python plan. Specify a command-line interface before UI and local simulated services before live business integrations. Select libraries, concrete data schemas, persistence, registry transport, version lifecycle, isolation mechanism, test approach and initial source layout here, with reasons tied to required behavior.
+Choose the smallest practical Python stack and establish the shared foundation that later tasks can build against. Keep the CLI before UI and local simulated services before live business integrations.
 
-Define how a request moves through Hermes, scoped discovery, tool execution, context assembly, trace capture, trusted evaluation, candidate isolation, publication and later runs. Define the minimum CLI operations and evidence contracts. Separate one-time executor setup from runtime repair. Plan Neatlogs and Workshop verification using the integration checklist, including a fallback that does not misrepresent missing integrations.
+## Prerequisites
 
-Do not create packages, application scaffolds, dependency installations, workflows, credentials, global settings, or live service connections in this task. Reading primary vendor documentation is permitted; record versions and unresolved runtime assumptions without claiming installed behavior.
+Read [AGENTS.md](../../AGENTS.md), [README](../../README.md), [status](../status.md), [direction](../direction.md), [architecture](../architecture.md), and the [integration checklist](../integrations.md). The documentation foundation is the only completed prerequisite. Preserve unrelated changes and direction.md unchanged.
 
-## Dependencies
+## Owned area
 
-The [documentation foundation](../../README.md), [architecture](../architecture.md), and [integration checklist](../integrations.md). There is no assumed runtime dependency.
+First record runtime/version, tooling, libraries, concrete schemas, persistence, registry transport, isolation mechanism, source layout, testing and continuous integration (CI) choices, with reasons. Decide what CI should run and what must remain local or requires separately authorized access. Then establish only the minimal Python package/CLI entry, configuration, persistence/version foundation and test harness justified by that plan; add the selected repository-local CI checks if applicable. These are future task deliverables, not authorization to add them in the current docs-only change.
 
-## Acceptance criteria
+Define shared contracts for scoped tool invocation, context input, task/run evidence, sourced success conditions, candidate artifacts and repair/publication records. Map request flow and component responsibilities. Separate one-time executor setup from runtime repair, and plan later Neatlogs/Workshop verification without assuming interoperability.
 
-- A written technical plan makes the deferred selections explicitly, explains practical trade-offs, and identifies any unresolved blocker before downstream code begins.
-- Contracts cover task/run identity, requirement provenance, visible tool versions, calls/results/errors, supplied context, application state, candidate diffs, rejected attempts, verification and publication/rollback history.
-- The plan identifies fixed executor and evaluator artifacts, editable repair surfaces, authority boundaries, and how restrictions will be enforced outside candidate code. Attempt, time and cost limits and stop conditions are explicit.
-- Secure candidate-code isolation is designed separately from simulated service state. A local fake service or reset fixture is not filesystem/network containment; specify how denied access will be tested from candidate execution.
-- Replay design covers equivalent isolated starting state, partial success and uncertain effects. Live continuation remains deferred and cannot inherit a safety claim from simulation.
-- Tool generation requires an authorized resource and rejects missing/ambiguous identity; context repair preserves historical retrieval and original documents.
-- Verification distinguishes documentation, component doubles, simulation, actual Hermes execution, and live provider evidence. The implementation sequence still prioritizes one complete loop before breadth.
+## Exclusions
 
-## Required evidence
+No business simulators, Hermes integration, debugger or repair scenarios yet. No UI, live business connections, credential acquisition or global settings. Do not select a stack before inspecting the requirements, or expand the foundation into unused infrastructure.
 
-Commit the decision document and contract descriptions, a map from each product invariant to its enforcement and test plan, and an integration uncertainty list with source/version references where consulted. Include a review checklist showing every later task has enough contract detail to start. No runtime results may be reported.
+## Acceptance checks
+
+- Decisions cover runtime, tooling, libraries, schemas, storage, transport, layout, testing and CI, with practical trade-offs and unresolved assumptions. Resolve shared-interface blockers before dependent implementation.
+- Minimal foundation setup, CLI entry, configuration validation, persistence round trip and test runner work from a clean checkout using documented commands. Tests check observable behavior; CI runs the selected checks or has a documented reason for deferral.
+- Contracts cover task/run identity, requirement provenance, visible tool versions, calls/results/errors, supplied context, state, candidate diffs, rejected attempts, verification and publication/rollback history.
+- The plan identifies fixed executor/evaluator artifacts, editable surfaces, permissions and externally enforced attempt/time/cost limits. Define how these restrictions will be tested rather than claiming they already protect an unbuilt debugger.
+- Secure candidate-code isolation is separate from simulated service state. Specify denied filesystem/network tests from inside candidate execution, equivalent-state replay, partial success, safe activation and rollback. Live continuation remains deferred.
+- Missing tools require authorized resources; retrieval retains source history. Evidence categories distinguish local components, simulation, actual Hermes, intended tracing integrations and live provider results.
+
+## Evidence
+
+Provide the decision/contract document, invariant-to-enforcement/test map, integration uncertainty list and exact clean setup/check commands with results. Retain persistence test evidence and any actual CI result; label unrun or deferred checks. Update status only for the minimal foundation actually demonstrated, leaving all later capabilities unimplemented.
 
 ## Copy-paste prompt
 
 ```text
-Implement Task 01 from docs/tasks/01-technical-plan.md only. Read AGENTS.md,
-README.md, docs/direction.md, docs/status.md, docs/architecture.md and
-docs/integrations.md first. Preserve direction.md unchanged and unrelated work.
-Write the concrete Python technical plan: CLI first, local simulated services
-first. Choose libraries, schemas, storage, transport, isolation, layout and tests;
-explain decisions and unresolved integration assumptions. Specify fixed executor,
-protected evaluator, enforced bounded permissions, replay, durable publication,
-rollback and honest evidence contracts. Do not add code, scaffolds, dependencies,
-CI, global settings or live integrations. Meet every acceptance criterion, validate
-documentation, and report decision/evidence paths and remaining blockers. Update
-status only for completed planning; runtime remains unimplemented.
+Implement only Task 01 in docs/tasks/01-technical-plan.md. Read AGENTS.md and
+its linked context first; preserve direction.md and unrelated changes. Select
+and document the Python runtime, tooling, libraries, schemas, persistence,
+transport, isolation, testing and CI, then build only the minimal foundation
+justified by those decisions. Define shared interfaces and enforcement/test plans
+for fixed executor, protected evaluator, bounded access/budgets, safe replay and
+durable versions. No business services, Hermes, debugger, UI, global settings or
+live integrations. Verify clean setup, CLI/configuration, persistence and tests;
+record actual CI results or deferral. Report decisions, files, commands, evidence
+and limitations. Update status only for demonstrated foundation behavior.
 ```

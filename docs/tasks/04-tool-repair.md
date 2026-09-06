@@ -2,7 +2,17 @@
 
 Status: unstarted. Intended future implementation.
 
-## Scope
+## Goal
+
+Prove one complete automatic repair loop: a real adapter correction persists and helps unchanged Hermes complete a fresh release.
+
+## Prerequisites
+
+Read [AGENTS.md](../../AGENTS.md), [direction](../direction.md), [status](../status.md), [architecture](../architecture.md), the [integration checklist](../integrations.md), and the completed Task 01 plan. Preserve unrelated work and report missing prerequisite evidence before dependent edits.
+
+[Task 03](03-executor-evidence.md), including actual Hermes execution, protected evaluator and inspectable simulated effects. Task 02 provides resettable state and the genuine defect.
+
+## Owned area
 
 Complete Scenario A through the CLI: an actual Hermes task fails because of the faulty checklist adapter; a supported signal automatically starts investigation; the debugger uses real trace and implementation evidence to generate a small executable correction. Stage and verify it in isolation, publish the accepted environment version, and prove that Hermes benefits on the original task and a fresh release.
 
@@ -10,11 +20,11 @@ Implement enforced attempt/time/cost limits, candidate isolation, trusted gating
 
 Keep Hermes implementation, prompt, model settings and discovery interface fixed, and keep evaluator/criteria/permissions outside the editable surface. Missing-tool and context repairs are later tasks. UI and live services stay out of scope.
 
-## Dependencies
+## Exclusions
 
-[Task 03](03-executor-evidence.md), including actual Hermes execution, protected evaluator and inspectable simulated effects. Task 02 provides resettable state and the genuine defect.
+No missing-tool or context repair, UI, live business services, executor edits, evaluator weakening or permission expansion. Do not use canned patches or substitute the debugger for Hermes.
 
-## Acceptance criteria
+## Acceptance checks
 
 - At least one investigation starts automatically from a captured error or failed trusted check, without a manual investigate action.
 - Diagnosis identifies the observed failed condition and supporting trace/code. The candidate changes actual serialization behavior and creates the required simulated checklist, not just a success response.
@@ -24,7 +34,7 @@ Keep Hermes implementation, prompt, model settings and discovery interface fixed
 - Partial-success replay does not duplicate effects. Publication occurs at a safe boundary; every run identifies its version. A restart preserves the active artifact and rollback restores the previous version.
 - Evidence links the failure, generated diff, tests, publication decision and later benefit. No trusted criteria or failed traces are altered.
 
-## Required evidence
+## Evidence
 
 Retain the pre-repair trace/state, automatic trigger, diagnosis with uncertainty, actual generated code diff, sandbox enforcement results, rejected-candidate and limit tests, trusted rerun/fresh/regression outcomes, fixed executor/evaluator comparisons, persistent artifact version, restart/rollback results and duplicate-effect checks. Record repair attempts, interventions and available latency/usage, separating repair overhead from subsequent runs.
 

@@ -1,44 +1,47 @@
-# Task 03: Fixed executor, traces and evaluation
+# Task 03: Actual Hermes integration and frozen configuration proof
 
 Status: unstarted. Intended future implementation.
 
-## Scope
+## Goal
 
-Connect Hermes once to the scoped local environment using Task 01's chosen interface. Make the release workflow observable from CLI task input through actual tool calls to final simulated state. Capture the executor baseline before experiments and control unrelated memory/skill updates.
+Have actual Hermes discover and invoke the local environment, with evidence that its implementation, prompt, model and discovery interface can remain fixed during later repairs.
 
-Implement correlated execution and retrieval evidence, requirement provenance, and trusted outcome evaluation. Instrument the intended Neatlogs boundaries and verify Workshop trace access/replay support where available under the agreed plan. Report an unavailable integration explicitly; local trace capture is not proof that Neatlogs or Workshop works.
+## Prerequisites
 
-Keep the evaluator and baseline acceptance fixtures inaccessible to generated candidate edits. Define evaluation for the ticket, checklist, notification destination, actual links and truthful completion report. Retain inferred versus explicit requirements and missing evidence.
+Read [AGENTS.md](../../AGENTS.md), [direction](../direction.md), [status](../status.md), [architecture](../architecture.md), the [integration checklist](../integrations.md) and [Task 02](02-local-environment.md) evidence. Use Task 01's selected interfaces and Task 02's existing traces/trusted checks. Report unmet dependencies before dependent changes.
 
-Do not implement automatic repair, generate a missing tool, build UI, or connect live business services. Any model provider needed by Hermes must use an explicitly authorized, documented data route from the plan; do not acquire credentials or silently choose another route.
+## Owned area
 
-## Dependencies
+Connect Hermes once to the scoped local environment. Extend existing evidence to include the actual executor's request, relevant conversation, visible capabilities, tool calls, received context, response and state observations. Capture the executor baseline and control unrelated memory/skill updates.
 
-[Task 02](02-local-environment.md) and Task 01's executor, evidence, privacy and evaluation contracts.
+Run the release workflow through the existing trusted checks. Preserve requirement provenance, ambiguity and missing evidence. Verify installed-version discovery and invocation, and record how a later environment version can become visible without per-tool executor edits.
 
-## Acceptance criteria
+## Exclusions
 
-- Actual Hermes discovers and invokes permitted local tools through one baseline interface. Record its installed version/configuration; a substitute executor cannot satisfy this criterion.
-- A release run shows the partial failure and unmet checklist condition in both trace and simulated state. A control run passes trusted checks.
-- Evidence ties request, requirement sources, visible tool versions, calls/arguments/results/errors, supplied documents and final state to task/run identifiers. Missing observations are marked missing.
-- The trusted evaluator catches a successful tool call with a wrong business outcome, such as the wrong notification destination, and cannot be rewritten through the candidate maintenance surface.
-- Tests cover denied access, missing evidence, ambiguous requirements and a correction that changes the goal rather than establishing a tool defect.
-- Integration checklist results distinguish actual Neatlogs/Workshop tests from local-only evidence. Workshop replay claims require configured execution against isolated state, not a trace viewer screenshot.
+No automatic repair, generated lookup, context repair, Neatlogs/Workshop integration, UI or live business connections. A test double cannot substitute for Hermes acceptance. Model inference must use an explicitly authorized, documented route from Task 01; do not acquire credentials or silently change providers.
 
-## Required evidence
+## Acceptance checks
 
-Retain the Hermes baseline identity/configuration evidence, actual discovery/invocation traces, sourced success conditions, passing and failing trusted check results, inspectable simulated state and evaluator protection checks. Record integration versions, commands and gaps without storing secrets. If Hermes is blocked, report partial component work and the dependency blocker; do not call the task complete.
+- Actual Hermes discovers permitted tools, reads invocation requirements and invokes them through the selected interface. Record installed version/configuration, denied access and invalid-call behavior.
+- A release run shows the partial adapter failure in existing traces and simulated state; a control run passes trusted checks. Wrong business outcomes remain failures even if tool calls return success.
+- Record and compare implementation identity, system prompt, model configuration and baseline discovery interface across controlled runs. Show unrelated memory/skill updates are controlled; missing baseline evidence prevents a frozen-configuration claim.
+- Correlate executor activity with Task 02 tool/context/state evidence using task/run identifiers. Retain sourced conditions and mark missing observations explicitly.
+- Test denied access, ambiguous requirements and a correction that changes the goal rather than proves a tool defect. Keep trusted checks outside candidate maintenance access.
+- Document the installed discovery/version-refresh behavior needed for later publication, with actual invocation proof where tested. Neatlogs/Workshop verification remains pending Task 07; local traces do not establish those integrations.
+
+## Evidence
+
+Retain baseline identity/configuration comparisons, actual Hermes discovery/invocation traces, passing/failing trusted results and simulated state. Record exact commands, versions, data routing and gaps without secrets. If Hermes is unavailable, label any component work partial and report the blocker; do not call this task complete.
 
 ## Copy-paste prompt
 
 ```text
 Implement only Task 03 in docs/tasks/03-executor-evidence.md. Read AGENTS.md,
-the approved technical plan and predecessor evidence first. Integrate actual
-Hermes once with the local simulated environment, capture a fixed executor
-baseline, instrument observable calls/context/state, and implement protected
-outcome checks with requirement provenance. Verify Neatlogs and Workshop only
-as supported by the plan and docs/integrations.md; label gaps honestly. Do not
-build repair logic, UI or live business integrations. Run the specified checks,
-retain actual traces and state, report unavailable observations/integrations,
-and update status only where execution evidence supports it.
+the technical plan and Task 02 evidence first. Connect actual Hermes once to the
+scoped local environment. Extend existing traces/trusted checks and prove actual
+discovery, invocation and frozen implementation/prompt/model/discovery baseline,
+with unrelated memory controlled. Keep denied access, missing evidence and
+ambiguous goals honest. No repair logic, Neatlogs/Workshop integration, UI or live
+business connections. Verify every acceptance check, retain baseline comparisons,
+commands, traces and state, and update status only for demonstrated behavior.
 ```

@@ -12,7 +12,7 @@ This is the canonical guidance. [Claude](CLAUDE.md) imports it; [Copilot](.githu
 
 Inspect applicable instructions, relevant source/tests, branch and existing changes before editing. Preserve unrelated work. Use a feature branch, write a short plan for substantial work, and complete only the assigned task and its checks. Report missing dependencies or scope conflicts before dependent work.
 
-Keep `docs/direction.md` byte-for-byte unchanged; record later decisions separately. Future work uses Python, CLI before UI, and local simulated services first. Task 01 selects libraries, concrete schemas, storage, transport and layout. Roadmap prompts do not authorize starting later tasks. This foundation adds no application code, scaffolds, dependencies, CI workflows, global settings or live integrations.
+Keep `docs/direction.md` byte-for-byte unchanged; record later decisions separately. Future work uses Python, CLI before UI, and local simulated services first. Task 01 selects runtime/tooling, libraries, concrete schemas, storage, transport, testing, CI and layout before implementing its minimal foundation. Roadmap prompts do not authorize starting later tasks. This documentation foundation adds no application code, scaffolds, dependencies, CI workflows, global settings or live integrations.
 
 ## Preserve the repair boundary
 

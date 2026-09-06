@@ -26,6 +26,8 @@ For example, Hermes can submit valid release data to a tool whose adapter serial
 
 Neatlogs is intended for tracing; Raindrop Workshop is intended for local inspection and replay where verified. Their adapters must preserve these boundaries. Neither is assumed to provide repair decisions, complete instrumentation, interoperable traces, or ready-to-use replay. See the [integration checklist](integrations.md).
 
+Basic local traces, context boundaries and trusted checks belong in Task 02. Task 03 connects actual Hermes to that existing evidence. Task 07 adds and verifies Neatlogs/Workshop interoperability; the repair tasks must already have inspectable local evidence before then.
+
 ## Information needs
 
 These are information requirements, not executable schemas or selected storage formats. Task 01 makes those implementation choices.

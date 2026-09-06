@@ -1,42 +1,48 @@
-# Task 02: Local environment and CLI baseline
+# Task 02: Simulated services, trusted checks and early traces
 
 Status: unstarted. Intended future implementation.
 
-## Scope
+## Goal
 
-Implement the smallest Python environment and CLI defined in Task 01. Provide permission-scoped discovery, descriptions, invocation requirements and dispatch for local simulated ticket, checklist/page and message tools. Provide directory data and retained current/historical runbooks as resources for later tasks, without exposing a prewritten owner-lookup adapter.
+Build an inspectable local release workflow environment with trusted outcome checks and basic traces before connecting Hermes or implementing repair.
 
-Make service state inspectable and resettable in isolated runs. Include a baseline adapter serialization defect for Scenario A and a correct control path for unrelated behavior. The fault must cause a real simulated contract violation, not a theatrical error unrelated to the operation. Separate fixture setup from tool behavior and trusted expected outcomes.
+## Prerequisites
 
-Do not implement the debugger, Hermes integration, missing-tool generation, retrieval repair, UI or live SaaS connections. Add only the runtime structure and dependencies justified by the completed technical plan.
+Read [AGENTS.md](../../AGENTS.md), [direction](../direction.md), [status](../status.md), [architecture](../architecture.md), and completed [Task 01](01-technical-plan.md) decisions, interfaces and foundation evidence. Resolve missing shared contracts before coding; preserve unrelated work.
 
-## Dependencies
+## Owned area
 
-[Task 01](01-technical-plan.md), including resolved contracts, permissions and isolation choices. If those decisions are missing, stop dependent implementation and report the gap.
+Implement simulated Jira tickets, Notion checklists/pages, Slack messages and directory records using Task 01's Python foundation. Add scoped tool discovery/descriptions/invocation/dispatch and context boundaries with retained current/historical runbooks. Do not expose a prewritten owner-lookup adapter.
 
-## Acceptance criteria
+Own fixture setup/reset, trusted checks for requested objects, content, links and destinations, and early local trace capture of task/run identity, tool versions, calls/arguments/results/errors, supplied context and state. Keep trusted expected outcomes and any fault setup separate from debugger-editable surfaces. Seed Scenario A's real adapter serialization defect, B's absent lookup capability and C's misleading old context without providing canned diagnoses or patches.
 
-- The documented CLI can initialize isolated simulated state, discover permitted tools, inspect their contracts, invoke them, and inspect actual created state.
-- Valid operations produce corresponding simulated objects and references. Denied calls and invalid inputs cannot produce successful-looking state.
-- The faulty checklist adapter fails for the documented contract reason. A successful ticket step can precede that failure, preserving a realistic partial-success fixture.
-- Baseline resets produce equivalent starting state without cross-run contamination. Permission tests demonstrate that discovery and execution do not exceed grants.
-- Directory and runbook fixtures support meaningful variation in project, owner, release and document scope. No hidden ready-made missing tool or fixture-to-patch mapping is installed.
-- State and CLI output are clearly labeled simulated. No external credentials or live business writes are required.
+## Exclusions
 
-## Required evidence
+No Hermes integration, debugger, missing-tool generation, retrieval repair, Neatlogs/Workshop integration, UI or live business connections. Simulated service state is not secure generated-code isolation. Use only the shared interfaces and dependencies chosen in Task 01.
 
-Record clean setup and CLI reproduction commands, actual input/output and state snapshots for successful, invalid and denied calls, a baseline failure trace, reset/isolation checks, and the focused test results. Document which behavior is simulated and which later components remain absent. Do not claim a repair or Hermes compatibility yet.
+## Acceptance checks
+
+- The CLI initializes/reset states, discovers only permitted tools, inspects contracts, invokes operations and shows actual simulated ticket/page/message state. Valid, invalid and denied operations are distinguishable.
+- Scenario A fails for a meaningful contract violation after a ticket succeeds. Scenario B lacks lookup despite an authorized directory resource. Scenario C supplies versioned old/current context and can represent a wrong destination with a successful call.
+- Trusted checks evaluate actual state and sourced requirements, including wrong links/recipient despite success output. Passing controls and deliberate failures produce the expected trusted results.
+- Basic traces already correlate calls, errors, context metadata and state to task/run identifiers; absent observations stay explicitly missing. No later integration is required to inspect them.
+- Resets restore equivalent starting state without cross-run contamination or duplicate effects. Discovery, execution and context access honor grants. Protection tests establish that candidate-facing access cannot change trusted checks.
+- Fixtures vary releases, projects, owners and document scope, preserve historical sources, and do not leak reference patches. Every effect/reference is labeled simulated; no credentials or live writes are required.
+
+## Evidence
+
+Provide exact setup/CLI/test commands, actual successful/invalid/denied state snapshots, early traces for passing and failing fixtures, trusted outcome results, reset/duplicate-effect checks and tool/context permission tests. Report missing evidence and remaining components; do not claim repair or Hermes compatibility.
 
 ## Copy-paste prompt
 
 ```text
-Implement only Task 02 in docs/tasks/02-local-environment.md after reading
-AGENTS.md and the completed Task 01 plan. Preserve direction.md and unrelated
-work. Build the planned Python CLI and permission-scoped local environment with
-inspectable, resettable simulated services. Include the genuine faulty checklist
-adapter and partial-success fixture; retain directory/runbook resources without
-a hidden missing-tool adapter. No debugger, Hermes integration, UI or live services.
-Run every relevant acceptance check, retain reproducible commands and simulated
-state evidence, and update docs/status.md only for demonstrated capabilities.
-Report files, tests, limitations and evidence locations.
+Implement only Task 02 in docs/tasks/02-local-environment.md. Read AGENTS.md,
+the completed Task 01 plan/interfaces and foundation evidence first. Build local
+simulated Jira/Notion/Slack/directory services, scoped tool/context boundaries,
+three scenario fixtures, trusted state checks and basic correlated traces now.
+Preserve historical sources and separate trusted checks/fault setup from the
+future repair surface. No canned diagnoses, hidden lookup adapter, Hermes,
+debugger, tracing-service integrations, UI or live business connections. Verify
+valid/invalid/denied calls, actual state, partial failure, reset and duplicates;
+retain commands, traces and trusted results. Update status only from evidence.
 ```

@@ -2,17 +2,27 @@
 
 Status: unstarted. Intended future implementation.
 
-## Scope
+## Goal
+
+Generate a genuinely absent executable QA-owner lookup capability and prove that unchanged Hermes uses it across different projects.
+
+## Prerequisites
+
+Read [AGENTS.md](../../AGENTS.md), [direction](../direction.md), [status](../status.md), [architecture](../architecture.md), the [integration checklist](../integrations.md), and the completed Task 01 plan. Preserve unrelated work and report missing prerequisite evidence before dependent edits.
+
+[Task 04](04-tool-repair.md), with a complete verified loop and persistent version lifecycle; Task 02's authorized directory resource and Task 03's discovery/evidence checks.
+
+## Owned area
 
 Extend the established repair loop to Scenario B. Hermes must hand a release to the project's QA owner but has no exposed owner-lookup capability. The debugger verifies absence in the permission-scoped registry, reads the authorized local directory contract, generates and tests an executable adapter plus discoverable description and input/output contract, then publishes it.
 
 Hermes discovers the new tool through its unchanged interface and uses the existing message tool for the handoff. Demonstrate transfer to another project with another owner. Do not replace Hermes, enable a hidden prewritten adapter, hardcode an identity, acquire credentials or create new permissions. UI, live directories and context repair are outside scope.
 
-## Dependencies
+## Exclusions
 
-[Task 04](04-tool-repair.md), with a complete verified loop and persistent version lifecycle; Task 02's authorized directory resource and Task 03's discovery/evidence checks.
+No hidden prewritten lookup adapter, guessed identities, new credentials or permissions, executor edits, UI, live directory integration or context repair.
 
-## Acceptance criteria
+## Acceptance checks
 
 - Evidence distinguishes a genuinely absent tool from an existing tool that was undiscovered, poorly described or denied by permissions. Denied access does not authorize tool creation that bypasses the denial.
 - The debugger generates an actual adapter and usable contract against the available directory operation; the diff shows what was produced.
@@ -21,7 +31,7 @@ Hermes discovers the new tool through its unchanged interface and uses the exist
 - A fresh session for a different project resolves its distinct owner from current directory state. Existing-tool repair regressions continue to pass.
 - The new artifact survives restart, remains permission-scoped, and participates in rejection, safe activation and rollback like existing-tool repairs. Failed candidates remain inactive.
 
-## Required evidence
+## Evidence
 
 Record the original request and scoped tool list, absence investigation, authorized directory contract, generated adapter/contract diff, successful and negative test outcomes, registry version change, actual Hermes discovery and calls, simulated message state, fresh-project result, unchanged executor proof and persistence/rollback checks. Keep evidence of any incomplete or denied branch.
 

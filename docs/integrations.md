@@ -4,6 +4,20 @@
 
 Use Python and local simulated services first. Task 01 selects libraries, schemas, storage, and transport after checking the required contracts. A graphical interface and live business-service connections are deferred. A local interface does not mean model inference is local; provider selection and data routing must be explicit.
 
+## Dated official references from the direction
+
+The supplied direction records these official sources as checked on **September 6, 2026**. That date belongs to the source document; this documentation foundation has not rechecked the pages. They guide future investigation and do not establish Epoch compatibility. **Installed-version verification remains pending for every entry.**
+
+| Intended area | Official sources cited in the supplied direction | Pending verification |
+| --- | --- | --- |
+| Hermes tool access | [Tools Runtime](https://hermes-agent.nousresearch.com/docs/developer-guide/tools-runtime) | Scoped discovery and invocation through the selected bridge |
+| Hermes capability updates | [MCP documentation](https://hermes-agent.nousresearch.com/docs/user-guide/features/mcp) | Installed-version refresh, caching and callable newly published tools |
+| Neatlogs capture | [Python SDK](https://docs.neatlogs.com/sdk/python), [Integrations](https://docs.neatlogs.com/integrations) | Actual model/tool/context coverage, correlation and data routing |
+| Raindrop Workshop | [Workshop overview](https://www.raindrop.ai/docs/workshop/overview/) | Trace access, explicit interoperability and configured safe replay |
+| Illustrative Notion adapter constraint | [Page property values](https://developers.notion.com/reference/page-property-values), [Page](https://developers.notion.com/reference/page) | Selected contract/version and simulation fidelity; live adapter deferred |
+
+Task 02 supplies basic local traces and trusted checks without these tracing integrations. Task 03 extends that evidence through actual Hermes. Task 07 implements and verifies Neatlogs/Workshop wiring; external documentation or a local trace alone cannot satisfy its integration acceptance.
+
 ## Verification record for every integration
 
 - [ ] Record the exact package/tool version or commit, documentation URL and access date, configuration, and environment used.
