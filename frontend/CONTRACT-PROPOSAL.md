@@ -1,6 +1,8 @@
 # PROPOSED frontend contract for Rajdeep
 
-**Not agreed. Not a backend schema or endpoint specification.** This local shape supports a replaceable UI fixture adapter. Rajdeep owns backend contracts, trusted evaluation, persistence, execution and repairs. Anushrut owns presentation and input handling. Final field names, versions, transport, storage and frontend tooling require joint Task 01 agreement.
+**Not agreed. Not a backend schema or endpoint specification.** This local shape supports a replaceable UI fixture adapter. Rajdeep owns backend contracts, trusted evaluation, persistence, execution and repairs. Anushrut owns presentation and input handling. Backend Phase 1 now has published field names and technical selections. Mapping this separate fixture shape to those contracts, future transport/recovery semantics and frontend tooling still requires agreement.
+
+Rebase update: [backend/FRONTEND_HANDOFF](../backend/docs/FRONTEND_HANDOFF.md) is available from `main` at `0a062dd`. It implements task intake/read/list; tasks remain pending. Its future progress envelope uses per-task sequence numbers, whereas this fixture models cursors per task/run/revision. That difference requires explicit reconciliation before integration; neither contract is silently treated as the other. No network adapter or execution integration was added by the rebase.
 
 ## What the interface needs
 
@@ -38,9 +40,9 @@ The fixture implementation uses `taskId`, `runId`, `revision`, `seq`, `eventId`,
 
 ## Handoff needed before integration
 
-1. Task 01 decision/contract location and owning branch/session; agreed tooling and event versions.
-2. Actual authorized endpoint/transport details, identity and error semantics, acknowledgement lookup and reconnect cursor/snapshot behavior.
+1. Available: [Task 01 decisions](../backend/DECISIONS.md) and [backend handoff](../backend/docs/FRONTEND_HANDOFF.md). Pending: joint fixture-to-backend mapping, frontend tooling and future event/recovery agreement.
+2. Available: Phase 1 intake endpoints and HTTP/error semantics in that handoff. Pending: integration, acknowledgement lookup and execution-stream reconnect/transition behavior.
 3. Real sanitized failure/repair run, checkpoint provenance and evaluator evidence, partial-effect/replay cases, rejected candidate and result objects.
 4. Intent revision semantics, result history retention, missing evidence behavior and documented service permissions.
 
-Until these arrive, integration and actual supervised repair verification are **blocked**. There are no backend run IDs, real result links or compatibility claims to report.
+The intake handoff is now available, but this UI is not integrated. Actual supervised repair verification remains **blocked** on the unimplemented execution/repair endpoints and the remaining agreement above. There are no backend run IDs, real result links or compatibility claims to report.

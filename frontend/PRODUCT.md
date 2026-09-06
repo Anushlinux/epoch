@@ -8,7 +8,7 @@ web
 
 ## Stack
 
-Provisional plain HTML, CSS and browser JavaScript modules. Node's built-in test runner verifies local state behavior. No production stack selected; joint agreement with Rajdeep remains pending. The user authorized minimal provisional tooling and fixture-only implementation.
+Provisional plain HTML, CSS and browser JavaScript modules. Node's built-in test runner verifies local state behavior. No production frontend stack selected; joint frontend agreement with Rajdeep remains pending. Backend Phase 1 selections are recorded separately in `backend/DECISIONS.md`. The user authorized minimal provisional tooling and fixture-only implementation.
 
 ## Users
 
@@ -20,7 +20,7 @@ Epoch is intended to supervise task delivery and support verified environment re
 
 ## Capabilities and Constraints
 
-Preserve original requests, explicit and inferred requirements, source references and revisions. Task completion and repair activation are separate claims. Every current execution record is visibly a development fixture. Backend contracts and endpoints are unavailable and unagreed. No private reasoning or credentials belong in this browser.
+Preserve original requests, explicit and inferred requirements, source references and revisions. Task completion and repair activation are separate claims. Every current execution record is visibly a development fixture. Phase 1 backend intake endpoints and a handoff are now published. This frontend is not connected; its fixture contract mapping and execution/recovery integration remain unsettled. No private reasoning or credentials belong in this browser.
 
 ## Evidence on Hand
 
