@@ -1,0 +1,3700 @@
+{
+  "description": "Data contracts only. Future models do not imply runtime support.",
+  "models": {
+    "Checkpoint": {
+      "$defs": {
+        "SourceReference": {
+          "additionalProperties": false,
+          "properties": {
+            "attribution": {
+              "enum": [
+                "explicit",
+                "inferred"
+              ],
+              "title": "Attribution",
+              "type": "string"
+            },
+            "excerpt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Excerpt"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                "user_request",
+                "user_feedback",
+                "document",
+                "tool_contract"
+              ],
+              "title": "Kind",
+              "type": "string"
+            },
+            "locator": {
+              "minLength": 1,
+              "title": "Locator",
+              "type": "string"
+            },
+            "version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Version"
+            }
+          },
+          "required": [
+            "id",
+            "kind",
+            "locator",
+            "attribution"
+          ],
+          "title": "SourceReference",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "depends_on": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Depends On",
+          "type": "array"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "evaluator_version": {
+          "minLength": 1,
+          "title": "Evaluator Version",
+          "type": "string"
+        },
+        "evidence_refs": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "scope": {
+          "minLength": 1,
+          "title": "Scope",
+          "type": "string"
+        },
+        "source_refs": {
+          "items": {
+            "$ref": "#/$defs/SourceReference"
+          },
+          "minItems": 1,
+          "title": "Source Refs",
+          "type": "array"
+        },
+        "status": {
+          "default": "pending",
+          "enum": [
+            "pending",
+            "verified",
+            "failed",
+            "blocked"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "uncertainty": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Uncertainty"
+        },
+        "verification_rule": {
+          "minLength": 1,
+          "title": "Verification Rule",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "source_refs",
+        "scope",
+        "verification_rule",
+        "evaluator_version"
+      ],
+      "title": "Checkpoint",
+      "type": "object"
+    },
+    "Clarification": {
+      "$defs": {
+        "SourceReference": {
+          "additionalProperties": false,
+          "properties": {
+            "attribution": {
+              "enum": [
+                "explicit",
+                "inferred"
+              ],
+              "title": "Attribution",
+              "type": "string"
+            },
+            "excerpt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Excerpt"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                "user_request",
+                "user_feedback",
+                "document",
+                "tool_contract"
+              ],
+              "title": "Kind",
+              "type": "string"
+            },
+            "locator": {
+              "minLength": 1,
+              "title": "Locator",
+              "type": "string"
+            },
+            "version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Version"
+            }
+          },
+          "required": [
+            "id",
+            "kind",
+            "locator",
+            "attribution"
+          ],
+          "title": "SourceReference",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "answered_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Answered At"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "question": {
+          "minLength": 1,
+          "title": "Question",
+          "type": "string"
+        },
+        "response": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Response"
+        },
+        "source_refs": {
+          "items": {
+            "$ref": "#/$defs/SourceReference"
+          },
+          "minItems": 1,
+          "title": "Source Refs",
+          "type": "array"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "task_id",
+        "question",
+        "source_refs",
+        "created_at"
+      ],
+      "title": "Clarification",
+      "type": "object"
+    },
+    "ContextInput": {
+      "$defs": {
+        "PermissionScope": {
+          "additionalProperties": false,
+          "properties": {
+            "allowed_hosts": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Allowed Hosts",
+              "type": "array"
+            },
+            "project_id": {
+              "minLength": 1,
+              "title": "Project Id",
+              "type": "string"
+            },
+            "readable_paths": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Readable Paths",
+              "type": "array"
+            },
+            "service_grants": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Service Grants",
+              "type": "array"
+            },
+            "writable_paths": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Writable Paths",
+              "type": "array"
+            }
+          },
+          "required": [
+            "project_id"
+          ],
+          "title": "PermissionScope",
+          "type": "object"
+        },
+        "SourceReference": {
+          "additionalProperties": false,
+          "properties": {
+            "attribution": {
+              "enum": [
+                "explicit",
+                "inferred"
+              ],
+              "title": "Attribution",
+              "type": "string"
+            },
+            "excerpt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Excerpt"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                "user_request",
+                "user_feedback",
+                "document",
+                "tool_contract"
+              ],
+              "title": "Kind",
+              "type": "string"
+            },
+            "locator": {
+              "minLength": 1,
+              "title": "Locator",
+              "type": "string"
+            },
+            "version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Version"
+            }
+          },
+          "required": [
+            "id",
+            "kind",
+            "locator",
+            "attribution"
+          ],
+          "title": "SourceReference",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "captured_at": {
+          "format": "date-time",
+          "title": "Captured At",
+          "type": "string"
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "run_id": {
+          "format": "uuid",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "scope": {
+          "$ref": "#/$defs/PermissionScope"
+        },
+        "selection_rule_version": {
+          "minLength": 1,
+          "title": "Selection Rule Version",
+          "type": "string"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/SourceReference"
+          },
+          "title": "Sources",
+          "type": "array"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "task_id",
+        "run_id",
+        "content",
+        "sources",
+        "selection_rule_version",
+        "scope",
+        "captured_at"
+      ],
+      "title": "ContextInput",
+      "type": "object"
+    },
+    "EnvironmentVersion": {
+      "$defs": {
+        "ToolVersion": {
+          "additionalProperties": false,
+          "properties": {
+            "artifact_sha256": {
+              "pattern": "^[a-f0-9]{64}$",
+              "title": "Artifact Sha256",
+              "type": "string"
+            },
+            "name": {
+              "minLength": 1,
+              "title": "Name",
+              "type": "string"
+            },
+            "version": {
+              "minLength": 1,
+              "title": "Version",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "version",
+            "artifact_sha256"
+          ],
+          "title": "ToolVersion",
+          "type": "object"
+        },
+        "VersionTransition": {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "enum": [
+                "publish",
+                "rollback"
+              ],
+              "title": "Action",
+              "type": "string"
+            },
+            "from_version_id": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "From Version Id"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "reason": {
+              "minLength": 1,
+              "title": "Reason",
+              "type": "string"
+            },
+            "recorded_at": {
+              "format": "date-time",
+              "title": "Recorded At",
+              "type": "string"
+            },
+            "to_version_id": {
+              "format": "uuid",
+              "title": "To Version Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "action",
+            "to_version_id",
+            "reason",
+            "recorded_at"
+          ],
+          "title": "VersionTransition",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "candidate_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Candidate Id"
+        },
+        "context_rule_version": {
+          "minLength": 1,
+          "title": "Context Rule Version",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "history": {
+          "items": {
+            "$ref": "#/$defs/VersionTransition"
+          },
+          "title": "History",
+          "type": "array"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "manifest_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Manifest Sha256",
+          "type": "string"
+        },
+        "previous_version_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Previous Version Id"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "staged",
+            "active",
+            "superseded",
+            "rolled_back"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "tools": {
+          "items": {
+            "$ref": "#/$defs/ToolVersion"
+          },
+          "title": "Tools",
+          "type": "array"
+        },
+        "verification_refs": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Verification Refs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "manifest_sha256",
+        "context_rule_version",
+        "status",
+        "created_at"
+      ],
+      "title": "EnvironmentVersion",
+      "type": "object"
+    },
+    "ErrorDetail": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "details": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Details",
+          "type": "array"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "ErrorDetail",
+      "type": "object"
+    },
+    "ErrorEnvelope": {
+      "$defs": {
+        "ErrorDetail": {
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "title": "Code",
+              "type": "string"
+            },
+            "details": {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "title": "Details",
+              "type": "array"
+            },
+            "message": {
+              "title": "Message",
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ],
+          "title": "ErrorDetail",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "$ref": "#/$defs/ErrorDetail"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "title": "ErrorEnvelope",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "captured_at": {
+          "format": "date-time",
+          "title": "Captured At",
+          "type": "string"
+        },
+        "category": {
+          "enum": [
+            "local_component",
+            "simulation",
+            "hermes",
+            "tracing_integration",
+            "live_provider"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "tool_call",
+            "tool_result",
+            "state_observation",
+            "artifact",
+            "check"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Run Id"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "summary": {
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "uri": {
+          "minLength": 1,
+          "title": "Uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "task_id",
+        "category",
+        "kind",
+        "uri",
+        "sha256",
+        "captured_at",
+        "summary"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "ExecutorBaseline": {
+      "additionalProperties": false,
+      "properties": {
+        "discovery_interface_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Discovery Interface Sha256",
+          "type": "string"
+        },
+        "evaluator_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Evaluator Sha256",
+          "type": "string"
+        },
+        "implementation_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Implementation Sha256",
+          "type": "string"
+        },
+        "model_configuration_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Model Configuration Sha256",
+          "type": "string"
+        },
+        "permission_grants_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Permission Grants Sha256",
+          "type": "string"
+        },
+        "system_prompt_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "System Prompt Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "implementation_sha256",
+        "system_prompt_sha256",
+        "model_configuration_sha256",
+        "discovery_interface_sha256",
+        "evaluator_sha256",
+        "permission_grants_sha256"
+      ],
+      "title": "ExecutorBaseline",
+      "type": "object"
+    },
+    "HealthResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "execution_enabled": {
+          "const": false,
+          "default": false,
+          "title": "Execution Enabled",
+          "type": "boolean"
+        },
+        "phase": {
+          "const": 1,
+          "default": 1,
+          "title": "Phase",
+          "type": "integer"
+        },
+        "status": {
+          "const": "ok",
+          "default": "ok",
+          "title": "Status",
+          "type": "string"
+        },
+        "storage": {
+          "const": "ok",
+          "default": "ok",
+          "title": "Storage",
+          "type": "string"
+        }
+      },
+      "title": "HealthResponse",
+      "type": "object"
+    },
+    "IntentRevision": {
+      "$defs": {
+        "SourceReference": {
+          "additionalProperties": false,
+          "properties": {
+            "attribution": {
+              "enum": [
+                "explicit",
+                "inferred"
+              ],
+              "title": "Attribution",
+              "type": "string"
+            },
+            "excerpt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Excerpt"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                "user_request",
+                "user_feedback",
+                "document",
+                "tool_contract"
+              ],
+              "title": "Kind",
+              "type": "string"
+            },
+            "locator": {
+              "minLength": 1,
+              "title": "Locator",
+              "type": "string"
+            },
+            "version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Version"
+            }
+          },
+          "required": [
+            "id",
+            "kind",
+            "locator",
+            "attribution"
+          ],
+          "title": "SourceReference",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "feedback": {
+          "minLength": 1,
+          "title": "Feedback",
+          "type": "string"
+        },
+        "feedback_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Feedback Id"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "previous_revision_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Previous Revision Id"
+        },
+        "reason": {
+          "enum": [
+            "omitted_requirement",
+            "evaluation_mistake",
+            "new_preference"
+          ],
+          "title": "Reason",
+          "type": "string"
+        },
+        "retained_evidence_refs": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Retained Evidence Refs",
+          "type": "array"
+        },
+        "source_refs": {
+          "items": {
+            "$ref": "#/$defs/SourceReference"
+          },
+          "minItems": 1,
+          "title": "Source Refs",
+          "type": "array"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "task_id",
+        "feedback",
+        "reason",
+        "source_refs",
+        "created_at"
+      ],
+      "title": "IntentRevision",
+      "type": "object"
+    },
+    "PermissionScope": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed_hosts": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Allowed Hosts",
+          "type": "array"
+        },
+        "project_id": {
+          "minLength": 1,
+          "title": "Project Id",
+          "type": "string"
+        },
+        "readable_paths": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Readable Paths",
+          "type": "array"
+        },
+        "service_grants": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Service Grants",
+          "type": "array"
+        },
+        "writable_paths": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Writable Paths",
+          "type": "array"
+        }
+      },
+      "required": [
+        "project_id"
+      ],
+      "title": "PermissionScope",
+      "type": "object"
+    },
+    "ProgressEvent": {
+      "$defs": {
+        "Checkpoint": {
+          "additionalProperties": false,
+          "properties": {
+            "depends_on": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Depends On",
+              "type": "array"
+            },
+            "description": {
+              "minLength": 1,
+              "title": "Description",
+              "type": "string"
+            },
+            "evaluator_version": {
+              "minLength": 1,
+              "title": "Evaluator Version",
+              "type": "string"
+            },
+            "evidence_refs": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Evidence Refs",
+              "type": "array"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "scope": {
+              "minLength": 1,
+              "title": "Scope",
+              "type": "string"
+            },
+            "source_refs": {
+              "items": {
+                "$ref": "#/$defs/SourceReference"
+              },
+              "minItems": 1,
+              "title": "Source Refs",
+              "type": "array"
+            },
+            "status": {
+              "default": "pending",
+              "enum": [
+                "pending",
+                "verified",
+                "failed",
+                "blocked"
+              ],
+              "title": "Status",
+              "type": "string"
+            },
+            "uncertainty": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Uncertainty"
+            },
+            "verification_rule": {
+              "minLength": 1,
+              "title": "Verification Rule",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "description",
+            "source_refs",
+            "scope",
+            "verification_rule",
+            "evaluator_version"
+          ],
+          "title": "Checkpoint",
+          "type": "object"
+        },
+        "ErrorDetail": {
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "title": "Code",
+              "type": "string"
+            },
+            "details": {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "title": "Details",
+              "type": "array"
+            },
+            "message": {
+              "title": "Message",
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ],
+          "title": "ErrorDetail",
+          "type": "object"
+        },
+        "ErrorEnvelope": {
+          "additionalProperties": false,
+          "properties": {
+            "error": {
+              "$ref": "#/$defs/ErrorDetail"
+            }
+          },
+          "required": [
+            "error"
+          ],
+          "title": "ErrorEnvelope",
+          "type": "object"
+        },
+        "ExecutorBaseline": {
+          "additionalProperties": false,
+          "properties": {
+            "discovery_interface_sha256": {
+              "pattern": "^[a-f0-9]{64}$",
+              "title": "Discovery Interface Sha256",
+              "type": "string"
+            },
+            "evaluator_sha256": {
+              "pattern": "^[a-f0-9]{64}$",
+              "title": "Evaluator Sha256",
+              "type": "string"
+            },
+            "implementation_sha256": {
+              "pattern": "^[a-f0-9]{64}$",
+              "title": "Implementation Sha256",
+              "type": "string"
+            },
+            "model_configuration_sha256": {
+              "pattern": "^[a-f0-9]{64}$",
+              "title": "Model Configuration Sha256",
+              "type": "string"
+            },
+            "permission_grants_sha256": {
+              "pattern": "^[a-f0-9]{64}$",
+              "title": "Permission Grants Sha256",
+              "type": "string"
+            },
+            "system_prompt_sha256": {
+              "pattern": "^[a-f0-9]{64}$",
+              "title": "System Prompt Sha256",
+              "type": "string"
+            }
+          },
+          "required": [
+            "implementation_sha256",
+            "system_prompt_sha256",
+            "model_configuration_sha256",
+            "discovery_interface_sha256",
+            "evaluator_sha256",
+            "permission_grants_sha256"
+          ],
+          "title": "ExecutorBaseline",
+          "type": "object"
+        },
+        "IntentRevision": {
+          "additionalProperties": false,
+          "properties": {
+            "created_at": {
+              "format": "date-time",
+              "title": "Created At",
+              "type": "string"
+            },
+            "feedback": {
+              "minLength": 1,
+              "title": "Feedback",
+              "type": "string"
+            },
+            "feedback_id": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Feedback Id"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "previous_revision_id": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Previous Revision Id"
+            },
+            "reason": {
+              "enum": [
+                "omitted_requirement",
+                "evaluation_mistake",
+                "new_preference"
+              ],
+              "title": "Reason",
+              "type": "string"
+            },
+            "retained_evidence_refs": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Retained Evidence Refs",
+              "type": "array"
+            },
+            "source_refs": {
+              "items": {
+                "$ref": "#/$defs/SourceReference"
+              },
+              "minItems": 1,
+              "title": "Source Refs",
+              "type": "array"
+            },
+            "task_id": {
+              "format": "uuid",
+              "title": "Task Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "task_id",
+            "feedback",
+            "reason",
+            "source_refs",
+            "created_at"
+          ],
+          "title": "IntentRevision",
+          "type": "object"
+        },
+        "RepairAttempt": {
+          "additionalProperties": false,
+          "properties": {
+            "candidate_id": {
+              "format": "uuid",
+              "title": "Candidate Id",
+              "type": "string"
+            },
+            "decision": {
+              "enum": [
+                "pending",
+                "rejected",
+                "published"
+              ],
+              "title": "Decision",
+              "type": "string"
+            },
+            "number": {
+              "exclusiveMinimum": 0,
+              "title": "Number",
+              "type": "integer"
+            },
+            "reason": {
+              "minLength": 1,
+              "title": "Reason",
+              "type": "string"
+            },
+            "verification_refs": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Verification Refs",
+              "type": "array"
+            }
+          },
+          "required": [
+            "candidate_id",
+            "number",
+            "decision",
+            "reason"
+          ],
+          "title": "RepairAttempt",
+          "type": "object"
+        },
+        "RepairRecord": {
+          "additionalProperties": false,
+          "properties": {
+            "attempts": {
+              "items": {
+                "$ref": "#/$defs/RepairAttempt"
+              },
+              "title": "Attempts",
+              "type": "array"
+            },
+            "checkpoint_refs": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Checkpoint Refs",
+              "type": "array"
+            },
+            "created_at": {
+              "format": "date-time",
+              "title": "Created At",
+              "type": "string"
+            },
+            "diagnosis": {
+              "minLength": 1,
+              "title": "Diagnosis",
+              "type": "string"
+            },
+            "evidence_refs": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Evidence Refs",
+              "type": "array"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "resulting_environment_version_id": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Resulting Environment Version Id"
+            },
+            "run_id": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            },
+            "task_id": {
+              "format": "uuid",
+              "title": "Task Id",
+              "type": "string"
+            },
+            "trigger": {
+              "minLength": 1,
+              "title": "Trigger",
+              "type": "string"
+            },
+            "uncertainty": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Uncertainty",
+              "type": "array"
+            }
+          },
+          "required": [
+            "id",
+            "task_id",
+            "run_id",
+            "checkpoint_refs",
+            "trigger",
+            "diagnosis",
+            "created_at"
+          ],
+          "title": "RepairRecord",
+          "type": "object"
+        },
+        "Run": {
+          "additionalProperties": false,
+          "properties": {
+            "brief_id": {
+              "format": "uuid",
+              "title": "Brief Id",
+              "type": "string"
+            },
+            "context_refs": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Context Refs",
+              "type": "array"
+            },
+            "environment_version_id": {
+              "format": "uuid",
+              "title": "Environment Version Id",
+              "type": "string"
+            },
+            "evidence_refs": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Evidence Refs",
+              "type": "array"
+            },
+            "executor_baseline": {
+              "$ref": "#/$defs/ExecutorBaseline"
+            },
+            "final_response": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Final Response"
+            },
+            "finished_at": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Finished At"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "intent_revision_id": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Intent Revision Id"
+            },
+            "intervention_refs": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Intervention Refs",
+              "type": "array"
+            },
+            "invocation_refs": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Invocation Refs",
+              "type": "array"
+            },
+            "missing_evidence": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Missing Evidence",
+              "type": "array"
+            },
+            "schema_version": {
+              "const": 1,
+              "default": 1,
+              "title": "Schema Version",
+              "type": "integer"
+            },
+            "started_at": {
+              "format": "date-time",
+              "title": "Started At",
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "pending",
+                "running",
+                "completed",
+                "blocked",
+                "failed",
+                "cancelled"
+              ],
+              "title": "Status",
+              "type": "string"
+            },
+            "task_id": {
+              "format": "uuid",
+              "title": "Task Id",
+              "type": "string"
+            },
+            "visible_tools": {
+              "items": {
+                "$ref": "#/$defs/ToolVersion"
+              },
+              "title": "Visible Tools",
+              "type": "array"
+            }
+          },
+          "required": [
+            "id",
+            "task_id",
+            "brief_id",
+            "environment_version_id",
+            "executor_baseline",
+            "visible_tools",
+            "status",
+            "started_at"
+          ],
+          "title": "Run",
+          "type": "object"
+        },
+        "SourceReference": {
+          "additionalProperties": false,
+          "properties": {
+            "attribution": {
+              "enum": [
+                "explicit",
+                "inferred"
+              ],
+              "title": "Attribution",
+              "type": "string"
+            },
+            "excerpt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Excerpt"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                "user_request",
+                "user_feedback",
+                "document",
+                "tool_contract"
+              ],
+              "title": "Kind",
+              "type": "string"
+            },
+            "locator": {
+              "minLength": 1,
+              "title": "Locator",
+              "type": "string"
+            },
+            "version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Version"
+            }
+          },
+          "required": [
+            "id",
+            "kind",
+            "locator",
+            "attribution"
+          ],
+          "title": "SourceReference",
+          "type": "object"
+        },
+        "Task": {
+          "additionalProperties": false,
+          "properties": {
+            "created_at": {
+              "format": "date-time",
+              "title": "Created At",
+              "type": "string"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "request": {
+              "$ref": "#/$defs/TaskCreate"
+            },
+            "schema_version": {
+              "const": 1,
+              "default": 1,
+              "title": "Schema Version",
+              "type": "integer"
+            },
+            "status": {
+              "$ref": "#/$defs/TaskStatus",
+              "default": "pending"
+            },
+            "updated_at": {
+              "format": "date-time",
+              "title": "Updated At",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "request",
+            "created_at",
+            "updated_at"
+          ],
+          "title": "Task",
+          "type": "object"
+        },
+        "TaskBrief": {
+          "additionalProperties": false,
+          "properties": {
+            "checkpoints": {
+              "items": {
+                "$ref": "#/$defs/Checkpoint"
+              },
+              "minItems": 1,
+              "title": "Checkpoints",
+              "type": "array"
+            },
+            "clarification_requests": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Clarification Requests",
+              "type": "array"
+            },
+            "constraints": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Constraints",
+              "type": "array"
+            },
+            "created_at": {
+              "format": "date-time",
+              "title": "Created At",
+              "type": "string"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "instructions": {
+              "minLength": 1,
+              "title": "Instructions",
+              "type": "string"
+            },
+            "intent_revision_id": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Intent Revision Id"
+            },
+            "schema_version": {
+              "const": 1,
+              "default": 1,
+              "title": "Schema Version",
+              "type": "integer"
+            },
+            "task_id": {
+              "format": "uuid",
+              "title": "Task Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "task_id",
+            "instructions",
+            "checkpoints",
+            "created_at"
+          ],
+          "title": "TaskBrief",
+          "type": "object"
+        },
+        "TaskCreate": {
+          "additionalProperties": false,
+          "properties": {
+            "client_request_id": {
+              "format": "uuid",
+              "title": "Client Request Id",
+              "type": "string"
+            },
+            "message": {
+              "maxLength": 16000,
+              "minLength": 1,
+              "title": "Message",
+              "type": "string"
+            },
+            "project_id": {
+              "default": "demo",
+              "maxLength": 100,
+              "minLength": 1,
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "client_request_id",
+            "message"
+          ],
+          "title": "TaskCreate",
+          "type": "object"
+        },
+        "TaskStatus": {
+          "enum": [
+            "pending",
+            "planning",
+            "awaiting_clarification",
+            "running",
+            "verifying",
+            "repairing",
+            "completed",
+            "blocked",
+            "failed",
+            "cancelled"
+          ],
+          "title": "TaskStatus",
+          "type": "string"
+        },
+        "ToolVersion": {
+          "additionalProperties": false,
+          "properties": {
+            "artifact_sha256": {
+              "pattern": "^[a-f0-9]{64}$",
+              "title": "Artifact Sha256",
+              "type": "string"
+            },
+            "name": {
+              "minLength": 1,
+              "title": "Name",
+              "type": "string"
+            },
+            "version": {
+              "minLength": 1,
+              "title": "Version",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "version",
+            "artifact_sha256"
+          ],
+          "title": "ToolVersion",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Future SSE envelope; Phase 1 never emits execution events.",
+      "properties": {
+        "emitted_at": {
+          "format": "date-time",
+          "title": "Emitted At",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "payload": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Task"
+            },
+            {
+              "$ref": "#/$defs/TaskBrief"
+            },
+            {
+              "$ref": "#/$defs/Checkpoint"
+            },
+            {
+              "$ref": "#/$defs/Run"
+            },
+            {
+              "$ref": "#/$defs/RepairRecord"
+            },
+            {
+              "$ref": "#/$defs/IntentRevision"
+            },
+            {
+              "$ref": "#/$defs/ErrorEnvelope"
+            }
+          ],
+          "title": "Payload"
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Run Id"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "sequence": {
+          "exclusiveMinimum": 0,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "task.created",
+            "task.status_changed",
+            "brief.created",
+            "checkpoint.updated",
+            "run.updated",
+            "repair.updated",
+            "intent.revised",
+            "error"
+          ],
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "task_id",
+        "sequence",
+        "type",
+        "emitted_at",
+        "payload"
+      ],
+      "title": "ProgressEvent",
+      "type": "object"
+    },
+    "RepairAttempt": {
+      "additionalProperties": false,
+      "properties": {
+        "candidate_id": {
+          "format": "uuid",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "decision": {
+          "enum": [
+            "pending",
+            "rejected",
+            "published"
+          ],
+          "title": "Decision",
+          "type": "string"
+        },
+        "number": {
+          "exclusiveMinimum": 0,
+          "title": "Number",
+          "type": "integer"
+        },
+        "reason": {
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "verification_refs": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Verification Refs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "number",
+        "decision",
+        "reason"
+      ],
+      "title": "RepairAttempt",
+      "type": "object"
+    },
+    "RepairCandidate": {
+      "$defs": {
+        "PermissionScope": {
+          "additionalProperties": false,
+          "properties": {
+            "allowed_hosts": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Allowed Hosts",
+              "type": "array"
+            },
+            "project_id": {
+              "minLength": 1,
+              "title": "Project Id",
+              "type": "string"
+            },
+            "readable_paths": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Readable Paths",
+              "type": "array"
+            },
+            "service_grants": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Service Grants",
+              "type": "array"
+            },
+            "writable_paths": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Writable Paths",
+              "type": "array"
+            }
+          },
+          "required": [
+            "project_id"
+          ],
+          "title": "PermissionScope",
+          "type": "object"
+        },
+        "RepairLimits": {
+          "additionalProperties": false,
+          "properties": {
+            "max_attempts": {
+              "exclusiveMinimum": 0,
+              "title": "Max Attempts",
+              "type": "integer"
+            },
+            "max_cost_usd": {
+              "minimum": 0,
+              "title": "Max Cost Usd",
+              "type": "number"
+            },
+            "max_seconds": {
+              "exclusiveMinimum": 0,
+              "title": "Max Seconds",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "max_attempts",
+            "max_seconds",
+            "max_cost_usd"
+          ],
+          "title": "RepairLimits",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "artifact_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Artifact Sha256",
+          "type": "string"
+        },
+        "artifact_uri": {
+          "minLength": 1,
+          "title": "Artifact Uri",
+          "type": "string"
+        },
+        "baseline_environment_version_id": {
+          "format": "uuid",
+          "title": "Baseline Environment Version Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "diff": {
+          "minLength": 1,
+          "title": "Diff",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "tool_repair",
+            "missing_tool",
+            "context_repair"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "limits": {
+          "$ref": "#/$defs/RepairLimits"
+        },
+        "permissions": {
+          "$ref": "#/$defs/PermissionScope"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "task_id",
+        "baseline_environment_version_id",
+        "kind",
+        "artifact_uri",
+        "artifact_sha256",
+        "diff",
+        "permissions",
+        "limits",
+        "created_at"
+      ],
+      "title": "RepairCandidate",
+      "type": "object"
+    },
+    "RepairLimits": {
+      "additionalProperties": false,
+      "properties": {
+        "max_attempts": {
+          "exclusiveMinimum": 0,
+          "title": "Max Attempts",
+          "type": "integer"
+        },
+        "max_cost_usd": {
+          "minimum": 0,
+          "title": "Max Cost Usd",
+          "type": "number"
+        },
+        "max_seconds": {
+          "exclusiveMinimum": 0,
+          "title": "Max Seconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_attempts",
+        "max_seconds",
+        "max_cost_usd"
+      ],
+      "title": "RepairLimits",
+      "type": "object"
+    },
+    "RepairRecord": {
+      "$defs": {
+        "RepairAttempt": {
+          "additionalProperties": false,
+          "properties": {
+            "candidate_id": {
+              "format": "uuid",
+              "title": "Candidate Id",
+              "type": "string"
+            },
+            "decision": {
+              "enum": [
+                "pending",
+                "rejected",
+                "published"
+              ],
+              "title": "Decision",
+              "type": "string"
+            },
+            "number": {
+              "exclusiveMinimum": 0,
+              "title": "Number",
+              "type": "integer"
+            },
+            "reason": {
+              "minLength": 1,
+              "title": "Reason",
+              "type": "string"
+            },
+            "verification_refs": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Verification Refs",
+              "type": "array"
+            }
+          },
+          "required": [
+            "candidate_id",
+            "number",
+            "decision",
+            "reason"
+          ],
+          "title": "RepairAttempt",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "attempts": {
+          "items": {
+            "$ref": "#/$defs/RepairAttempt"
+          },
+          "title": "Attempts",
+          "type": "array"
+        },
+        "checkpoint_refs": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Checkpoint Refs",
+          "type": "array"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "diagnosis": {
+          "minLength": 1,
+          "title": "Diagnosis",
+          "type": "string"
+        },
+        "evidence_refs": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "resulting_environment_version_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Resulting Environment Version Id"
+        },
+        "run_id": {
+          "format": "uuid",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "trigger": {
+          "minLength": 1,
+          "title": "Trigger",
+          "type": "string"
+        },
+        "uncertainty": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Uncertainty",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "task_id",
+        "run_id",
+        "checkpoint_refs",
+        "trigger",
+        "diagnosis",
+        "created_at"
+      ],
+      "title": "RepairRecord",
+      "type": "object"
+    },
+    "Run": {
+      "$defs": {
+        "ExecutorBaseline": {
+          "additionalProperties": false,
+          "properties": {
+            "discovery_interface_sha256": {
+              "pattern": "^[a-f0-9]{64}$",
+              "title": "Discovery Interface Sha256",
+              "type": "string"
+            },
+            "evaluator_sha256": {
+              "pattern": "^[a-f0-9]{64}$",
+              "title": "Evaluator Sha256",
+              "type": "string"
+            },
+            "implementation_sha256": {
+              "pattern": "^[a-f0-9]{64}$",
+              "title": "Implementation Sha256",
+              "type": "string"
+            },
+            "model_configuration_sha256": {
+              "pattern": "^[a-f0-9]{64}$",
+              "title": "Model Configuration Sha256",
+              "type": "string"
+            },
+            "permission_grants_sha256": {
+              "pattern": "^[a-f0-9]{64}$",
+              "title": "Permission Grants Sha256",
+              "type": "string"
+            },
+            "system_prompt_sha256": {
+              "pattern": "^[a-f0-9]{64}$",
+              "title": "System Prompt Sha256",
+              "type": "string"
+            }
+          },
+          "required": [
+            "implementation_sha256",
+            "system_prompt_sha256",
+            "model_configuration_sha256",
+            "discovery_interface_sha256",
+            "evaluator_sha256",
+            "permission_grants_sha256"
+          ],
+          "title": "ExecutorBaseline",
+          "type": "object"
+        },
+        "ToolVersion": {
+          "additionalProperties": false,
+          "properties": {
+            "artifact_sha256": {
+              "pattern": "^[a-f0-9]{64}$",
+              "title": "Artifact Sha256",
+              "type": "string"
+            },
+            "name": {
+              "minLength": 1,
+              "title": "Name",
+              "type": "string"
+            },
+            "version": {
+              "minLength": 1,
+              "title": "Version",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "version",
+            "artifact_sha256"
+          ],
+          "title": "ToolVersion",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "brief_id": {
+          "format": "uuid",
+          "title": "Brief Id",
+          "type": "string"
+        },
+        "context_refs": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Context Refs",
+          "type": "array"
+        },
+        "environment_version_id": {
+          "format": "uuid",
+          "title": "Environment Version Id",
+          "type": "string"
+        },
+        "evidence_refs": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "executor_baseline": {
+          "$ref": "#/$defs/ExecutorBaseline"
+        },
+        "final_response": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Final Response"
+        },
+        "finished_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Finished At"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "intent_revision_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Intent Revision Id"
+        },
+        "intervention_refs": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Intervention Refs",
+          "type": "array"
+        },
+        "invocation_refs": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Invocation Refs",
+          "type": "array"
+        },
+        "missing_evidence": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Missing Evidence",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "started_at": {
+          "format": "date-time",
+          "title": "Started At",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "pending",
+            "running",
+            "completed",
+            "blocked",
+            "failed",
+            "cancelled"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "visible_tools": {
+          "items": {
+            "$ref": "#/$defs/ToolVersion"
+          },
+          "title": "Visible Tools",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "task_id",
+        "brief_id",
+        "environment_version_id",
+        "executor_baseline",
+        "visible_tools",
+        "status",
+        "started_at"
+      ],
+      "title": "Run",
+      "type": "object"
+    },
+    "SourceReference": {
+      "additionalProperties": false,
+      "properties": {
+        "attribution": {
+          "enum": [
+            "explicit",
+            "inferred"
+          ],
+          "title": "Attribution",
+          "type": "string"
+        },
+        "excerpt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Excerpt"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "user_request",
+            "user_feedback",
+            "document",
+            "tool_contract"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "locator": {
+          "minLength": 1,
+          "title": "Locator",
+          "type": "string"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Version"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "locator",
+        "attribution"
+      ],
+      "title": "SourceReference",
+      "type": "object"
+    },
+    "SupervisorIntervention": {
+      "additionalProperties": false,
+      "properties": {
+        "checkpoint_refs": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Checkpoint Refs",
+          "type": "array"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "evidence_refs": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "instruction": {
+          "minLength": 1,
+          "title": "Instruction",
+          "type": "string"
+        },
+        "reason": {
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "run_id": {
+          "format": "uuid",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "task_id",
+        "run_id",
+        "checkpoint_refs",
+        "instruction",
+        "reason",
+        "created_at"
+      ],
+      "title": "SupervisorIntervention",
+      "type": "object"
+    },
+    "Task": {
+      "$defs": {
+        "TaskCreate": {
+          "additionalProperties": false,
+          "properties": {
+            "client_request_id": {
+              "format": "uuid",
+              "title": "Client Request Id",
+              "type": "string"
+            },
+            "message": {
+              "maxLength": 16000,
+              "minLength": 1,
+              "title": "Message",
+              "type": "string"
+            },
+            "project_id": {
+              "default": "demo",
+              "maxLength": 100,
+              "minLength": 1,
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "client_request_id",
+            "message"
+          ],
+          "title": "TaskCreate",
+          "type": "object"
+        },
+        "TaskStatus": {
+          "enum": [
+            "pending",
+            "planning",
+            "awaiting_clarification",
+            "running",
+            "verifying",
+            "repairing",
+            "completed",
+            "blocked",
+            "failed",
+            "cancelled"
+          ],
+          "title": "TaskStatus",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "request": {
+          "$ref": "#/$defs/TaskCreate"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/$defs/TaskStatus",
+          "default": "pending"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "request",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "Task",
+      "type": "object"
+    },
+    "TaskBrief": {
+      "$defs": {
+        "Checkpoint": {
+          "additionalProperties": false,
+          "properties": {
+            "depends_on": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Depends On",
+              "type": "array"
+            },
+            "description": {
+              "minLength": 1,
+              "title": "Description",
+              "type": "string"
+            },
+            "evaluator_version": {
+              "minLength": 1,
+              "title": "Evaluator Version",
+              "type": "string"
+            },
+            "evidence_refs": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Evidence Refs",
+              "type": "array"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "scope": {
+              "minLength": 1,
+              "title": "Scope",
+              "type": "string"
+            },
+            "source_refs": {
+              "items": {
+                "$ref": "#/$defs/SourceReference"
+              },
+              "minItems": 1,
+              "title": "Source Refs",
+              "type": "array"
+            },
+            "status": {
+              "default": "pending",
+              "enum": [
+                "pending",
+                "verified",
+                "failed",
+                "blocked"
+              ],
+              "title": "Status",
+              "type": "string"
+            },
+            "uncertainty": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Uncertainty"
+            },
+            "verification_rule": {
+              "minLength": 1,
+              "title": "Verification Rule",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "description",
+            "source_refs",
+            "scope",
+            "verification_rule",
+            "evaluator_version"
+          ],
+          "title": "Checkpoint",
+          "type": "object"
+        },
+        "SourceReference": {
+          "additionalProperties": false,
+          "properties": {
+            "attribution": {
+              "enum": [
+                "explicit",
+                "inferred"
+              ],
+              "title": "Attribution",
+              "type": "string"
+            },
+            "excerpt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Excerpt"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                "user_request",
+                "user_feedback",
+                "document",
+                "tool_contract"
+              ],
+              "title": "Kind",
+              "type": "string"
+            },
+            "locator": {
+              "minLength": 1,
+              "title": "Locator",
+              "type": "string"
+            },
+            "version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Version"
+            }
+          },
+          "required": [
+            "id",
+            "kind",
+            "locator",
+            "attribution"
+          ],
+          "title": "SourceReference",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "checkpoints": {
+          "items": {
+            "$ref": "#/$defs/Checkpoint"
+          },
+          "minItems": 1,
+          "title": "Checkpoints",
+          "type": "array"
+        },
+        "clarification_requests": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Clarification Requests",
+          "type": "array"
+        },
+        "constraints": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Constraints",
+          "type": "array"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "instructions": {
+          "minLength": 1,
+          "title": "Instructions",
+          "type": "string"
+        },
+        "intent_revision_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Intent Revision Id"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "task_id",
+        "instructions",
+        "checkpoints",
+        "created_at"
+      ],
+      "title": "TaskBrief",
+      "type": "object"
+    },
+    "TaskCreate": {
+      "additionalProperties": false,
+      "properties": {
+        "client_request_id": {
+          "format": "uuid",
+          "title": "Client Request Id",
+          "type": "string"
+        },
+        "message": {
+          "maxLength": 16000,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "project_id": {
+          "default": "demo",
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Project Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "client_request_id",
+        "message"
+      ],
+      "title": "TaskCreate",
+      "type": "object"
+    },
+    "TaskList": {
+      "$defs": {
+        "Task": {
+          "additionalProperties": false,
+          "properties": {
+            "created_at": {
+              "format": "date-time",
+              "title": "Created At",
+              "type": "string"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "request": {
+              "$ref": "#/$defs/TaskCreate"
+            },
+            "schema_version": {
+              "const": 1,
+              "default": 1,
+              "title": "Schema Version",
+              "type": "integer"
+            },
+            "status": {
+              "$ref": "#/$defs/TaskStatus",
+              "default": "pending"
+            },
+            "updated_at": {
+              "format": "date-time",
+              "title": "Updated At",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "request",
+            "created_at",
+            "updated_at"
+          ],
+          "title": "Task",
+          "type": "object"
+        },
+        "TaskCreate": {
+          "additionalProperties": false,
+          "properties": {
+            "client_request_id": {
+              "format": "uuid",
+              "title": "Client Request Id",
+              "type": "string"
+            },
+            "message": {
+              "maxLength": 16000,
+              "minLength": 1,
+              "title": "Message",
+              "type": "string"
+            },
+            "project_id": {
+              "default": "demo",
+              "maxLength": 100,
+              "minLength": 1,
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "client_request_id",
+            "message"
+          ],
+          "title": "TaskCreate",
+          "type": "object"
+        },
+        "TaskStatus": {
+          "enum": [
+            "pending",
+            "planning",
+            "awaiting_clarification",
+            "running",
+            "verifying",
+            "repairing",
+            "completed",
+            "blocked",
+            "failed",
+            "cancelled"
+          ],
+          "title": "TaskStatus",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/$defs/Task"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "limit": {
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        },
+        "offset": {
+          "minimum": 0,
+          "title": "Offset",
+          "type": "integer"
+        },
+        "total": {
+          "minimum": 0,
+          "title": "Total",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "total",
+        "limit",
+        "offset"
+      ],
+      "title": "TaskList",
+      "type": "object"
+    },
+    "ToolContract": {
+      "$defs": {
+        "PermissionScope": {
+          "additionalProperties": false,
+          "properties": {
+            "allowed_hosts": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Allowed Hosts",
+              "type": "array"
+            },
+            "project_id": {
+              "minLength": 1,
+              "title": "Project Id",
+              "type": "string"
+            },
+            "readable_paths": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Readable Paths",
+              "type": "array"
+            },
+            "service_grants": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Service Grants",
+              "type": "array"
+            },
+            "writable_paths": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Writable Paths",
+              "type": "array"
+            }
+          },
+          "required": [
+            "project_id"
+          ],
+          "title": "PermissionScope",
+          "type": "object"
+        },
+        "ToolVersion": {
+          "additionalProperties": false,
+          "properties": {
+            "artifact_sha256": {
+              "pattern": "^[a-f0-9]{64}$",
+              "title": "Artifact Sha256",
+              "type": "string"
+            },
+            "name": {
+              "minLength": 1,
+              "title": "Name",
+              "type": "string"
+            },
+            "version": {
+              "minLength": 1,
+              "title": "Version",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "version",
+            "artifact_sha256"
+          ],
+          "title": "ToolVersion",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "idempotency_key_supported": {
+          "default": false,
+          "title": "Idempotency Key Supported",
+          "type": "boolean"
+        },
+        "input_schema": {
+          "additionalProperties": true,
+          "title": "Input Schema",
+          "type": "object"
+        },
+        "output_schema": {
+          "additionalProperties": true,
+          "title": "Output Schema",
+          "type": "object"
+        },
+        "permissions": {
+          "$ref": "#/$defs/PermissionScope"
+        },
+        "retry_behavior": {
+          "minLength": 1,
+          "title": "Retry Behavior",
+          "type": "string"
+        },
+        "side_effects": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Side Effects",
+          "type": "array"
+        },
+        "tool": {
+          "$ref": "#/$defs/ToolVersion"
+        }
+      },
+      "required": [
+        "tool",
+        "description",
+        "input_schema",
+        "output_schema",
+        "permissions",
+        "retry_behavior"
+      ],
+      "title": "ToolContract",
+      "type": "object"
+    },
+    "ToolInvocation": {
+      "$defs": {
+        "ErrorDetail": {
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "title": "Code",
+              "type": "string"
+            },
+            "details": {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "title": "Details",
+              "type": "array"
+            },
+            "message": {
+              "title": "Message",
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ],
+          "title": "ErrorDetail",
+          "type": "object"
+        },
+        "PermissionScope": {
+          "additionalProperties": false,
+          "properties": {
+            "allowed_hosts": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Allowed Hosts",
+              "type": "array"
+            },
+            "project_id": {
+              "minLength": 1,
+              "title": "Project Id",
+              "type": "string"
+            },
+            "readable_paths": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Readable Paths",
+              "type": "array"
+            },
+            "service_grants": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Service Grants",
+              "type": "array"
+            },
+            "writable_paths": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Writable Paths",
+              "type": "array"
+            }
+          },
+          "required": [
+            "project_id"
+          ],
+          "title": "PermissionScope",
+          "type": "object"
+        },
+        "ToolVersion": {
+          "additionalProperties": false,
+          "properties": {
+            "artifact_sha256": {
+              "pattern": "^[a-f0-9]{64}$",
+              "title": "Artifact Sha256",
+              "type": "string"
+            },
+            "name": {
+              "minLength": 1,
+              "title": "Name",
+              "type": "string"
+            },
+            "version": {
+              "minLength": 1,
+              "title": "Version",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "version",
+            "artifact_sha256"
+          ],
+          "title": "ToolVersion",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "arguments": {
+          "additionalProperties": true,
+          "title": "Arguments",
+          "type": "object"
+        },
+        "environment_version_id": {
+          "format": "uuid",
+          "title": "Environment Version Id",
+          "type": "string"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ErrorDetail"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "evidence_refs": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "finished_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Finished At"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "idempotency_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Idempotency Key"
+        },
+        "permissions": {
+          "$ref": "#/$defs/PermissionScope"
+        },
+        "result": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Result"
+        },
+        "run_id": {
+          "format": "uuid",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "started_at": {
+          "format": "date-time",
+          "title": "Started At",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "started",
+            "succeeded",
+            "failed",
+            "uncertain"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "tool": {
+          "$ref": "#/$defs/ToolVersion"
+        }
+      },
+      "required": [
+        "id",
+        "task_id",
+        "run_id",
+        "tool",
+        "environment_version_id",
+        "permissions",
+        "arguments",
+        "status",
+        "started_at"
+      ],
+      "title": "ToolInvocation",
+      "type": "object"
+    },
+    "ToolVersion": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Artifact Sha256",
+          "type": "string"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version",
+        "artifact_sha256"
+      ],
+      "title": "ToolVersion",
+      "type": "object"
+    },
+    "UserFeedback": {
+      "additionalProperties": false,
+      "properties": {
+        "classification": {
+          "default": "unclassified",
+          "enum": [
+            "omitted_requirement",
+            "evaluation_mistake",
+            "new_preference",
+            "unclassified"
+          ],
+          "title": "Classification",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "message": {
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Run Id"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "task_id",
+        "message",
+        "created_at"
+      ],
+      "title": "UserFeedback",
+      "type": "object"
+    },
+    "VerificationResult": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Artifact Sha256",
+          "type": "string"
+        },
+        "baseline_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Baseline Sha256",
+          "type": "string"
+        },
+        "candidate_id": {
+          "format": "uuid",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "category": {
+          "enum": [
+            "component",
+            "original_task",
+            "fresh_task",
+            "regression",
+            "isolation"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "completed_at": {
+          "format": "date-time",
+          "title": "Completed At",
+          "type": "string"
+        },
+        "evidence_refs": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "missing"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "verifier_version": {
+          "minLength": 1,
+          "title": "Verifier Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "candidate_id",
+        "artifact_sha256",
+        "baseline_sha256",
+        "category",
+        "status",
+        "verifier_version",
+        "completed_at"
+      ],
+      "title": "VerificationResult",
+      "type": "object"
+    },
+    "VersionTransition": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "publish",
+            "rollback"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "from_version_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "From Version Id"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "reason": {
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "recorded_at": {
+          "format": "date-time",
+          "title": "Recorded At",
+          "type": "string"
+        },
+        "to_version_id": {
+          "format": "uuid",
+          "title": "To Version Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "action",
+        "to_version_id",
+        "reason",
+        "recorded_at"
+      ],
+      "title": "VersionTransition",
+      "type": "object"
+    }
+  },
+  "schema_version": 1
+}

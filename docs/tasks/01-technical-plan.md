@@ -1,6 +1,6 @@
 # Task 01: Technical selections and runtime foundation
 
-Status: unstarted. This brief describes future implementation; no selection or runtime work is delivered by the documentation foundation.
+Status: Phase 1 foundation complete. See [decisions](../../backend/DECISIONS.md), [setup](../../backend/README.md), [frontend handoff](../../backend/docs/FRONTEND_HANDOFF.md), and [validation](../status.md#phase-1-validation-record). Contracts are available for Anushrut; UI integration remains separate. Remote CI is configured but has not yet been verified.
 
 ## Goal
 
@@ -12,7 +12,7 @@ Read [AGENTS.md](../../AGENTS.md), [README](../../README.md), [status](../status
 
 ## Owned area
 
-First record runtime/version, tooling, libraries, concrete schemas, persistence, registry transport, isolation mechanism, source layout, testing and continuous integration (CI) choices, with reasons. Decide what CI should run and what must remain local or requires separately authorized access. Then establish only the minimal Python package/CLI entry, configuration, persistence/version foundation and test harness justified by that plan; add the selected repository-local CI checks if applicable. These are future task deliverables, not authorization to add them in the current docs-only change.
+First record runtime/version, tooling, libraries, concrete schemas, persistence, registry transport, isolation mechanism, source layout, testing and continuous integration (CI) choices, with reasons. Decide what CI should run and what must remain local or requires separately authorized access. Then establish only the minimal Python package/CLI entry, configuration, persistence/version foundation and test harness justified by that plan; add the selected repository-local CI checks if applicable. These deliverables were authorized through the Phase 1 implementation request; they do not authorize subsequent phases.
 
 Define shared contracts for scoped tool invocation, context input, task/run evidence, sourced success conditions, candidate artifacts and repair/publication records. Map request flow and component responsibilities. Separate one-time executor setup from runtime repair, and plan later Neatlogs/Workshop verification without assuming interoperability.
 

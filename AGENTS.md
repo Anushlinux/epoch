@@ -1,6 +1,6 @@
 # Repository instructions
 
-Epoch should supervise task delivery through sourced checkpoints and improve an executor's tools and context through verified environment repairs. **This foundation is documentation only; every product runtime capability is unimplemented.** The current supervisor flow and Anushrut/Rajdeep ownership in README.md record a later user decision than the preserved direction.
+Epoch should supervise task delivery through sourced checkpoints and improve an executor's tools and context through verified environment repairs. **Backend Phase 1 implements local task intake, contracts, configuration and persistence; executor/supervisor/repair capabilities remain unimplemented.** The current supervisor flow and Anushrut/Rajdeep ownership in README.md record a later user decision than the preserved direction.
 
 ## Start here
 
@@ -12,7 +12,7 @@ This is the canonical guidance. [Claude](CLAUDE.md) imports it; [Copilot](.githu
 
 Inspect applicable instructions, relevant source/tests, branch and existing changes before editing. Preserve unrelated work. Use a feature branch, write a short plan for substantial work, and complete only the assigned task and its checks. Report missing dependencies or scope conflicts before dependent work.
 
-Keep `docs/direction.md` byte-for-byte unchanged; record later decisions separately. Future backend work uses Python and local simulated services first. Rajdeep owns backend/supervision and Anushrut owns the product UI; agree contracts first, then permit the separately assigned UI lane to proceed alongside ordered backend tasks. Keep a CLI/harness for backend verification. Task 01 selects runtime/tooling, libraries, concrete schemas, storage, transport, testing, CI and layout before implementing its minimal foundation. Roadmap prompts do not authorize starting later tasks. This documentation update adds no application code, scaffolds, dependencies, CI workflows, global settings or live integrations.
+Keep `docs/direction.md` byte-for-byte unchanged; record later decisions separately. Backend work uses Python and local simulated services first. Rajdeep owns backend/supervision and Anushrut owns the product UI; establish contracts first, then permit the separately assigned UI lane to proceed alongside ordered backend tasks. Keep a CLI/harness for backend verification. Task 01's selections are recorded in [backend/DECISIONS.md](backend/DECISIONS.md), with setup and checks in [backend/README.md](backend/README.md). Follow [backend/PHASES.md](backend/PHASES.md): roadmap prompts do not authorize starting later phases. Keep backend implementation under `backend/`; do not add global settings or live integrations without an assigned scope.
 
 ## Preserve the repair boundary
 
@@ -28,7 +28,7 @@ Keep `docs/direction.md` byte-for-byte unchanged; record later decisions separat
 
 Run relevant checks and report actual commands, outcomes, evidence and unexecuted checks. Maintain [docs/status.md](docs/status.md) from demonstrated results; distinguish decisions, requirements, assumptions and implemented facts.
 
-For docs, check source identity, links/anchors, entrypoints, task structure, docs-only scope and `git diff --check`. Preserve and report the source's original Markdown hard-break exception. Follow the AO preview guide when available; open `ao preview README.md` without adding a runtime.
+For docs, check source identity, links/anchors, entrypoints, task structure, assigned scope and `git diff --check`. Preserve and report the source's original Markdown hard-break exception. Follow the AO preview guide when available; open `ao preview README.md` without adding a preview dependency.
 
 Use focused conventional commits. When a PR is required, include validation and limitations, address relevant review feedback, and do not merge without authorization.
 

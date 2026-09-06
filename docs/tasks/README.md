@@ -1,6 +1,6 @@
 # Implementation tasks: Anushrut and Rajdeep
 
-**Planning only. All seven backend tasks and the UI lane are unstarted; all product runtime capabilities remain unimplemented.** Rajdeep owns the ordered backend tasks. Anushrut owns the separately assigned UI lane below. A copied prompt authorizes only its assigned scope, not the entire roadmap.
+**Task 01 / backend Phase 1 is complete; Tasks 02–07 and the UI lane remain unimplemented.** Rajdeep owns the ordered backend tasks. Anushrut owns the separately assigned UI lane below and can use the [frontend contract handoff](../../backend/docs/FRONTEND_HANDOFF.md). A copied prompt authorizes only its assigned scope, not the entire roadmap. Follow the smaller [backend phases](../../backend/PHASES.md) for step-by-step implementation.
 
 Read [AGENTS.md](../../AGENTS.md), [direction](../direction.md), [status](../status.md), [architecture](../architecture.md), and the [integration checklist](../integrations.md) before starting. Preserve the direction unchanged.
 
@@ -14,7 +14,7 @@ Read [AGENTS.md](../../AGENTS.md), [direction](../direction.md), [status](../sta
 | 06 | [Repair supplied context](06-context-repair.md) | 05 | Persistent scoped retrieval change with historical regression coverage |
 | 07 | [Integration verification and inspectable CLI demonstration](07-demo-evidence.md) | 06 | Verified Neatlogs/Workshop wiring and reproducible three-scenario evidence |
 
-Use Python for the backend, retain a CLI/test harness, and use local simulated services first. The user-facing product is the Epoch interface described in the [README](../../README.md#user-flow). Task 01 chooses runtime/tooling, libraries, concrete schemas, storage, transport, testing, CI and layout and agrees the frontend contract before building the minimal foundation. No implementation is being executed by this documentation change, and the sequence makes no ten-hour completion promise.
+Use Python for the backend, retain a CLI/test harness, and use local simulated services first. The user-facing product is the Epoch interface described in the [README](../../README.md#user-flow). Task 01 records [technical selections](../../backend/DECISIONS.md) and provides concrete frontend contracts with a verified minimal foundation. The sequence makes no ten-hour completion promise. Phase 2 is next and remains unstarted.
 
 ## Anushrut: UI lane
 

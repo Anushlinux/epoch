@@ -1,6 +1,6 @@
 # Intended architecture and data flow
 
-**Design only: none of these runtime components exists yet.** Python is the future backend language and local simulated services come first. Rajdeep builds the backend with a CLI/test harness; Anushrut builds the Epoch UI in parallel after shared contracts are agreed. [Task 01](tasks/01-technical-plan.md) chooses libraries, concrete schemas, persistence, transport, and layout. The current [supervisor flow](../README.md#user-flow) records the later user decision; the original direction remains unchanged.
+**The supervisor/repair architecture below remains a design.** Phase 1 implements only a Python API/CLI, contracts and SQLite task intake; [technical decisions](../backend/DECISIONS.md) specify the foundation. Local simulated business services come next. Rajdeep builds the backend; Anushrut can build the UI against the [frontend handoff](../backend/docs/FRONTEND_HANDOFF.md). The current [supervisor flow](../README.md#user-flow) records the later user decision; the original direction remains unchanged.
 
 ## Core idea
 
@@ -31,7 +31,7 @@ Basic local traces, context boundaries and trusted checks belong in Task 02. Tas
 
 ## Information needs
 
-These are information requirements, not executable schemas or selected storage formats. Task 01 makes those implementation choices.
+These information requirements now have [concrete data contracts](../backend/src/epoch_backend/contracts.py). Only task intake is persisted in Phase 1; records describing execution and repair do not imply those components exist.
 
 | Record | Information it must make available |
 | --- | --- |

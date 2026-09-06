@@ -2,14 +2,14 @@
 
 Epoch is a planned task supervisor and debugger. The user describes the desired result in the interface; Epoch turns that request into verifiable checkpoints, gives Hermes a structured task brief, monitors execution, and directs corrections until the checks pass or a clear limit is reached. When the cause lies in the tools or supplied context, Epoch verifies and publishes an environment repair that benefits future tasks.
 
-**Current state: documentation only. All product runtime capabilities are unimplemented.** There is no application to install or run, no runtime test suite, and no verified integration. See the [implementation status](docs/status.md) for the exact boundary.
+**Current state: backend Phase 1 implemented.** The local Python API saves and reads tasks, persists them in SQLite, validates configuration, and publishes shared contracts and UI fixtures. Submitted tasks remain pending. Hermes execution, supervision, simulated business tools and repairs are unimplemented. See [backend setup](backend/README.md) and the [implementation status](docs/status.md).
 
 ## Start here
 
 1. Read the [product direction](docs/direction.md), preserved unchanged from the approved source.
 2. Read [AGENTS.md](AGENTS.md), the canonical instructions for agents working in this repository.
 3. Follow the [architecture and data flow](docs/architecture.md) and [integration verification checklist](docs/integrations.md).
-4. Follow the [Anushrut / Rajdeep work split](docs/tasks/README.md). Rajdeep starts with [Task 01: technical selections and runtime foundation](docs/tasks/01-technical-plan.md); Anushrut builds the UI against their agreed contracts. The seven backend tasks retain their dependency order.
+4. Follow the [Anushrut / Rajdeep work split](docs/tasks/README.md). Rajdeep's Phase 1 foundation is complete; Anushrut can use the [frontend handoff](backend/docs/FRONTEND_HANDOFF.md). Implement subsequent [backend phases](backend/PHASES.md) only when requested.
 
 ## User flow
 
@@ -54,7 +54,7 @@ Two later scenarios exercise the same loop: generating a missing QA-owner lookup
 
 ## Build direction
 
-- Use Python for the future implementation. Choose runtime/tooling, libraries, concrete schemas, storage, transport, testing, CI and repository layout in Task 01 before building its minimal foundation.
+- The foundation uses Python 3.12, FastAPI/Pydantic, SQLite, uv, pytest and Ruff; the [technical decisions](backend/DECISIONS.md) describe the choices and future enforcement boundaries.
 - Keep a CLI/harness for early backend verification while Anushrut builds the product UI in parallel against agreed contracts. Prove one complete repair loop before expanding the demonstration.
 - Keep Hermes fixed during runtime repair. Protect trusted evaluators, bound maintenance permissions, and prevent duplicate side effects during replay.
 - Persist executable tool or retrieval changes. A successful-looking response, a reminder, or a prerecorded patch is not a repair.
@@ -64,11 +64,11 @@ The 10-hour target is: agree contracts and smoke-test integrations in hour 1; co
 
 ## Working with this repository
 
-There are no setup or execution commands yet. Do not infer a working runtime from these documents. Claude and Copilot have minimal entry files pointing to [AGENTS.md](AGENTS.md); the shared rules live there.
+From `backend/`, run `uv sync --frozen`, then `uv run --frozen epoch-backend serve`. The health check is at `http://127.0.0.1:8000/api/health`; API docs are at `/docs`. Follow the [backend README](backend/README.md) for Python/uv prerequisites, local cache setup, configuration, tests and the live-server smoke check. Claude and Copilot point to [AGENTS.md](AGENTS.md) for shared rules.
 
 For documentation changes, check relative links and anchors, preserve the exact direction source, inspect the diff for scope, and run `git diff --check`. The [documentation validation notes](docs/status.md#documentation-validation) describe the handoff checks and their limits.
 
-The preserved direction remains unchanged. The supervisor flow and named work split above record the user's later decision and supersede the earlier passive-debugger/CLI-only presentation. This change updates documentation only; implementation must be assigned explicitly through the task briefs.
+The preserved direction remains unchanged. The supervisor flow and named work split above record the user's later decision and supersede the earlier passive-debugger/CLI-only presentation. Only Phase 1 is implemented; later phases require an explicit assignment.
 
 ## Generic agent startup prompt
 
@@ -81,6 +81,6 @@ and existing changes; preserve unrelated work. Explain the task scope and
 dependencies before editing. Work only on the assigned task, follow its
 acceptance criteria, and report checks actually run, evidence and limitations.
 Update docs/status.md only for demonstrated results. Do not start later tasks.
-For the first implementation handoff, use docs/tasks/01-technical-plan.md;
-that future task selects the stack before implementing its minimal foundation.
+Phase 1 is complete. Read backend/PHASES.md and backend/DECISIONS.md, then
+implement only the next phase explicitly assigned by the user.
 ```

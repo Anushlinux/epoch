@@ -1,0 +1,367 @@
+{
+  "description": "UI development examples. No execution or repair occurred.",
+  "examples": [
+    {
+      "model": "TaskCreate",
+      "name": "TaskCreate",
+      "value": {
+        "client_request_id": "00000000-0000-0000-0000-000000000001",
+        "message": "Draft a release checklist.",
+        "project_id": "demo"
+      }
+    },
+    {
+      "model": "Task",
+      "name": "Task",
+      "value": {
+        "created_at": "2026-09-06T10:00:00Z",
+        "id": "00000000-0000-0000-0000-000000000002",
+        "request": {
+          "client_request_id": "00000000-0000-0000-0000-000000000001",
+          "message": "Draft a release checklist.",
+          "project_id": "demo"
+        },
+        "schema_version": 1,
+        "status": "pending",
+        "updated_at": "2026-09-06T10:00:00Z"
+      }
+    },
+    {
+      "model": "TaskList",
+      "name": "TaskList",
+      "value": {
+        "items": [
+          {
+            "created_at": "2026-09-06T10:00:00Z",
+            "id": "00000000-0000-0000-0000-000000000002",
+            "request": {
+              "client_request_id": "00000000-0000-0000-0000-000000000001",
+              "message": "Draft a release checklist.",
+              "project_id": "demo"
+            },
+            "schema_version": 1,
+            "status": "pending",
+            "updated_at": "2026-09-06T10:00:00Z"
+          }
+        ],
+        "limit": 20,
+        "offset": 0,
+        "total": 1
+      }
+    },
+    {
+      "model": "HealthResponse",
+      "name": "HealthResponse",
+      "value": {
+        "execution_enabled": false,
+        "phase": 1,
+        "status": "ok",
+        "storage": "ok"
+      }
+    },
+    {
+      "model": "ErrorEnvelope",
+      "name": "ErrorEnvelope",
+      "value": {
+        "error": {
+          "code": "task_not_found",
+          "details": [],
+          "message": "Task not found"
+        }
+      }
+    },
+    {
+      "model": "SourceReference",
+      "name": "SourceReference",
+      "value": {
+        "attribution": "explicit",
+        "excerpt": null,
+        "id": "00000000-0000-0000-0000-000000000003",
+        "kind": "user_request",
+        "locator": "task:00000000-0000-0000-0000-000000000002",
+        "version": null
+      }
+    },
+    {
+      "model": "Evidence",
+      "name": "Evidence",
+      "value": {
+        "captured_at": "2026-09-06T10:00:00Z",
+        "category": "simulation",
+        "id": "00000000-0000-0000-0000-000000000004",
+        "kind": "artifact",
+        "run_id": "00000000-0000-0000-0000-000000000007",
+        "schema_version": 1,
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "summary": "Fixture only: a simulated checklist artifact for layout development.",
+        "task_id": "00000000-0000-0000-0000-000000000002",
+        "uri": "fixture://release/checklist"
+      }
+    },
+    {
+      "model": "Checkpoint",
+      "name": "Checkpoint",
+      "value": {
+        "depends_on": [],
+        "description": "A release checklist draft is available.",
+        "evaluator_version": "fixture-evaluator-v1",
+        "evidence_refs": [
+          "00000000-0000-0000-0000-000000000004"
+        ],
+        "id": "00000000-0000-0000-0000-000000000005",
+        "scope": "demo project",
+        "source_refs": [
+          {
+            "attribution": "explicit",
+            "excerpt": null,
+            "id": "00000000-0000-0000-0000-000000000003",
+            "kind": "user_request",
+            "locator": "task:00000000-0000-0000-0000-000000000002",
+            "version": null
+          }
+        ],
+        "status": "verified",
+        "uncertainty": null,
+        "verification_rule": "Artifact is present."
+      }
+    },
+    {
+      "model": "TaskBrief",
+      "name": "TaskBrief",
+      "value": {
+        "checkpoints": [
+          {
+            "depends_on": [],
+            "description": "A release checklist draft is available.",
+            "evaluator_version": "fixture-evaluator-v1",
+            "evidence_refs": [
+              "00000000-0000-0000-0000-000000000004"
+            ],
+            "id": "00000000-0000-0000-0000-000000000005",
+            "scope": "demo project",
+            "source_refs": [
+              {
+                "attribution": "explicit",
+                "excerpt": null,
+                "id": "00000000-0000-0000-0000-000000000003",
+                "kind": "user_request",
+                "locator": "task:00000000-0000-0000-0000-000000000002",
+                "version": null
+              }
+            ],
+            "status": "verified",
+            "uncertainty": null,
+            "verification_rule": "Artifact is present."
+          }
+        ],
+        "clarification_requests": [],
+        "constraints": [],
+        "created_at": "2026-09-06T10:00:00Z",
+        "id": "00000000-0000-0000-0000-000000000006",
+        "instructions": "Create a checklist draft in the demo workspace.",
+        "intent_revision_id": null,
+        "schema_version": 1,
+        "task_id": "00000000-0000-0000-0000-000000000002"
+      }
+    },
+    {
+      "model": "Run",
+      "name": "Run",
+      "value": {
+        "brief_id": "00000000-0000-0000-0000-000000000006",
+        "context_refs": [],
+        "environment_version_id": "00000000-0000-0000-0000-000000000008",
+        "evidence_refs": [
+          "00000000-0000-0000-0000-000000000004"
+        ],
+        "executor_baseline": {
+          "discovery_interface_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+          "evaluator_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+          "implementation_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+          "model_configuration_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+          "permission_grants_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+          "system_prompt_sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+        },
+        "final_response": "Fixture only: checklist prepared.",
+        "finished_at": "2026-09-06T10:00:00Z",
+        "id": "00000000-0000-0000-0000-000000000007",
+        "intent_revision_id": null,
+        "intervention_refs": [],
+        "invocation_refs": [],
+        "missing_evidence": [],
+        "schema_version": 1,
+        "started_at": "2026-09-06T10:00:00Z",
+        "status": "completed",
+        "task_id": "00000000-0000-0000-0000-000000000002",
+        "visible_tools": [
+          {
+            "artifact_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+            "name": "checklist.create",
+            "version": "fixture-v1"
+          }
+        ]
+      }
+    },
+    {
+      "model": "IntentRevision",
+      "name": "IntentRevision",
+      "value": {
+        "created_at": "2026-09-06T10:00:00Z",
+        "feedback": "Also include rollback steps.",
+        "feedback_id": null,
+        "id": "00000000-0000-0000-0000-000000000009",
+        "previous_revision_id": null,
+        "reason": "new_preference",
+        "retained_evidence_refs": [
+          "00000000-0000-0000-0000-000000000004"
+        ],
+        "source_refs": [
+          {
+            "attribution": "explicit",
+            "excerpt": null,
+            "id": "00000000-0000-0000-0000-00000000000a",
+            "kind": "user_feedback",
+            "locator": "fixture://feedback/1",
+            "version": null
+          }
+        ],
+        "task_id": "00000000-0000-0000-0000-000000000002"
+      }
+    },
+    {
+      "model": "RepairCandidate",
+      "name": "RepairCandidate",
+      "value": {
+        "artifact_sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+        "artifact_uri": "fixture://candidate/adapter.py",
+        "baseline_environment_version_id": "00000000-0000-0000-0000-000000000008",
+        "created_at": "2026-09-06T10:00:00Z",
+        "diff": "Fixture only: adapter serialization patch.",
+        "id": "00000000-0000-0000-0000-00000000000b",
+        "kind": "tool_repair",
+        "limits": {
+          "max_attempts": 2,
+          "max_cost_usd": 1.0,
+          "max_seconds": 60
+        },
+        "permissions": {
+          "allowed_hosts": [],
+          "project_id": "demo",
+          "readable_paths": [],
+          "service_grants": [
+            "simulation:checklists"
+          ],
+          "writable_paths": []
+        },
+        "task_id": "00000000-0000-0000-0000-000000000002"
+      }
+    },
+    {
+      "model": "VerificationResult",
+      "name": "VerificationResult",
+      "value": {
+        "artifact_sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+        "baseline_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+        "candidate_id": "00000000-0000-0000-0000-00000000000b",
+        "category": "component",
+        "completed_at": "2026-09-06T10:00:00Z",
+        "evidence_refs": [],
+        "id": "00000000-0000-0000-0000-00000000000c",
+        "notes": "Fixture only: regression detected.",
+        "status": "failed",
+        "verifier_version": "fixture-evaluator-v1"
+      }
+    },
+    {
+      "model": "RepairRecord",
+      "name": "RepairRecord",
+      "value": {
+        "attempts": [
+          {
+            "candidate_id": "00000000-0000-0000-0000-00000000000b",
+            "decision": "rejected",
+            "number": 1,
+            "reason": "Component check failed.",
+            "verification_refs": [
+              "00000000-0000-0000-0000-00000000000c"
+            ]
+          }
+        ],
+        "checkpoint_refs": [
+          "00000000-0000-0000-0000-000000000005"
+        ],
+        "created_at": "2026-09-06T10:00:00Z",
+        "diagnosis": "Adapter serialization mismatch.",
+        "evidence_refs": [
+          "00000000-0000-0000-0000-000000000004"
+        ],
+        "id": "00000000-0000-0000-0000-00000000000d",
+        "resulting_environment_version_id": null,
+        "run_id": "00000000-0000-0000-0000-000000000007",
+        "task_id": "00000000-0000-0000-0000-000000000002",
+        "trigger": "Fixture only: invalid tool response.",
+        "uncertainty": []
+      }
+    },
+    {
+      "model": "EnvironmentVersion",
+      "name": "EnvironmentVersion",
+      "value": {
+        "candidate_id": null,
+        "context_rule_version": "fixture-v1",
+        "created_at": "2026-09-06T10:00:00Z",
+        "history": [],
+        "id": "00000000-0000-0000-0000-000000000008",
+        "manifest_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+        "previous_version_id": null,
+        "schema_version": 1,
+        "status": "staged",
+        "tools": [
+          {
+            "artifact_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+            "name": "checklist.create",
+            "version": "fixture-v1"
+          }
+        ],
+        "verification_refs": []
+      }
+    },
+    {
+      "model": "ProgressEvent",
+      "name": "ProgressEvent",
+      "value": {
+        "emitted_at": "2026-09-06T10:00:00Z",
+        "id": "00000000-0000-0000-0000-00000000000e",
+        "payload": {
+          "depends_on": [],
+          "description": "A release checklist draft is available.",
+          "evaluator_version": "fixture-evaluator-v1",
+          "evidence_refs": [
+            "00000000-0000-0000-0000-000000000004"
+          ],
+          "id": "00000000-0000-0000-0000-000000000005",
+          "scope": "demo project",
+          "source_refs": [
+            {
+              "attribution": "explicit",
+              "excerpt": null,
+              "id": "00000000-0000-0000-0000-000000000003",
+              "kind": "user_request",
+              "locator": "task:00000000-0000-0000-0000-000000000002",
+              "version": null
+            }
+          ],
+          "status": "verified",
+          "uncertainty": null,
+          "verification_rule": "Artifact is present."
+        },
+        "run_id": "00000000-0000-0000-0000-000000000007",
+        "schema_version": 1,
+        "sequence": 1,
+        "task_id": "00000000-0000-0000-0000-000000000002",
+        "type": "checkpoint.updated"
+      }
+    }
+  ],
+  "fixture_only": true
+}

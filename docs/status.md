@@ -1,10 +1,10 @@
 # Current implementation status
 
-As of September 6, 2026, Epoch is a documentation-only repository. **All product runtime capabilities are unimplemented.** The approved direction is a target, not a result.
+As of September 6, 2026, **backend Phase 1 is implemented and locally verified**. It provides task intake, configuration, persistence and shared contracts. The supervisor, Hermes executor and repair loop remain unimplemented; the approved direction is still a product target.
 
 ## Implemented facts
 
-Only the documentation below exists. No product code or runtime tests have been implemented or executed.
+The repository contains the following documentation and the bounded Phase 1 foundation:
 
 - [README](../README.md): product summary, current state, and reading order.
 - [Direction](direction.md): unchanged source document.
@@ -12,12 +12,15 @@ Only the documentation below exists. No product code or runtime tests have been 
 - [Architecture](architecture.md): intended boundaries and evidence flow.
 - [Integration checklist](integrations.md): verification required before compatibility claims.
 - [Seven ordered backend task briefs and the UI lane](tasks/README.md): Rajdeep/Anushrut ownership, future scope, dependencies, acceptance criteria, required evidence, and prompts.
+- [Backend API/CLI](../backend/README.md): health, task creation/read/list, normalized retry idempotency, explicit configuration validation and SQLite persistence across restarts. Tasks remain pending; no execution is scheduled.
+- [Technical selections](../backend/DECISIONS.md), [contract models](../backend/src/epoch_backend/contracts.py), deterministic [schema bundle](../backend/contracts/schemas.json), and labelled [UI fixtures](../backend/fixtures/development.json). Future execution/repair models are data contracts only.
+- [Tests](../backend/tests/test_api.py), [live-server smoke harness](../backend/scripts/smoke_test.py), uv lockfile, Ruff checks and a [GitHub workflow](../.github/workflows/backend.yml). Local results are recorded below; remote CI execution is not yet verified.
 
 ## Approved decisions
 
 The later user decision is an Epoch interface with a task supervisor: define verifiable checkpoints, send enhanced task briefs to Hermes, monitor observable progress, issue bounded corrective instructions, repair the environment when justified, and handle feedback after delivery. Keep the approved direction unchanged as historical product intent.
 
-Rajdeep owns the Python backend, supervisor, Hermes integration, checks, tools and repairs. Anushrut owns the UI, feedback flow, evidence presentation and frontend integration/tests. Agree contracts in Task 01, then run the UI lane alongside the ordered backend tasks. Retain a CLI/test harness and start with local simulated services. Runtime/tooling, libraries, concrete schemas, storage, transport, testing, CI and layout still require selection in Task 01; none is implemented by this documentation update.
+Rajdeep owns the Python backend, supervisor, Hermes integration, checks, tools and repairs. Anushrut owns the UI, feedback flow, evidence presentation and frontend integration/tests. Task 01 publishes the [frontend handoff](../backend/docs/FRONTEND_HANDOFF.md); consuming UI work remains separate. Python 3.12, uv, FastAPI/Pydantic, SQLite, pytest and Ruff are selected and used. SSE and container isolation are future implementation decisions, not active capabilities. Follow [backend phases](../backend/PHASES.md); only Phase 1 was requested and implemented.
 
 ## Requirements awaiting implementation
 
@@ -31,15 +34,16 @@ Hermes discovery behavior, Neatlogs capture coverage, Workshop replay, and inter
 
 | Capability | Current status | Planned work |
 | --- | --- | --- |
-| Concrete runtime/tooling, library, schema, storage, transport, testing and CI decisions | Not selected | Task 01 |
-| Python runtime and command-line interface foundation | Unimplemented | Task 01 onward |
+| Concrete runtime/tooling, library, schema, storage, transport, testing and CI decisions | Selected and recorded; future transport/isolation still unimplemented | Task 01 complete |
+| Python API/CLI, config validation, task persistence and shared contracts | Implemented; 66 tests and live-server restart smoke pass locally | Phase 1 complete |
 | Task brief/checkpoint planning, targeted continuation and feedback revisions | Unimplemented | Contracts in Task 01; executor/supervision in Task 03 |
 | User interface, checkpoint board, results and feedback flow | Unimplemented; assigned to Anushrut | UI lane alongside Rajdeep's backend tasks after shared contracts |
 | Local simulated business services and inspectable state | Unimplemented | Task 02 |
 | Permission-scoped tool registry and version lifecycle | Unimplemented | Tasks 02 and 04 |
 | Hermes integration and dynamic tool discovery | Unimplemented; compatibility unverified | Task 03 |
 | Early local trace/context capture and trusted outcome checks | Unimplemented | Task 02; extended to Hermes in Task 03 |
-| Runtime tests, evaluator protection tests and regression suite | Unimplemented | Tasks 01–07 |
+| Foundation API/config/storage/contract tests | 66 pass locally; CI configured, remote result unverified | Task 01 complete |
+| Evaluator protection and runtime repair regression suite | Unimplemented | Tasks 02–07 |
 | Debugger agent and complete repair loop | Unimplemented | Task 04 onward |
 | Automatic failure triggers and bounded investigation | Unimplemented | Task 04 |
 | Existing-tool repair, isolated verification, publication and rollback | Unimplemented | Task 04 |
@@ -51,11 +55,11 @@ Hermes discovery behavior, Neatlogs capture coverage, Workshop replay, and inter
 | Live Jira, Notion, Slack or directory connections | Unimplemented; not in initial local implementation scope | Separate future authorization |
 | Production deployment and broad multi-domain support | Unimplemented; deferred | Outside these initial briefs |
 
-No package manifest, dependency installation, application scaffold, runtime test suite, CI workflow, global configuration, or live integration is part of this foundation. There are no runtime benchmark results or successful repair demonstrations to report.
+Phase 1 adds only its local package, locked dependencies, API/CLI, configuration, persistence, contracts, fixtures and checks. It adds no global configuration or live integration. There are no agent benchmarks, successful repair demonstrations, user-facing UI or live SSE events to report.
 
 ## Documentation validation
 
-Foundation handoff must check the following and report actual outcomes in the pull request:
+The original documentation foundation used the following checks; implementation handoffs additionally verify their assigned source/runtime scope:
 
 1. Compare `docs/direction.md` byte-for-byte with the supplied source file. Record matching SHA-256 hashes. The source used for this foundation is `/Users/bhaskarpandit/.ao/electron/terminal-drops/1788694360022-direction_1_.md`; this is provenance, not a portable dependency or setup path.
 2. Resolve every relative Markdown link and fragment to an existing file and heading. Check preserved footnote references separately. This does not verify remote URLs or installed integration behavior.
@@ -64,7 +68,7 @@ Foundation handoff must check the following and report actual outcomes in the pu
 5. Inspect all changed and untracked files against the base commit: only the intended Markdown documentation and agent entry files may be added or changed. Run `git diff --check` and the corresponding staged check before committing.
 6. Follow the AO preview guide and open `ao preview README.md` when working in AO. Inspect the rendered primary handoff without introducing a server, dependencies, or launch configuration.
 
-These checks validate documentation integrity and navigation only. Update the runtime inventory only after future implementation has matching execution evidence; record partial or blocked results explicitly.
+These checks validate documentation integrity and navigation only. Update the runtime inventory only when implementation has matching execution evidence; record partial or blocked results explicitly.
 
 ### Foundation validation record
 
@@ -75,3 +79,27 @@ The full staged `git diff --check` reports three trailing-whitespace findings in
 ### Supervisor and ownership documentation update
 
 Pulled the documentation foundation at `d681128` before updating the supervisor flow and Anushrut/Rajdeep assignments. Checked 91 local links including four heading fragments, all seven backend brief structures, and the shared agent entrypoints. The original direction Git blob retains SHA-256 `791826322bab72f3198c862cad796e2c5298c1ed5801fb8db8bd70a6101e3df5`, and its working file has no Git diff. The source's original Markdown hard breaks remain preserved. All ten changed files are Markdown and the authored diff passes `git diff --check`. AO preview is unavailable on this host; no runtime or preview dependency was added. Runtime and integration checks remain unexecuted because no application code is part of this change.
+
+### Phase 1 validation record
+
+Implemented on a feature branch from `e1395bc` using parallel contract, storage and integration-test agents with separate file ownership. Technical selections were recorded before coding. Validation used Python 3.12.10 and uv 0.8.15 on Windows; dependencies are pinned in `backend/uv.lock`.
+
+Initial `uv sync` downloaded dependencies into a repository-local cache. Copied only Git-visible backend source files into a fresh temporary directory, created a new virtual environment, and ran the following commands there with that warmed cache. This verifies clean installation from source with a frozen lock; it is not a claim of installation without previously downloaded dependencies.
+
+| Command (from `backend/`) | Observed result |
+| --- | --- |
+| `uv sync --frozen --offline` | Clean environment created; 26 packages installed |
+| `uv run --frozen --offline epoch-backend check-config` | Valid local configuration; no database side effects |
+| `uv run --frozen --offline pytest -q` | 66 passed; two dependency deprecation warnings |
+| `uv run --frozen --offline ruff check .` | Passed |
+| `uv run --frozen --offline ruff format --check .` | Passed |
+| `uv run --frozen --offline python scripts/export_contracts.py --check` | Schema and fixture exports match their source |
+| `uv run --frozen --offline python scripts/smoke_test.py` | Actual CLI server health, HTTP intake, idempotent retry and persisted task after process restart passed |
+
+Tests include 16 storage checks, 40 API/config/CLI checks and 10 contract checks. They cover concurrent retry idempotency, conflicting request IDs, pagination, corrupted storage, schema-version refusal, field validation, CORS, sanitized errors, explicit environment files and source/evidence invariants. SQLite `user_version=1` guards the intake schema; environment-version records have contracts only, with publication/storage deferred to Phase 5.
+
+Windows sandbox ACLs blocked pytest temporary-directory access, so the successful test and smoke executions ran with the approved local escalation. The two remaining warnings are from Starlette's HTTPX compatibility and its AnyIO portal alias; all tests pass with the locked dependencies. The workflow uses Python 3.12 on Linux and is configured to run tests, formatting, exports and the smoke script; no remote CI result is claimed here.
+
+Documentation checks passed for 135 local links, six heading fragments, seven task brief structures and the canonical agent entrypoints. The direction Git blob still hashes to `791826322bab72f3198c862cad796e2c5298c1ed5801fb8db8bd70a6101e3df5`; its Windows worktree remains unchanged at SHA-256 `714c89515b81ad887935de309d5b69ec43a77ee623c13fbff6fadc56f371a9a7`, including the original Markdown hard breaks. Authored changes pass `git diff --check`. AO preview remains unavailable on this host.
+
+Anushrut has the published HTTP/error contracts and fixture states; this does not claim a completed UI integration or personal sign-off. Phase 2 and every subsequent phase remain unstarted. Hermes, Neatlogs, Workshop, isolation, live-service, supervision and generated-repair tests remain unexecuted because those components are outside Phase 1.
