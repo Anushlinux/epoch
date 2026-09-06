@@ -352,4 +352,14 @@ Final local validation: **296 tests passed**, including all 9 actual Docker case
 with the two existing upstream warnings. Ruff lint/format (67 files), schema
 export and the actual inference-disabled CLI HTTP/intake/restart smoke passed.
 The [Phase 5 report](../backend/PHASE_5_REPORT.md) records setup, commands,
-capabilities and the unpublished branch handoff.
+capabilities and the Phase 5 branch handoff.
+
+### Phase 5 main publication
+
+The user authorized pushing Phase 5 to main for frontend integration. Pulled
+`origin/main` at `bf1c93f`; it already contains Phases 1–4 and required no additional
+merge. Phase 5 implementation `d28da9d` is a direct descendant. The frontend tree
+is identical to pulled main, and the original checkout's unfinished merge remains
+untouched. The previously tested backend source is unchanged; its 296-test result
+is retained rather than claiming new model inference. Publication checks verify
+Git ancestry, unchanged frontend/direction, exported contracts and authored diffs.
