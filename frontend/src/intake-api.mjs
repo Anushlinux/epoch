@@ -60,8 +60,8 @@ export class IntakeAPI {
   }
   async health() {
     const { body, status } = await this.call('/api/health');
-    if (status !== 200 || !keys(body, ['status', 'phase', 'storage', 'execution_enabled']) || body.status !== 'ok' || body.phase !== 3 || body.storage !== 'ok' || typeof body.execution_enabled !== 'boolean')
-      throw new IntakeError('Unsupported server capabilities. This view requires the published Phase 3 API.', 0, 'contract');
+    if (status !== 200 || !keys(body, ['status', 'phase', 'storage', 'execution_enabled']) || body.status !== 'ok' || ![3, 4, 5, 6, 7].includes(body.phase) || body.storage !== 'ok' || typeof body.execution_enabled !== 'boolean')
+      throw new IntakeError('Unsupported server capabilities. This view requires a supported Phase 3–7 API.', 0, 'contract');
     return body;
   }
   async list(offset = 0) {

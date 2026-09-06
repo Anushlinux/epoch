@@ -1,6 +1,6 @@
 # Epoch frontend
 
-Epoch has a Hermes-inspired chat interface and a separate debugger pipeline. The real workspace connects to the Phase 3 backend for task intake, explicit release execution and verified results. The interactive Atlas release example is a separate, clearly labeled demo.
+Epoch has a chat interface, an execution debugger and an incident workspace. The real workspace connects to the Phase 7 backend for explicit release execution, supervision, feedback and environment repair evidence. The interactive Atlas release example remains a separate, clearly labeled demo.
 
 ## Run
 
@@ -20,6 +20,7 @@ The host uses Node's built-in HTTP server and binds to loopback. It serves only 
 | --- | --- |
 | `/chat` | Real request intake and saved conversations |
 | `/debugger?task=UUID` | Actual run history, sourced checkpoints, activity and simulated state |
+| `/incidents` | Incident list, source evidence, related runs, recurrence and explicit Luna analysis |
 | `/demo/chat` | Existing Atlas 2.4 release fixture as a conversation |
 | `/demo/debugger` | The same demo's failure, candidate, checks, publication and continuation |
 | `/`, `/index.html` | Compatibility aliases for real chat |
@@ -31,8 +32,9 @@ Same-mode navigation retains in-memory drafts, selection, disclosures and page s
 
 A chat starts as one saved request. Saving does not start Hermes. After saving,
 enter a release value, choose a sandbox scenario, and select **Start release run**.
-The release template creates a ticket, attaches the required checklist and notifies
-QA with both links. It does not infer arbitrary workflows from your message.
+The release workflow creates a ticket, attaches the required checklist and notifies
+QA with both links. Luna supervision defaults on and interprets supported additions
+from the request. Direct execution remains available. Arbitrary workflows are not inferred.
 
 The UI reads `/api/runtime` and blocks starting while execution is unavailable or
 another run is active. Installation detection is not a model-connectivity test.
@@ -60,6 +62,34 @@ when the backend records a terminal status. Same-page navigation reuses the trac
 cursor; a full reload safely rereads persisted history from zero. Neither action
 replays execution. Missing evidence never becomes a fabricated success.
 
+Supervised runs expose recorded clarification questions and additive feedback.
+Each submission preserves the current revision and exact retry identity. Opt-in
+environment repair follows the server's advertised targets and Docker availability:
+checklist serialization, missing QA-owner lookup and outdated guidance selection.
+The debugger shows generated source, investigation, verification proofs, publication,
+effective shared artifacts and the run's pinned artifacts. Rollback applies to future
+runs. Publication and task completion remain separate outcomes. The backend's
+Phase 6/7 development-acceptance warning remains visible.
+
+## Incidents and telemetry
+
+Open **Incidents** to filter by project and inspect source records, inclusion/exclusion
+reasons, related run links, repair records and recurrence counts. Read-only refreshes
+run every five seconds while this page is visible; hidden pages do not poll incidents.
+The telemetry panel separates local collector readiness from configured Neatlogs cloud
+export acceptance and verified cloud readback. Export acceptance alone does not establish successful readback. Credentials belong in the backend process, never this UI.
+
+Import up to 200 exported Slack or support JSON records by pasting or loading a file.
+Each record requires `source_type`, `source_id`, timezone-aware `timestamp`, `project_id`
+and `text`; optional source/task/run/workflow references help correlation. Imported
+observations remain untrusted. Importing does not start a model, executor or repair.
+
+**Analyze incident** and **Ask question** each explicitly request one bounded Luna
+analysis. The view keeps citations, hypotheses, missing evidence and failed outcomes.
+These explanations do not authorize repairs. Imports and model actions retain their
+request IDs in per-tab storage before sending; uncertain acknowledgements require an
+explicit exact retry, including after reload.
+
 The server normalizes outer whitespace. Responses are validated; late or unrelated records do not replace current selection. Missing selected tasks retain a clearly unavailable receipt while healthy list/connection reads continue. Switching servers clears previous receipts. Pagination and detail refresh remain available.
 
 ## Demo and evidence
@@ -84,6 +114,6 @@ npm run test:integration --prefix frontend
 npm run test:execution --prefix frontend
 ```
 
-The integration runner uses isolated temporary backend data and a configurable frontend port (`EPOCH_FRONTEND_PORT`, default 5173), stopping only its own processes. It exercises real HTTP intake and restart persistence. The execution runner uses `backend/tests/frontend_server.py`, an explicit test-only executor with real API, SQLite, sandbox tools and trusted checks. It does not invoke Hermes or a model and is never used by the production entrypoint. Browser transport-fault cases are labeled separately. See [the evidence record](evidence/README.md) for actual results and limitations.
+The integration runner uses isolated temporary backend data and a configurable frontend port (`EPOCH_FRONTEND_PORT`, default 5173), stopping only its own processes. It exercises real HTTP intake and restart persistence. The execution runner uses `backend/tests/frontend_server.py` with explicit test actors and real API, SQLite, sandbox tools and trusted checks. It does not invoke actual Hermes, Luna or Docker and is never used by the production entrypoint. Browser transport-fault cases are labeled separately. Filter a focused run with `EPOCH_BROWSER_GREP` and `EPOCH_BROWSER_PROJECT` (for example `desktop`). See [the evidence record](evidence/README.md) for historical results and [current status](../docs/status.md) for this integration's actual checks and limitations.
 
-The frontend remains plain HTML/CSS/browser modules with no runtime framework or build step. [Design notes](DESIGN.md), [implementation plan](PLAN.md), and [product context](PRODUCT.md) describe this UI scope. The [backend handoff](../backend/docs/FRONTEND_HANDOFF.md) is the implemented API contract. The [integration plan](INTEGRATION_PLAN.md) records this scope. Automatic supervision, user-feedback revisions and generated repair remain later backend phases.
+The frontend remains plain HTML/CSS/browser modules with no runtime framework or build step. [Design notes](DESIGN.md), [implementation plan](PLAN.md), [product context](PRODUCT.md) and [integration plan](INTEGRATION_PLAN.md) preserve the earlier UI planning context. The [backend handoff](../backend/docs/FRONTEND_HANDOFF.md), [Phase 6/7 handoff](../backend/docs/PHASES_6_7_HANDOFF.md) and [incident contract](../backend/docs/INCIDENT_IMPLEMENTATION.md) describe the current interfaces. Focused local checks do not establish live-model repair or authenticated Neatlogs cloud acceptance.

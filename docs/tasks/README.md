@@ -16,6 +16,17 @@ Read [AGENTS.md](../../AGENTS.md), [direction](../direction.md), [status](../sta
 
 Use Python for the backend, retain a CLI/test harness, and use local simulated services first. The user-facing product is the Epoch interface described in the [README](../../README.md#user-flow). Task 01 records [technical selections](../../backend/DECISIONS.md); the [Phase 2/3 plan](../../backend/PHASES_2_3_PLAN.md) connects the sandbox and installed executor. The sequence makes no ten-hour completion promise. The user explicitly assigned Phases 6 and 7 and requested no testing; Phase 8 still requires its own assignment.
 
+## Current integration assignment
+
+The user explicitly assigned current frontend integration plus incident construction,
+Neatlogs local/cloud wiring and JSON evidence imports. This delivery uses parallel
+agents with shared contracts and preserves the existing backend architecture. The
+Phase 7 frontend and incident screens are connected; focused checks are recorded in
+[status](../status.md#frontend-incidents-and-neatlogs-integration--september-6-2026).
+Full live repair/cloud acceptance remains pending. Workshop and live SaaS connectors
+are deferred. This later assignment supersedes the older unassigned integration
+statements below; the preserved direction remains unchanged.
+
 ## Anushrut: UI lane
 
 **Local implementation:** the [frontend workspace](../../frontend/README.md) has historical Phase 3 intake and explicit-execution HTTP/browser evidence. Its health/runtime guards require Phase 3 and automatic supervision/repair disabled, so it rejects the current Phase 5 backend. Anushrut owns updating those guards and integrating supervision, feedback, repair/diff/check views and version history against the [frontend handoff](../../backend/docs/FRONTEND_HANDOFF.md). This backend change preserves every frontend file. Model-backed browser acceptance is still required for current UI support.

@@ -1,0 +1,488 @@
+{
+  "description": "Additive incident evidence imports and explicit bounded analysis; no repair authority.",
+  "models": {
+    "EvidenceImport": {
+      "$defs": {
+        "ExternalRecord": {
+          "additionalProperties": false,
+          "properties": {
+            "project_id": {
+              "maxLength": 300,
+              "minLength": 1,
+              "title": "Project Id",
+              "type": "string"
+            },
+            "run_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Run Id"
+            },
+            "source_id": {
+              "maxLength": 300,
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            },
+            "source_ref": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Source Ref"
+            },
+            "source_type": {
+              "enum": [
+                "slack",
+                "support"
+              ],
+              "title": "Source Type",
+              "type": "string"
+            },
+            "task_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Task Id"
+            },
+            "text": {
+              "maxLength": 12000,
+              "minLength": 1,
+              "title": "Text",
+              "type": "string"
+            },
+            "timestamp": {
+              "format": "date-time",
+              "title": "Timestamp",
+              "type": "string"
+            },
+            "workflow": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Workflow"
+            }
+          },
+          "required": [
+            "source_type",
+            "source_id",
+            "timestamp",
+            "project_id",
+            "text"
+          ],
+          "title": "ExternalRecord",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "client_request_id": {
+          "format": "uuid",
+          "title": "Client Request Id",
+          "type": "string"
+        },
+        "records": {
+          "items": {
+            "$ref": "#/$defs/ExternalRecord"
+          },
+          "maxItems": 200,
+          "minItems": 1,
+          "title": "Records",
+          "type": "array"
+        }
+      },
+      "required": [
+        "client_request_id",
+        "records"
+      ],
+      "title": "EvidenceImport",
+      "type": "object"
+    },
+    "ExternalRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "project_id": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Project Id",
+          "type": "string"
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Run Id"
+        },
+        "source_id": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Source Id",
+          "type": "string"
+        },
+        "source_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Ref"
+        },
+        "source_type": {
+          "enum": [
+            "slack",
+            "support"
+          ],
+          "title": "Source Type",
+          "type": "string"
+        },
+        "task_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Task Id"
+        },
+        "text": {
+          "maxLength": 12000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "timestamp": {
+          "format": "date-time",
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "workflow": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Workflow"
+        }
+      },
+      "required": [
+        "source_type",
+        "source_id",
+        "timestamp",
+        "project_id",
+        "text"
+      ],
+      "title": "ExternalRecord",
+      "type": "object"
+    },
+    "IncidentAction": {
+      "additionalProperties": false,
+      "properties": {
+        "client_request_id": {
+          "format": "uuid",
+          "title": "Client Request Id",
+          "type": "string"
+        },
+        "question": {
+          "anyOf": [
+            {
+              "maxLength": 12000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Question"
+        }
+      },
+      "required": [
+        "client_request_id"
+      ],
+      "title": "IncidentAction",
+      "type": "object"
+    },
+    "IncidentAnswer": {
+      "additionalProperties": false,
+      "properties": {
+        "answer": {
+          "maxLength": 8000,
+          "minLength": 1,
+          "title": "Answer",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "maxItems": 24,
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "hypotheses": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Hypotheses",
+          "type": "array"
+        },
+        "missing_evidence": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Missing Evidence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "answer",
+        "evidence_ids",
+        "hypotheses",
+        "missing_evidence"
+      ],
+      "title": "IncidentAnswer",
+      "type": "object"
+    },
+    "NormalizedEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "check_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Check Id"
+        },
+        "environment_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Environment Version"
+        },
+        "error_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error Code"
+        },
+        "native_event_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Native Event Id"
+        },
+        "project_id": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Project Id",
+          "type": "string"
+        },
+        "revision_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Revision Id"
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Run Id"
+        },
+        "source_id": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Source Id",
+          "type": "string"
+        },
+        "source_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Ref"
+        },
+        "source_type": {
+          "enum": [
+            "epoch",
+            "trace",
+            "slack",
+            "support"
+          ],
+          "title": "Source Type",
+          "type": "string"
+        },
+        "span_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Span Id"
+        },
+        "structured_payload": {
+          "additionalProperties": true,
+          "title": "Structured Payload",
+          "type": "object"
+        },
+        "task_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Task Id"
+        },
+        "text": {
+          "maxLength": 12000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "timestamp": {
+          "format": "date-time",
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "tool": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tool"
+        },
+        "trace_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trace Id"
+        },
+        "workflow": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Workflow"
+        }
+      },
+      "required": [
+        "source_type",
+        "source_id",
+        "timestamp",
+        "project_id",
+        "text"
+      ],
+      "title": "NormalizedEvidence",
+      "type": "object"
+    }
+  },
+  "schema_version": 1
+}

@@ -15,9 +15,9 @@ from epoch_backend.candidate_runner import CandidateError
 from epoch_backend.config import Settings
 from epoch_backend.contracts import Checkpoint, SourceReference, Task, TaskBrief, TaskStatus
 from epoch_backend.environment_store import EnvironmentStore
-from epoch_backend.repair_surfaces import artifacts
 from epoch_backend.execution_contracts import ExecutionRecord, ReleaseRunRequest, RuntimeInfo
 from epoch_backend.execution_store import ExecutionStore
+from epoch_backend.repair_surfaces import artifacts
 from epoch_backend.sandbox import Sandbox, SandboxError
 from epoch_backend.storage import RequestConflict, SQLiteStore
 from epoch_backend.supervision_contracts import (
@@ -150,12 +150,25 @@ class ExecutionService:
         self._cancel = threading.Event()
         self.active_run_id: UUID | None = None
         self._unresolved_state = False
+        from epoch_backend.incidents import IncidentService
+        from epoch_backend.telemetry import TelemetryService
+
+        self.incidents = IncidentService(settings.data_dir, execution=self)
+        self.telemetry = TelemetryService(settings, self.incidents)
+        self.observation_warnings: dict[str, str] = {}
 
     def initialize(self):
         self.lease.acquire()
         try:
             self.store.initialize()
             self.environments.initialize()
+            for name, component in (("incidents", self.incidents), ("telemetry", self.telemetry)):
+                try:
+                    component.initialize()
+                except Exception as exc:
+                    self.observation_warnings[name] = (
+                        f"{name.capitalize()} initialization unavailable ({type(exc).__name__})."
+                    )
             self.environments.recover_interrupted()
             for record in self.store.list():
                 if record.status not in TERMINAL:
@@ -188,7 +201,10 @@ class ExecutionService:
                             "Interrupted run's sandbox evidence unavailable."
                         )
                         self.store.save(record)
+            for record in self.store.list():
+                self.observe(record, self.sandbox(record))
         except Exception:
+            self.telemetry.close()
             self.lease.release()
             raise
 
@@ -200,7 +216,47 @@ class ExecutionService:
             if thread.is_alive():
                 # Keep the lease until process exit rather than allow competing writers.
                 raise RuntimeError("Hermes worker did not stop within the shutdown limit.")
+        self.telemetry.close()
         self.lease.release()
+
+    def observe(self, record: ExecutionRecord, sandbox: Sandbox, trigger=None) -> list[dict]:
+        """Project committed evidence; observability cannot decide task success."""
+        incidents = []
+        for name, refresh in (
+            ("incidents", self.incidents.refresh_run),
+            ("telemetry", self.telemetry.project_events),
+        ):
+            try:
+                result = (
+                    refresh(record, sandbox, trigger=trigger)
+                    if name == "incidents"
+                    else refresh(record, sandbox)
+                )
+                if name == "incidents":
+                    incidents = result or []
+                    if trigger is not None:
+                        incidents = [
+                            item
+                            for item in incidents
+                            if any(
+                                evidence.get("trusted")
+                                and (
+                                    evidence.get("native_event_id") == trigger["id"]
+                                    or evidence.get("structured_payload", {}).get(
+                                        "trigger_event_id"
+                                    )
+                                    == trigger["id"]
+                                )
+                                for evidence in self.incidents.get_incident(item["id"])["evidence"]
+                            )
+                        ]
+                self.observation_warnings.pop(name, None)
+            except Exception as exc:
+                self.observation_warnings[name] = (
+                    f"{name.capitalize()} projection unavailable ({type(exc).__name__}); "
+                    "saved execution evidence remains available for catch-up."
+                )
+        return incidents
 
     def runtime_info(self) -> RuntimeInfo:
         installation = hermes_bridge.detect_installation()
@@ -498,6 +554,7 @@ class ExecutionService:
                     persist,
                     environments=self.environments,
                     repair_image=self.settings.repair_image,
+                    observe=lambda trigger=None: self.observe(record, sandbox, trigger),
                 )
                 return
 
@@ -505,6 +562,8 @@ class ExecutionService:
                 sandbox.record_event(
                     str(event.get("type", "executor.event")), event.get("data", {})
                 )
+                if event.get("type") == "executor.tool_completed":
+                    self.observe(record, sandbox)
 
             result = hermes_bridge.execute(
                 {
@@ -617,6 +676,7 @@ class ExecutionService:
                 except Exception:
                     pass
             finally:
+                self.observe(record, sandbox)
                 with self._lock:
                     if not self._unresolved_state:
                         self.active_run_id = None

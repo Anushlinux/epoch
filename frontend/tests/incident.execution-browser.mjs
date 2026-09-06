@@ -1,0 +1,58 @@
+// Real HTTP/storage/projection and explicit test executor/debugger; no live models or cloud.
+import { test, expect } from '@playwright/test';
+const api = process.env.EPOCH_INTAKE_TEST_ORIGIN;
+const origin = process.env.EPOCH_INTAKE_FRONTEND_ORIGIN;
+
+test('incident evidence import and cited analysis retain exact retry identity', async ({ page }, info) => {
+  test.setTimeout(65000);
+  const errors = []; page.on('pageerror', (error) => errors.push(error.message));
+  const project = `incident-${crypto.randomUUID()}`;
+  await page.goto(`${origin}/chat`);
+  await page.locator('.topbar [data-action=settings]').click();
+  await page.locator('#api-origin').fill(api);
+  await page.locator('#connect').click();
+  await expect(page.locator('.connection-state')).toHaveAttribute('title', 'Connected · local API');
+  await page.locator('#request-message').fill('Prepare release 4.1 for QA.');
+  await page.locator('[data-key=project]>summary').click();
+  await page.locator('#project-id').fill(project);
+  await page.locator('[data-key=project]>summary').click();
+  await page.locator('#save-request').click();
+  await expect(page.locator('#start-release')).toBeEnabled();
+  const taskId = new URL(page.url()).searchParams.get('task');
+  await page.locator('#release-value').fill('4.1');
+  await page.locator('#release-supervised').uncheck();
+  await page.locator('#release-scenario').selectOption('broken_checklist');
+  await page.locator('#start-release').click();
+  await expect(page.locator('[data-run-status]')).toHaveText(/failed|blocked/, { timeout: 20000 });
+  const runId = await page.locator('[data-run-id]').getAttribute('data-run-id');
+  await page.locator('.primary-nav').getByRole('link', { name: 'Incidents' }).click();
+  await page.locator('#incident-project').fill(project);
+  await page.locator('#incident-filter-form button[type=submit], #incident-filter-form button:not([type])').click();
+  await expect(page.locator('.incident-list a').first()).toBeVisible();
+  await page.locator('.incident-list a').first().click();
+  await expect(page.locator('.incident-detail')).toBeVisible();
+  const incidentId = await page.locator('[data-incident-id]').getAttribute('data-incident-id');
+  await expect(page.locator('.incident-detail')).toContainText('Trusted native fact');
+  await page.locator('[data-key=incident-import]>summary').click();
+  await page.locator('#incident-import-json').fill(JSON.stringify([{ source_type: 'support', source_id: `support-${project}`, timestamp: new Date().toISOString(), project_id: project, text: 'QA confirms the checklist was missing from the release.', task_id: taskId, run_id: runId, workflow: 'release' }]));
+  await page.locator('#incident-import-form button').click();
+  await expect(page.locator('.incident-detail')).toContainText('QA confirms the checklist was missing from the release.');
+  await expect(page.locator('.incident-detail')).toContainText('Untrusted observation');
+  let submitted;
+  await page.route(`${api}/api/incidents/${incidentId}/analyze`, async (route) => {
+    submitted = route.request().postDataJSON();
+    expect((await route.fetch()).ok()).toBe(true);
+    await route.abort('failed');
+  }, { times: 1 });
+  await page.locator('[data-action=incident-analyze]').click();
+  await expect(page.locator('[data-action=incident-retry]')).toBeVisible();
+  const response = page.waitForResponse((value) => value.url().endsWith(`/incidents/${incidentId}/analyze`) && value.request().method() === 'POST');
+  await page.locator('[data-action=incident-retry]').click();
+  expect((await response).request().postDataJSON()).toEqual(submitted);
+  await expect(page.locator('.incident-analysis')).toContainText('completed');
+  await expect(page.locator('.incident-analysis a[href^="#evidence-"]').first()).toBeVisible();
+  expect((await (await fetch(`${api}/api/incidents/${incidentId}`)).json()).analyses).toHaveLength(1);
+  expect(errors).toEqual([]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: `evidence/phase7-incidents-${info.project.name}.png`, fullPage: true });
+});

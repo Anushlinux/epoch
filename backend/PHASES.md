@@ -110,6 +110,11 @@ Existing brief: [Task 06](../docs/tasks/06-context-repair.md).
 
 ## Phase 8 — Integration, reliability, and demo handoff
 
+**Current assignment delivered in part:** Phase 7 frontend integration, incidents,
+on-demand investigation and Neatlogs transport are implemented with focused checks.
+Full live repair/cloud acceptance remains pending; Workshop is deferred by the user.
+See [current status](../docs/status.md) and [setup](docs/INCIDENTS_SETUP.md).
+
 - Verify the intended Neatlogs/Workshop integrations against real local execution; preserve local evidence and disclose unsupported integration paths.
 - Check frontend/API integration, progress reconnection, interrupted runs, persistence, limits, and safe recovery with Anushrut.
 - Package reproducible setup/reset/demo commands and artifact-backed results. Separate supervisory interventions, repair overhead, and later-task performance.

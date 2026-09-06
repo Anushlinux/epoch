@@ -20,4 +20,36 @@
 .execution-panel pre { max-height: 400px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
 .live-events { max-height: 540px; overflow: auto; }
 .execution-panel summary { overflow-wrap: anywhere; }
+.release-options { border: 1px solid var(--line); padding: 14px; border-radius: 6px; margin: 18px 0; }
+.release-options legend { padding: 0 6px; font-weight: 600; }
+.release-options label { display: flex; align-items: center; gap: 10px; }
+.release-options input[type="checkbox"] { width: 16px; height: 16px; flex: 0 0 16px; }
+.release-options p { margin: 6px 0 16px 26px; color: var(--muted); }
+.release-options p:last-child { margin-bottom: 0; }
+.supervision-operations { list-style: none; padding: 0; }
+.supervision-operation, .repair-record, .environment-panel { border-top: 1px solid var(--line); margin-top: 20px; padding-top: 16px; }
+.execution-panel h4 { font-size: 13px; margin: 10px 0; }
+.supervision-operation > .inline-row, .repair-record > .inline-row, .repair-attempt > .inline-row { flex-wrap: wrap; gap: 8px; }
+.repair-attempt { margin: 14px 0; padding: 14px; border: 1px solid var(--line); border-radius: 6px; }
+.repair-proofs { list-style: none; padding: 0; }
+.repair-proofs > li { padding: 8px 0; border-bottom: 1px solid var(--line); }
+.repair-proofs > li > span + span { margin-left: 10px; }
+#feedback-form { margin-top: 24px; }
+#feedback-form label { display: block; margin-bottom: 8px; }
+#feedback-form textarea { width: 100%; box-sizing: border-box; resize: vertical; padding: 12px; margin-bottom: 12px; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+.operation-budget { font-variant-numeric: tabular-nums; }
+.execution-panel .badge.repairing, .execution-panel .badge.investigating, .execution-panel .badge.generating { color: var(--ink); background: var(--surface); }
 @media (max-width: 760px) { .release-fields { grid-template-columns: 1fr; } .live-checkpoint .inline-row { flex-wrap: wrap; } }
+
+.incidents-page { margin-top: 0; }
+.incident-list { list-style: none; padding: 0; }
+.incident-list li { border-bottom: 1px solid var(--line); padding: 12px 0; }
+.incident-list a { display: grid; gap: 5px; color: var(--ink); text-decoration: none; }
+.incident-list a[aria-current="page"] { border-left: 2px solid var(--ink); padding-left: 12px; }
+.incident-list span { color: var(--muted); }
+.incident-detail, .incident-evidence, .incident-analysis { padding-top: 20px; margin-top: 20px; border-top: 1px solid var(--line); }
+.incident-evidence { scroll-margin-top: 24px; }
+.incident-detail > .inline-row { flex-wrap: wrap; }
+.incidents-page textarea { display: block; width: 100%; box-sizing: border-box; resize: vertical; margin: 8px 0 12px; padding: 12px; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+.incidents-page form { margin-top: 18px; }
+.incidents-page a, .incidents-page h2 { overflow-wrap: anywhere; }

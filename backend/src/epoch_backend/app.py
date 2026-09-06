@@ -16,8 +16,10 @@ from epoch_backend.config import Settings
 from epoch_backend.contracts import ErrorEnvelope, HealthResponse, Task, TaskCreate, TaskList
 from epoch_backend.execution import ExecutionError, ExecutionService
 from epoch_backend.execution_api import execution_router
+from epoch_backend.incident_api import incident_router
 from epoch_backend.sandbox import SandboxError
 from epoch_backend.storage import RequestConflict, SQLiteStore
+from epoch_backend.telemetry_api import telemetry_router
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +50,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         version="0.1.0",
         description=(
             "Local task intake, simulated release tools and bounded actual Hermes execution. "
-            "Optional Luna supervision, feedback and gated serializer, missing-tool and context repair. Phases 6 and 7 are untested development."
+            "Optional Luna supervision, feedback and gated environment repair. "
+            "Incident evidence and on-demand analysis; Phases 6/7 live acceptance pending."
         ),
         lifespan=lifespan,
     )
@@ -56,6 +59,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = config
     app.state.execution = execution
     app.include_router(execution_router(execution))
+    app.include_router(incident_router(execution.incidents))
+    app.include_router(telemetry_router(execution.telemetry))
 
     @app.middleware("http")
     async def require_allowed_origin(request: Request, call_next):

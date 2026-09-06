@@ -263,6 +263,7 @@ def run_supervised(
     *,
     environments=None,
     repair_image=None,
+    observe=None,
 ):
     assert record.supervision is not None
     operation = record.supervision.operations[-1]
@@ -329,6 +330,8 @@ def run_supervised(
         emit(event.get("type", "executor.event"), event.get("data", {}))
         if event.get("type") == "executor.tool_completed":
             verify()
+            if observe is not None:
+                observe()
 
     def call_debugger(kind, instructions, payload, model):
         budget.consume("debugger")
@@ -534,6 +537,7 @@ def run_supervised(
 
                     trigger = supported_error(sandbox.events(after=operation_event_start), sandbox)
                     if trigger is not None:
+                        related_incidents = observe(trigger) if observe is not None else []
                         record.status = operation.status = "repairing"
                         persist()
                         if environments is None:
@@ -552,15 +556,18 @@ def run_supervised(
                             repair_image,
                             cancelled,
                             trigger,
+                            incident_ids=[item["id"] for item in related_incidents],
                         )
                         session.account_verification_pause(budget.paused_seconds - previous_pause)
                         metadata = sandbox.metadata()
                         instruction = (
-                            "The controller verified and activated an environment change. Rediscover available "
+                            "The controller verified and activated an environment change. "
+                            "Rediscover available "
                             "tools and reread applicable context using the ordinary interfaces. "
                             "Retry the failed operation using the existing objects and original "
                             "idempotency keys where arguments are unchanged. Complete the original "
-                            "requirements without duplicate effects. Update an existing notice if its destination "
+                            "requirements without duplicate effects. Update an existing notice "
+                            "if its destination "
                             "was wrong; preserve its links and identity.\n"
                             + record.brief.instructions
                         )

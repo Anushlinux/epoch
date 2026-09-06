@@ -7,6 +7,7 @@ from uuid import UUID
 
 from epoch_backend import contracts as c
 from epoch_backend import execution_contracts as execution
+from epoch_backend import incident_contracts as incident
 from epoch_backend import repair_contracts as repair
 from epoch_backend import supervision_contracts as supervision
 
@@ -183,9 +184,26 @@ def fixture_examples() -> list[dict]:
 
 def documents() -> dict[Path, dict]:
     return {
+        BACKEND / "contracts" / "incident-schemas.json": {
+            "schema_version": 1,
+            "description": (
+                "Additive incident evidence imports and explicit bounded analysis; "
+                "no repair authority."
+            ),
+            "models": {
+                name: value.model_json_schema()
+                for name, value in vars(incident).items()
+                if isinstance(value, type)
+                and issubclass(value, c.Contract)
+                and value.__module__ == incident.__name__
+            },
+        },
         BACKEND / "contracts" / "repair-schemas.json": {
             "schema_version": 1,
-            "description": "Phase 7 generated artifact proposals, rollback requests and host repair limits; Phases 6 and 7 untested.",
+            "description": (
+                "Phase 7 generated artifact proposals, rollback requests and host repair limits; "
+                "Phases 6 and 7 untested."
+            ),
             "models": {
                 name: value.model_json_schema()
                 for name, value in vars(repair).items()
@@ -197,7 +215,8 @@ def documents() -> dict[Path, dict]:
         BACKEND / "contracts" / "execution-schemas.json": {
             "schema_version": 1,
             "description": (
-                "Phase 7 run, trace, supervision and opt-in multi-surface repair interfaces (untested additions)."
+                "Phase 7 run, trace, supervision and opt-in multi-surface repair interfaces "
+                "(untested additions)."
             ),
             "models": {
                 name: value.model_json_schema()

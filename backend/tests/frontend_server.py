@@ -7,6 +7,7 @@ by the frontend runner. No Hermes or model call occurs in this process.
 import time
 
 import uvicorn
+from frontend_doubles import install
 from test_execution import perform_release
 
 from epoch_backend import hermes_bridge
@@ -29,7 +30,7 @@ def browser_executor(request, on_event, cancel_event):
 
 
 if __name__ == "__main__":
-    hermes_bridge.detect_installation = lambda: {"available": True, "test_executor": True}
+    install()
     hermes_bridge.execute = browser_executor
     config = Settings(enable_hermes=True)
     uvicorn.run(create_app(config), host=config.host, port=config.port, log_level="warning")

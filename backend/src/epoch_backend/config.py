@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     port: int = Field(default=8000, ge=1, le=65535)
     log_level: Literal["critical", "error", "warning", "info", "debug", "trace"] = "info"
     enable_hermes: bool = True
+    telemetry_enabled: bool = True
+    neatlogs_cloud_enabled: bool = False
     repair_image: str = (
         "python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea"
     )

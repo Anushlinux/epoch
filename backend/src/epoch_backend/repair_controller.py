@@ -9,24 +9,23 @@ from uuid import uuid4
 
 from epoch_backend.candidate_runner import RUNNER_VERSION, CandidateError, digest, inspect_runner
 from epoch_backend.environment_store import EnvironmentStore, stamp
+from epoch_backend.extended_verification import (
+    require_artifact_use,
+    surface_proofs,
+    verification_manifest,
+)
 from epoch_backend.operation_budget import BudgetExceeded
 from epoch_backend.repair_contracts import RepairProposal
 from epoch_backend.repair_surfaces import (
-    SERIALIZER,
     LOOKUP,
+    SERIALIZER,
     artifacts,
-    investigation,
     extended_trigger,
+    investigation,
     normalize_tool_contract,
-)
-from epoch_backend.extended_verification import (
-    surface_proofs,
-    verification_manifest,
-    require_artifact_use,
 )
 from epoch_backend.repair_verification import (
     clone_sandbox,
-    component_proofs,
     isolation_proof,
     run_verification,
 )
@@ -93,6 +92,8 @@ def repair_environment(
     image,
     cancelled,
     event,
+    *,
+    incident_ids=None,
 ) -> dict:
     from epoch_backend.supervisor import executor_instructions
 
@@ -113,16 +114,20 @@ def repair_environment(
             "You are Epoch's OpenAI debugger. Inspect the supplied structural failure evidence, "
             "authorized interface and trusted expectations. Raw directory rows and source document "
             "bodies are retained locally, not supplied. Return unsupported when these facts do not "
-            "support the proposed cause. Generate a complete Python module for the specified target "
-            "and entrypoint only. No filesystem, network, credentials, effects, test edits or grants. "
+            "support the proposed cause. Generate a complete Python module for the specified "
+            "target and entrypoint only. No filesystem, network, credentials, effects, test "
+            "edits or grants. "
             "Code receives authorized JSON in Docker. Never hardcode identities or document IDs. "
-            "For missing lookup generate tool_contract with the supplied name, your description, and "
+            "For missing lookup generate tool_contract with the supplied name, your description, "
+            "and "
             "input_schema_json/output_schema_json containing JSON strings of the supplied schemas. "
             "schemas plus your accurate description. Classify zero/one/multiple QA-owner matches "
             "as missing/found/ambiguous; return the exact found record or null. "
-            "For retrieval return an existing document ID, preserve explicit versions and historical "
+            "For retrieval return an existing document ID, preserve explicit versions and "
+            "historical "
             "access, respect project scope and raise ValueError for missing or ambiguous guidance. "
-            "Return tool_contract=null for retrieval. Cite evidence UUIDs and disclose uncertainty. "
+            "Return tool_contract=null for retrieval. Cite evidence UUIDs and disclose "
+            "uncertainty. "
             "This is a context hypothesis until independent original/fresh replay verifies it."
         )
     )
@@ -134,6 +139,7 @@ def repair_environment(
         "run_id": str(record.id),
         "revision_id": str(operation.id),
         "trigger": event,
+        "incident_ids": list(incident_ids or []),
         "created_at": stamp(),
         "status": "investigating",
         "previous_version": previous,

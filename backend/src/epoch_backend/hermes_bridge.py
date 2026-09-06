@@ -68,7 +68,9 @@ def _installation_paths() -> tuple[Path, Path, Path] | None:
         for name in ("venv", ".venv"):
             python = checkout / name / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
             if python.is_file() and (checkout / "run_agent.py").is_file():
-                return home.resolve(), checkout.resolve(), python.resolve()
+                # Keep the virtualenv entrypoint: resolving its symlink launches the
+                # base interpreter without Hermes's installed dependencies on POSIX.
+                return home.resolve(), checkout.resolve(), python.absolute()
     return None
 
 
