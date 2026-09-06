@@ -384,23 +384,63 @@ export class FixtureAdapter {
     }
     return this.snapshot();
   }
+  // Fixture-only reconciled replacement, used by the scope-transition tests.
+  replaceRun(runId) {
+    if (!runId || runId === this.state.runId)
+      throw new Error("A new fixture run ID is required.");
+    const previous = this.snapshot();
+    delete previous.history;
+    this.state = {
+      ...this.state,
+      runId,
+      seq: 0,
+      seen: [],
+      status: "planned",
+      result: null,
+      transition: {
+        authority: "fixture-adapter",
+        kind: "replacement-run",
+        parent: scope(previous),
+      },
+      checkpoints: this.state.checkpoints.map((cp) => ({
+        ...cp,
+        status: "planned",
+        evidenceIds: [],
+      })),
+      evidence: [],
+      activity: [],
+      repairs: [],
+      history: [...this.state.history, previous],
+    };
+    this.frame = 0;
+    return this.snapshot();
+  }
+  async lookup(command) {
+    const prior = this.commands.get(command.id);
+    if (!prior || prior.fingerprint !== JSON.stringify(command))
+      return { status: "unknown" };
+    return { status: "accepted", snapshot: copy(prior.result) };
+  }
   async command(command) {
     const fingerprint = JSON.stringify(command);
     if (this.commands.has(command.id)) {
       const prior = this.commands.get(command.id);
       if (prior.fingerprint !== fingerprint)
-        throw new Error(
+        throw commandError(
+          "rejected",
           "This command ID belongs to different input. Keep the original request when retrying.",
         );
       return copy(prior.result);
     }
-    if (!command.id) throw new Error("A command ID is required.");
+    if (!command.id)
+      throw commandError("rejected", "A command ID is required.");
     if (
       command.kind !== "create" &&
       (command.taskId !== this.state.taskId ||
         command.expectedRevision !== this.state.revision)
     )
-      throw new Error(
+      throw commandError(
+        "rejected",
         "This request belongs to an older revision. Reconnect before submitting again.",
       );
     if (command.kind === "create") {
@@ -408,7 +448,10 @@ export class FixtureAdapter {
         !command.payload.request?.trim() ||
         !command.payload.destination?.trim()
       )
-        throw new Error("A request and sharing destination are required.");
+        throw commandError(
+          "rejected",
+          "A request and sharing destination are required.",
+        );
       this.state = createTask({
         taskId: `fixture-${command.id}`,
         ...command.payload,
@@ -418,14 +461,14 @@ export class FixtureAdapter {
     } else if (command.kind === "feedback") {
       this.state = revise(this.state, command.payload, command.id);
       this.frame = 0;
-    } else throw new Error("Unknown fixture command.");
+    } else throw commandError("rejected", "Unknown fixture command.");
     const result = this.snapshot();
     this.commands.set(command.id, { fingerprint, result });
     if (this.loseNextAcknowledgement) {
       this.loseNextAcknowledgement = false;
       throw commandError(
         "acknowledgement-lost",
-        "Fixture acknowledgement lost. The command may already be recorded. Retry the same submission to retrieve it safely.",
+        "Fixture acknowledgement lost. The command may already be recorded. Input is frozen; check its status before taking another action.",
       );
     }
     return copy(result);

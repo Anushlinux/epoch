@@ -1,5 +1,11 @@
 import { FixtureAdapter } from "./fixtures.mjs";
-import { acceptEvent, reconnectState, checkpointEvidence } from "./state.mjs";
+import {
+  acceptEvent,
+  reconnectState,
+  checkpointEvidence,
+  adoptScope,
+  freezeSubmission,
+} from "./state.mjs";
 
 const $ = (selector) => document.querySelector(selector);
 const escape = (value) =>
@@ -33,6 +39,25 @@ const icon = (name) =>
     .split("ZZ")
     .map((d) => `<path d="${d}"/>`)
     .join("")}</svg>`;
+const pendingMarker = "epoch.fixture.pending";
+const markPending = (command) => {
+  try {
+    if (command)
+      sessionStorage.setItem(pendingMarker, JSON.stringify({ id: command.id }));
+    else sessionStorage.removeItem(pendingMarker);
+    return true;
+  } catch {
+    /* No task content is stored; reload fallback below stays conservative. */
+    return false;
+  }
+};
+const hasLostSubmission = () => {
+  try {
+    return sessionStorage.getItem(pendingMarker) !== null;
+  } catch {
+    return performance.getEntriesByType("navigation")[0]?.type === "reload";
+  }
+};
 let adapter = new FixtureAdapter();
 let state = adapter.snapshot();
 let ui = {
@@ -44,6 +69,8 @@ let ui = {
   feedback: "",
   feedbackKind: "new-preference",
   pending: null,
+  submissionStatus: "idle",
+  recoveryUnknown: hasLostSubmission(),
   busy: false,
   error: "",
 };
@@ -80,7 +107,7 @@ function header() {
 }
 function sidebar() {
   return `<aside class="sidebar"><a class="brand" href="./index.html" aria-label="Epoch fixture workspace home"><img src="./mark.svg" alt="" width="32" height="32">epoch<span>preview</span></a>
-    <button class="new-task" data-action="new" ${ui.pending ? "disabled" : ""}>${icon("plus")} New request</button>
+    <button class="new-task" data-action="new" ${ui.pending || ui.recoveryUnknown ? "disabled" : ""}>${icon("plus")} New request</button>
     <nav aria-label="Workspace"><p class="nav-label">Workspace</p><button class="nav-item selected" data-action="task">${icon("layers")} Task workspace <span class="nav-count">1</span></button></nav>
     <div class="task-nav"><p class="nav-label">Current task</p><button data-action="task" class="current-task"><span class="task-bullet"></span><span>${escape(state.title)}<small>${taskLabel()}</small></span></button></div>
     <div class="sidebar-bottom"><div class="local-label">${icon("box")} Development space</div><p>Session memory only.<br>Reloading restores the example.</p><a href="./README.md" target="_blank" rel="noopener">Frontend handoff ${icon("arrow")}</a></div>
@@ -150,7 +177,7 @@ function artifacts(owner = state) {
       .map((id) => owner.evidence.find((e) => e.id === id))
       .filter(Boolean) || [];
   return records.length
-    ? `<div class="artifact-list">${records.map((e) => `<button class="artifact" data-action="inspect-evidence" data-id="${escape(e.id)}" data-revision="${owner.revision}"><span class="artifact-icon">${icon(e.object?.type === "message" ? "activity" : "file")}</span><span><strong>${escape(e.object?.id || e.id)}</strong><small>${escape(e.object?.type || "record")} · fixture JSON · revision ${owner.revision}</small></span>${icon("arrow")}</button>`).join("")}</div>`
+    ? `<div class="artifact-list">${records.map((e) => `<button class="artifact" data-action="inspect-evidence" data-id="${escape(e.id)}" data-revision="${owner.revision}" data-run="${escape(owner.runId)}"><span class="artifact-icon">${icon(e.object?.type === "message" ? "activity" : "file")}</span><span><strong>${escape(e.object?.id || e.id)}</strong><small>${escape(e.object?.type || "record")} · fixture JSON · revision ${owner.revision}</small></span>${icon("arrow")}</button>`).join("")}</div>`
     : empty(
         "box",
         "No result artifacts yet",
@@ -159,7 +186,7 @@ function artifacts(owner = state) {
 }
 function results() {
   return `<div class="results-grid"><section><div class="panel-heading"><h2>${state.status === "delivered" ? "Delivered fixture results" : "Partial results & gaps"}</h2><p>${state.status === "delivered" ? "Inspect the authored objects behind each fixture outcome." : "Completed partial effects remain inspectable while other requirements are unresolved."}</p></div>${artifacts()}<div class="limitations"><h3>Limitations</h3><ul>${(state.result?.limitations || ["No task has executed for this revision.", "Backend contracts and integration remain pending."]).map((l) => `<li>${escape(l)}</li>`).join("")}</ul></div></section>
-    <section class="feedback-section"><h2>What needs to change?</h2><p>Record feedback as a new intent revision. Keep this request, its evidence and its results in history.</p><form id="feedback-form"><fieldset ${ui.busy || ui.pending || state.connection !== "connected" ? "disabled" : ""}><label for="feedback-kind">Reason for revision</label><select id="feedback-kind" name="kind"><option value="new-preference" ${ui.feedbackKind === "new-preference" ? "selected" : ""}>New preference</option><option value="missed-requirement" ${ui.feedbackKind === "missed-requirement" ? "selected" : ""}>Missed requirement or clarification</option><option value="evaluation-concern" ${ui.feedbackKind === "evaluation-concern" ? "selected" : ""}>A check may be wrong</option></select><label for="feedback-text">Your feedback</label><textarea id="feedback-text" name="feedback" required maxlength="4000" rows="5" placeholder="For example, include the rollback owner in the checklist.">${escape(ui.feedback)}</textarea><p class="field-hint">Your exact feedback is retained. This does not authorize a shared-tool repair.</p><button class="primary" type="submit">${ui.busy ? "Recording…" : "Create fixture revision"} ${icon("arrow")}</button></fieldset></form><p class="fixture-note">Saved in this page session only. No backend execution starts.</p></section></div>`;
+    <section class="feedback-section"><h2>What needs to change?</h2><p>Record feedback as a new intent revision. Keep this request, its evidence and its results in history.</p><form id="feedback-form"><fieldset ${ui.busy || ui.pending || ui.recoveryUnknown || state.connection !== "connected" ? "disabled" : ""}><label for="feedback-kind">Reason for revision</label><select id="feedback-kind" name="kind"><option value="new-preference" ${ui.feedbackKind === "new-preference" ? "selected" : ""}>New preference</option><option value="missed-requirement" ${ui.feedbackKind === "missed-requirement" ? "selected" : ""}>Missed requirement or clarification</option><option value="evaluation-concern" ${ui.feedbackKind === "evaluation-concern" ? "selected" : ""}>A check may be wrong</option></select><label for="feedback-text">Your feedback</label><textarea id="feedback-text" name="feedback" required maxlength="4000" rows="5" placeholder="For example, include the rollback owner in the checklist.">${escape(ui.feedback)}</textarea><p class="field-hint">Your exact feedback is retained. This does not authorize a shared-tool repair.</p><button class="primary" type="submit">${ui.busy ? "Recording…" : "Create fixture revision"} ${icon("arrow")}</button></fieldset></form><p class="fixture-note">Saved in this page session only. No backend execution starts.</p></section></div>`;
 }
 function history() {
   return `<div class="panel-heading"><h2>Intent & result history</h2><p>Previous requirements, clarifications, checkpoints, artifacts and rejected attempts remain attached to their revision.</p></div><div class="current-revision"><strong>Revision ${state.revision} · current</strong><p>${escape(state.intent.feedback.at(-1)?.text || state.intent.original)}</p></div>${
@@ -168,7 +195,7 @@ function history() {
           .reverse()
           .map(
             (previous) =>
-              `<details class="history-record" open><summary><strong>Revision ${previous.revision}</strong><span>${escape(previous.status)} · fixture</span></summary><div><h3>Original request</h3><p>${escape(previous.intent.original)}</p><h3>Constraints</h3><p>${escape(previous.intent.constraints || "None supplied.")}</p>${previous.intent.feedback.map((f) => `<p>Revision feedback: ${escape(f.text)}</p>`).join("")}<h3>Checkpoints at revision boundary</h3><ul>${previous.checkpoints.map((cp) => `<li>${escape(cp.text)} · ${escape(cp.status)} · criterion v${cp.criterionVersion}</li>`).join("")}</ul>${artifacts(previous)}<button class="text-button" data-action="inspect-history" data-revision="${previous.revision}">Inspect complete revision & repair history ${icon("arrow")}</button></div></details>`,
+              `<details class="history-record" open><summary><strong>Revision ${previous.revision}</strong><span>${escape(previous.status)} · fixture</span></summary><div><h3>Original request</h3><p>${escape(previous.intent.original)}</p><h3>Constraints</h3><p>${escape(previous.intent.constraints || "None supplied.")}</p>${previous.intent.feedback.map((f) => `<p>Revision feedback: ${escape(f.text)}</p>`).join("")}<h3>Checkpoints at revision boundary</h3><ul>${previous.checkpoints.map((cp) => `<li>${escape(cp.text)} · ${escape(cp.status)} · criterion v${cp.criterionVersion}</li>`).join("")}</ul>${artifacts(previous)}<button class="text-button" data-action="inspect-history" data-revision="${previous.revision}" data-run="${escape(previous.runId)}">Inspect complete revision & repair history ${icon("arrow")}</button></div></details>`,
           )
           .join("")
       : empty(
@@ -179,19 +206,21 @@ function history() {
   }`;
 }
 function commandError() {
+  if (ui.recoveryUnknown)
+    return `<div class="form-error" role="alert"><strong>Previous submission status is unknown</strong><p>The prior fixture adapter and submitted payload were lost on reload. This is a fresh example, not the previous task. No request was resubmitted. Recovery cannot be verified locally.</p><button data-action="reset-lost-fixture" type="button">Discard lost fixture session</button><p>Clears only this local fixture warning; never repeats or cancels backend work.</p></div>`;
   return ui.error
-    ? `<div class="form-error" role="alert"><p>${escape(ui.error)}</p>${ui.pending && !ui.busy ? '<button data-action="retry" type="button">Retry same submission</button>' : ""}</div>`
+    ? `<div class="form-error" role="alert"><strong>${ui.submissionStatus === "acknowledgement-unknown" ? "Acknowledgement unknown" : "Submission rejected"}</strong><p>${escape(ui.error)}</p>${ui.pending && !ui.busy ? '<button data-action="retry" type="button">Check submission status</button>' : ""}</div>`
     : "";
 }
 function composer() {
-  return `<div class="composer"><button class="text-button" data-action="back" ${ui.pending ? "disabled" : ""}>${icon("arrowLeft")} Back to task</button><h1>${ui.stage === "request" ? "What should get done?" : "One detail before the brief"}</h1><p class="composer-intro">Describe the result you want. Your original words and constraints stay with the task.</p><form id="request-form"><fieldset ${ui.busy || ui.pending ? "disabled" : ""}>${ui.stage === "request" ? `<label for="request-text">Your request</label><textarea id="request-text" name="request" rows="5" required maxlength="6000" placeholder="Prepare a release, collect the evidence, and share the result…">${escape(ui.draft.request)}</textarea><label for="constraints-text">Constraints <span class="subtle">(optional)</span></label><textarea id="constraints-text" name="constraints" rows="3" maxlength="3000" placeholder="What must be kept, avoided, or checked?">${escape(ui.draft.constraints)}</textarea><p class="field-hint">Do not include credentials or secrets. This is a local UI fixture.</p><button class="primary" type="submit">Review clarification ${icon("arrow")}</button>` : `<div class="request-review"><h2>Your request · unchanged</h2><p>${escape(ui.draft.request)}</p><h3>Constraints</h3><p>${escape(ui.draft.constraints || "None supplied.")}</p></div><label for="destination-text">Where should the result be shared?</label><input id="destination-text" name="destination" required maxlength="200" value="${escape(ui.draft.destination)}" placeholder="A team channel, or just here"><p class="field-hint">A fixed fixture question, not a backend-generated clarification. “Just here” is a valid answer.</p><div class="button-row"><button type="button" data-action="edit-request">Edit request</button><button class="primary" type="submit">${ui.busy ? "Recording…" : "Create fixture task"} ${icon("arrow")}</button></div>`}</fieldset></form><div class="boundary-note">${icon("info")}<p>Backend interpretation is pending. Custom requests remain verbatim and do not receive invented execution progress.</p></div></div>`;
+  return `<div class="composer"><button class="text-button" data-action="back" ${ui.pending || ui.recoveryUnknown ? "disabled" : ""}>${icon("arrowLeft")} Back to task</button><h1>${ui.stage === "request" ? "What should get done?" : "One detail before the brief"}</h1><p class="composer-intro">Describe the result you want. Your original words and constraints stay with the task.</p><form id="request-form"><fieldset ${ui.busy || ui.pending || ui.recoveryUnknown ? "disabled" : ""}>${ui.stage === "request" ? `<label for="request-text">Your request</label><textarea id="request-text" name="request" rows="5" required maxlength="6000" placeholder="Prepare a release, collect the evidence, and share the result…">${escape(ui.draft.request)}</textarea><label for="constraints-text">Constraints <span class="subtle">(optional)</span></label><textarea id="constraints-text" name="constraints" rows="3" maxlength="3000" placeholder="What must be kept, avoided, or checked?">${escape(ui.draft.constraints)}</textarea><p class="field-hint">Do not include credentials or secrets. This is a local UI fixture.</p><button class="primary" type="submit">Review clarification ${icon("arrow")}</button>` : `<div class="request-review"><h2>Your request · unchanged</h2><p>${escape(ui.draft.request)}</p><h3>Constraints</h3><p>${escape(ui.draft.constraints || "None supplied.")}</p></div><label for="destination-text">Where should the result be shared?</label><input id="destination-text" name="destination" required maxlength="200" value="${escape(ui.draft.destination)}" placeholder="A team channel, or just here"><p class="field-hint">A fixed fixture question, not a backend-generated clarification. “Just here” is a valid answer.</p><div class="button-row"><button type="button" data-action="edit-request">Edit request</button><button class="primary" type="submit">${ui.busy ? "Recording…" : "Create fixture task"} ${icon("arrow")}</button></div>`}</fieldset></form><div class="boundary-note">${icon("info")}<p>Backend interpretation is pending. Custom requests remain verbatim and do not receive invented execution progress.</p></div></div>`;
 }
 function fixtureControls() {
-  return `<details class="fixture-controls"><summary>${icon("box")} Fixture controls <span>Manual playback · no execution</span></summary><div class="fixture-controls-body"><p>Explore authored states and connection failures. Advancing never runs a tool or test. A reload resets this session.</p><div class="button-row"><button id="advance-fixture" data-action="advance" ${state.connection !== "connected" || !state.example || state.revision !== 1 || adapter.frame >= 8 || ui.pending || ui.busy ? "disabled" : ""}>Advance fixture ${icon("arrow")}</button><button data-action="disconnect" ${state.connection !== "connected" || ui.pending || ui.busy ? "disabled" : ""}>Disconnect fixture</button><button data-action="load-example" ${ui.pending || ui.busy ? "disabled" : ""}>Restart release example</button></div><label class="checkbox-label"><input type="checkbox" id="lose-ack" ${adapter.loseNextAcknowledgement ? "checked" : ""} ${ui.pending || ui.busy ? "disabled" : ""}> Lose the next submission acknowledgement</label><label class="checkbox-label"><input type="checkbox" id="fail-reconnect" ${adapter.failNextReconnect ? "checked" : ""}> Fail the next fixture reconnect</label><p class="fixture-cursor">${escape(state.runId)} · revision ${state.revision} · event ${state.seq}</p></div></details>`;
+  return `<details class="fixture-controls"><summary>${icon("box")} Fixture controls <span>Manual playback · no execution</span></summary><div class="fixture-controls-body"><p>Explore authored states and connection failures. Advancing never runs a tool or test. A reload resets this session.</p><div class="button-row"><button id="advance-fixture" data-action="advance" ${state.connection !== "connected" || !state.example || state.revision !== 1 || adapter.frame >= 8 || ui.pending || ui.busy || ui.recoveryUnknown ? "disabled" : ""}>Advance fixture ${icon("arrow")}</button><button data-action="disconnect" ${state.connection !== "connected" || ui.pending || ui.busy || ui.recoveryUnknown ? "disabled" : ""}>Disconnect fixture</button><button data-action="load-example" ${ui.pending || ui.busy || ui.recoveryUnknown ? "disabled" : ""}>Restart release example</button></div><label class="checkbox-label"><input type="checkbox" id="lose-ack" ${adapter.loseNextAcknowledgement ? "checked" : ""} ${ui.pending || ui.busy || ui.recoveryUnknown ? "disabled" : ""}> Lose the next submission acknowledgement</label><label class="checkbox-label"><input type="checkbox" id="fail-reconnect" ${adapter.failNextReconnect ? "checked" : ""}> Fail the next fixture reconnect</label><p class="fixture-cursor">${escape(state.runId)} · revision ${state.revision} · event ${state.seq}</p></div></details>`;
 }
 function render(focusId) {
   $("#app").innerHTML =
-    `${sidebar()}<div class="shell">${header()}<main id="workspace" tabindex="-1">${state.connection !== "connected" ? `<div class="reconnect-banner" role="alert"><div><strong>Fixture updates are paused</strong><p>${escape(state.notice || "Connection interrupted. Existing evidence is retained. Reconnect retrieves state without repeating work.")}</p></div><button data-action="reconnect" ${ui.busy ? "disabled" : ""}>${ui.busy ? "Reconnecting…" : "Reconnect fixture"}</button></div>` : state.notice ? `<div class="notice" role="status">${escape(state.notice)}</div>` : ""}${commandError()}${ui.composer ? composer() : `<div class="task-heading"><div><p class="task-identity">${icon("layers")} Task workspace <span>/</span> Revision ${state.revision}</p><h1>${escape(state.title)}</h1><div class="task-meta"><span class="task-state">${taskLabel()}</span><span>Environment: fixture ${state.repairs.some((r) => r.status === "active") ? "v2" : "v1"}</span></div></div><button data-action="revise" ${ui.pending ? "disabled" : ""}>Revise request ${icon("arrow")}</button></div><div class="tabs" role="tablist" aria-label="Task sections">${tabs.map(([id, label]) => `<button id="tab-${id}" role="tab" ${ui.pending ? "disabled" : ""} aria-selected="${ui.tab === id}" tabindex="${ui.tab === id ? 0 : -1}" aria-controls="task-panel" data-tab="${id}">${label}${id === "repairs" && state.repairs.length ? `<span class="tab-count">${state.repairs.length}</span>` : ""}</button>`).join("")}</div><div id="task-panel" role="tabpanel" aria-labelledby="tab-${ui.tab}" tabindex="0">${{ overview, activity, repairs, results, history }[ui.tab]()}</div>`}${fixtureControls()}<footer>Epoch frontend preview <span>PROPOSED contract · integration blocked</span></footer></main></div>`;
+    `${sidebar()}<div class="shell">${header()}<main id="workspace" tabindex="-1">${state.connection !== "connected" ? `<div class="reconnect-banner" role="alert"><div><strong>Fixture updates are paused</strong><p>${escape(state.notice || "Connection interrupted. Existing evidence is retained. Reconnect retrieves state without repeating work.")}</p></div><button data-action="reconnect" ${ui.busy ? "disabled" : ""}>${ui.busy ? "Reconnecting…" : "Reconnect fixture"}</button></div>` : state.notice ? `<div class="notice" role="status">${escape(state.notice)}</div>` : ""}${commandError()}${ui.composer ? composer() : `<div class="task-heading"><div><p class="task-identity">${icon("layers")} Task workspace <span>/</span> Revision ${state.revision}</p><h1>${escape(state.title)}</h1><div class="task-meta"><span class="task-state">${taskLabel()}</span><span>Environment: fixture ${state.repairs.some((r) => r.status === "active") ? "v2" : "v1"}</span></div></div><button data-action="revise" ${ui.pending || ui.recoveryUnknown ? "disabled" : ""}>Revise request ${icon("arrow")}</button></div><div class="tabs" role="tablist" aria-label="Task sections">${tabs.map(([id, label]) => `<button id="tab-${id}" role="tab" ${ui.pending || ui.recoveryUnknown ? "disabled" : ""} aria-selected="${ui.tab === id}" tabindex="${ui.tab === id ? 0 : -1}" aria-controls="task-panel" data-tab="${id}">${label}${id === "repairs" && state.repairs.length ? `<span class="tab-count">${state.repairs.length}</span>` : ""}</button>`).join("")}</div><div id="task-panel" role="tabpanel" aria-labelledby="tab-${ui.tab}" tabindex="0">${{ overview, activity, repairs, results, history }[ui.tab]()}</div>`}${fixtureControls()}<footer>Epoch frontend preview <span>PROPOSED contract · integration blocked</span></footer></main></div>`;
   if (focusId) document.getElementById(focusId)?.focus();
 }
 function inspect(title, data) {
@@ -211,15 +240,45 @@ function switchTab(tab, focus = false) {
   render(focus ? `tab-${tab}` : undefined);
 }
 async function sendCommand(command = ui.pending) {
-  if (ui.busy) return;
-  ui.pending = command;
+  if (ui.busy || ui.recoveryUnknown) return;
+  const reconciling = Boolean(ui.pending);
+  if (!ui.pending) ui.pending = freezeSubmission(command);
+  command = ui.pending;
+  if (!reconciling && !markPending(command)) {
+    ui.pending = null;
+    ui.submissionStatus = "rejected";
+    ui.error =
+      "The fixture recovery marker could not be saved. This action was not submitted; your draft is retained.";
+    render();
+    return;
+  }
+  ui.submissionStatus = reconciling ? "acknowledgement-unknown" : "submitting";
   ui.busy = true;
   ui.error = "";
   render();
-  announce("Recording fixture submission.");
+  announce(
+    reconciling
+      ? "Checking fixture submission status; no work is being replayed."
+      : "Recording fixture submission.",
+  );
   try {
-    state = await adapter.command(command);
+    let snapshot;
+    if (reconciling) {
+      const result = await adapter.lookup(command);
+      if (result.status !== "accepted")
+        throw new Error(
+          "The submitted identity cannot be reconciled. Keep this action pending; no replacement or replay is safe.",
+        );
+      snapshot = result.snapshot;
+    } else snapshot = await adapter.command(command);
+    if (command.kind === "feedback") {
+      const adopted = adoptScope(state, snapshot, command);
+      if (adopted.connection !== "connected") throw new Error(adopted.notice);
+      state = adopted;
+    } else state = snapshot;
     ui.pending = null;
+    ui.submissionStatus = "accepted";
+    markPending(null);
     ui.composer = false;
     ui.tab = command.kind === "feedback" ? "history" : "overview";
     ui.feedback = "";
@@ -229,7 +288,11 @@ async function sendCommand(command = ui.pending) {
     announce("Fixture submission recorded. No task execution started.");
   } catch (error) {
     ui.error = error.message;
-    if (error.code !== "acknowledgement-lost") ui.pending = null;
+    if (error.code === "rejected") {
+      ui.pending = null;
+      ui.submissionStatus = "rejected";
+      markPending(null);
+    } else ui.submissionStatus = "acknowledgement-unknown";
     announce(error.message);
   } finally {
     ui.busy = false;
@@ -248,7 +311,7 @@ $("#app").addEventListener("input", (event) => {
 });
 $("#app").addEventListener("submit", (event) => {
   event.preventDefault();
-  if (ui.busy || ui.pending) return;
+  if (ui.busy || ui.pending || ui.recoveryUnknown) return;
   if (event.target.id === "request-form") {
     if (!ui.draft.request.trim()) {
       ui.error = "Describe the result you want before continuing.";
@@ -285,16 +348,37 @@ $("#app").addEventListener("submit", (event) => {
 $("#app").addEventListener("click", async (event) => {
   const button = event.target.closest("button");
   if (!button || button.disabled) return;
+  if (ui.recoveryUnknown && button.dataset.action === "reset-lost-fixture") {
+    markPending(null);
+    ui.recoveryUnknown = false;
+    ui.submissionStatus = "idle";
+    render();
+    announce("Lost local fixture session discarded. No action was replayed.");
+    return;
+  }
+  if (
+    ui.recoveryUnknown &&
+    [
+      "new",
+      "edit-request",
+      "revise",
+      "retry",
+      "advance",
+      "load-example",
+    ].includes(button.dataset.action)
+  )
+    return;
   if (button.dataset.tab) {
     switchTab(button.dataset.tab, true);
     return;
   }
   const id = button.dataset.id;
   const owner =
-    button.dataset.revision &&
-    Number(button.dataset.revision) !== state.revision
+    button.dataset.run && button.dataset.run !== state.runId
       ? state.history.find(
-          (s) => s.revision === Number(button.dataset.revision),
+          (s) =>
+            s.runId === button.dataset.run &&
+            s.revision === Number(button.dataset.revision),
         )
       : state;
   switch (button.dataset.action) {

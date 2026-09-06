@@ -6,6 +6,8 @@ import {
   revise,
   copy,
   CHECKPOINT_STATES,
+  adoptScope,
+  freezeSubmission,
 } from "../src/state.mjs";
 import { FixtureAdapter, createTask } from "../src/fixtures.mjs";
 const event = (s, kind, data, extra = {}) => ({
@@ -334,4 +336,166 @@ test("a failed reconnect can be retried without changing task state or command c
   assert.deepEqual(a.snapshot(), previous);
   assert.deepEqual(await a.reconnect(), previous);
   assert.equal(a.commands.size, 0);
+});
+
+test("acknowledged feedback adopts a new scope with cursor zero and retained parent evidence", async () => {
+  const adapter = complete();
+  const prior = adapter.snapshot();
+  const command = {
+    id: "feedback-transition",
+    kind: "feedback",
+    taskId: prior.taskId,
+    expectedRevision: prior.revision,
+    payload: { text: "Keep the owner", kind: "new-preference" },
+  };
+  const snapshot = await adapter.command(command);
+  const adopted = adoptScope(prior, snapshot, command);
+  assert.equal(adopted.connection, "connected");
+  assert.equal(adopted.revision, 2);
+  assert.equal(adopted.seq, 0);
+  assert.ok(prior.seq > 0);
+  assert.deepEqual(adopted.history[0].evidence, prior.evidence);
+  assert.equal(
+    acceptEvent(
+      adopted,
+      event(
+        prior,
+        "activity",
+        { id: "late", type: "observation" },
+        { seq: prior.seq + 100 },
+      ),
+    ),
+    adopted,
+  );
+});
+
+test("reconnect after missed feedback transition reconciles the parent before switching streams", async () => {
+  const adapter = complete();
+  const prior = adapter.snapshot();
+  adapter.loseNextAcknowledgement = true;
+  const command = {
+    id: "missed-transition",
+    kind: "feedback",
+    taskId: prior.taskId,
+    expectedRevision: 1,
+    payload: { text: "Keep dates", kind: "new-preference" },
+  };
+  await assert.rejects(adapter.command(command), /acknowledgement lost/);
+  const restored = reconnectState(
+    { ...prior, connection: "disconnected" },
+    await adapter.reconnect(),
+  );
+  assert.equal(restored.connection, "connected");
+  assert.equal(restored.revision, 2);
+  assert.equal(restored.seq, 0);
+  assert.equal(adapter.commands.size, 1);
+});
+
+test("replacement run transition can reset its cursor without changing intent revision", async () => {
+  const adapter = complete();
+  const prior = adapter.snapshot();
+  const replacement = adapter.replaceRun("fixture-replacement");
+  const adopted = adoptScope(prior, replacement);
+  assert.equal(adopted.connection, "connected");
+  assert.equal(adopted.revision, prior.revision);
+  assert.equal(adopted.runId, "fixture-replacement");
+  assert.equal(adopted.seq, 0);
+  assert.deepEqual(adopted.intent, prior.intent);
+  assert.equal(adopted.history[0].runId, prior.runId);
+  const reconnected = reconnectState(
+    { ...prior, connection: "disconnected" },
+    await adapter.reconnect(),
+  );
+  assert.equal(reconnected.runId, "fixture-replacement");
+  assert.equal(
+    acceptEvent(
+      reconnected,
+      event(prior, "activity", { id: "late", type: "observation" }),
+    ),
+    reconnected,
+  );
+});
+
+test("unrelated, missing-parent, stale-parent, changed-source and unmatched command transitions fail closed", async () => {
+  const adapter = complete();
+  const prior = adapter.snapshot();
+  const command = {
+    id: "reviewed",
+    kind: "feedback",
+    taskId: prior.taskId,
+    expectedRevision: 1,
+    payload: { text: "Add owner", kind: "new-preference" },
+  };
+  const snapshot = await adapter.command(command);
+  for (const mutate of [
+    (s) => delete s.transition,
+    (s) => (s.transition.parent.taskId = "other"),
+    (s) => (s.transition.authority = "untrusted"),
+    (s) => (s.history = []),
+    (s) => (s.history[0].seq = 0),
+    (s) => (s.checkpoints[0].source.quote = "weakened"),
+    (s) => (s.intent.original = "changed"),
+  ]) {
+    const wrong = copy(snapshot);
+    mutate(wrong);
+    const refused = adoptScope(prior, wrong, command);
+    assert.equal(refused.connection, "gap");
+    assert.equal(refused.runId, prior.runId);
+  }
+  assert.equal(
+    adoptScope(prior, snapshot, { ...command, id: "different" }).connection,
+    "gap",
+  );
+  assert.equal(
+    adoptScope(prior, snapshot, {
+      ...command,
+      payload: { ...command.payload, text: "edited" },
+    }).connection,
+    "gap",
+  );
+});
+
+test("submission freezing binds the payload and expected revision independently of draft edits", () => {
+  const draft = {
+    id: "frozen",
+    kind: "feedback",
+    taskId: "task",
+    expectedRevision: 1,
+    payload: { text: "Original", kind: "new-preference" },
+  };
+  const submitted = freezeSubmission(draft);
+  draft.payload.text = "Edited";
+  draft.expectedRevision = 2;
+  assert.equal(submitted.payload.text, "Original");
+  assert.equal(submitted.expectedRevision, 1);
+  assert.throws(() => (submitted.payload.text = "Changed"), TypeError);
+});
+
+test("unknown acknowledgement lookup is read-only and rejects mismatched frozen identity", async () => {
+  const adapter = new FixtureAdapter();
+  adapter.loseNextAcknowledgement = true;
+  const command = freezeSubmission({
+    id: "frozen-create",
+    kind: "create",
+    payload: { request: "One ticket", destination: "Here" },
+  });
+  await assert.rejects(adapter.command(command));
+  const before = adapter.snapshot();
+  assert.equal((await adapter.lookup(command)).status, "accepted");
+  assert.equal(
+    (
+      await adapter.lookup({
+        ...command,
+        payload: { request: "Two tickets", destination: "Here" },
+      })
+    ).status,
+    "unknown",
+  );
+  assert.equal(adapter.commands.size, 1);
+  assert.deepEqual(adapter.snapshot(), before);
+  const reloadedAdapter = new FixtureAdapter();
+  const reloaded = reloadedAdapter.snapshot();
+  assert.equal((await reloadedAdapter.lookup(command)).status, "unknown");
+  assert.equal(reloadedAdapter.commands.size, 0);
+  assert.deepEqual(reloadedAdapter.snapshot(), reloaded);
 });

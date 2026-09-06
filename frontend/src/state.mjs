@@ -148,6 +148,8 @@ export function acceptEvent(state, event) {
   return next;
 }
 export function reconnectState(current, snapshot) {
+  if (!scoped(current, snapshot) && snapshot?.transition)
+    return adoptScope(current, snapshot);
   if (!scoped(current, snapshot) || snapshot.seq < current.seq)
     return {
       ...current,
@@ -214,6 +216,123 @@ export function reconnectState(current, snapshot) {
       "Fixture connection restored. Existing work was retained; no command was resubmitted.",
   };
 }
+// Only the adapter's reconciled response may adopt a new scope. Ordinary events
+// never call this path. The fixture tag is not backend authentication/authority.
+export function adoptScope(current, snapshot, submitted) {
+  const reject = () => ({
+    ...current,
+    connection: "gap",
+    notice:
+      "Fixture scope transition could not be reconciled. Current evidence was retained; no action was replayed.",
+  });
+  if (scoped(current, snapshot)) return reconnectState(current, snapshot);
+  const transition = snapshot?.transition;
+  if (
+    !transition ||
+    transition.authority !== "fixture-adapter" ||
+    !scoped(current, transition.parent) ||
+    snapshot.category !== "fixture" ||
+    snapshot.taskId !== current.taskId ||
+    !snapshot.runId ||
+    snapshot.runId === current.runId ||
+    !Number.isInteger(snapshot.seq) ||
+    snapshot.seq < 0 ||
+    !Array.isArray(snapshot.history) ||
+    snapshot.history.length !== current.history.length + 1
+  )
+    return reject();
+  const parent = snapshot.history.at(-1);
+  if (!scoped(current, parent)) return reject();
+  // Only compare the old cursor with the retained OLD stream, never with the
+  // new run's cursor (which may legitimately restart at zero).
+  const restoredParent = reconnectState(current, {
+    ...parent,
+    history: snapshot.history.slice(0, -1),
+  });
+  if (restoredParent.connection !== "connected") return reject();
+  if (
+    !Array.isArray(snapshot.checkpoints) ||
+    !Array.isArray(snapshot.evidence) ||
+    !Array.isArray(snapshot.activity) ||
+    !Array.isArray(snapshot.repairs) ||
+    !Array.isArray(snapshot.seen) ||
+    !snapshot.intent
+  )
+    return reject();
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  if (transition.kind === "feedback") {
+    const feedback = snapshot.intent.feedback?.at(-1);
+    if (
+      snapshot.revision !== current.revision + 1 ||
+      !feedback ||
+      feedback.commandId !== transition.commandId ||
+      feedback.fromRevision !== current.revision ||
+      !same(
+        { ...snapshot.intent, feedback: current.intent.feedback },
+        current.intent,
+      ) ||
+      !same(snapshot.intent.feedback.slice(0, -1), current.intent.feedback) ||
+      (submitted &&
+        (submitted.id !== transition.commandId ||
+          submitted.kind !== "feedback" ||
+          submitted.taskId !== current.taskId ||
+          submitted.expectedRevision !== current.revision ||
+          submitted.payload.text.trim() !== feedback.text ||
+          submitted.payload.kind !== feedback.kind))
+    )
+      return reject();
+  } else if (transition.kind === "replacement-run") {
+    if (
+      submitted ||
+      snapshot.revision !== current.revision ||
+      !same(snapshot.intent, current.intent)
+    )
+      return reject();
+  } else return reject();
+  if (
+    current.checkpoints.some(
+      (prior) =>
+        !snapshot.checkpoints.some(
+          (cp) =>
+            cp.id === prior.id &&
+            cp.text === prior.text &&
+            cp.criterionVersion === prior.criterionVersion &&
+            same(cp.source, prior.source) &&
+            same(cp.dependencies, prior.dependencies),
+        ),
+    ) ||
+    snapshot.evidence.some((e) => !scoped(snapshot, e)) ||
+    snapshot.checkpoints.some(
+      (cp) =>
+        !CHECKPOINT_STATES.includes(cp.status) ||
+        !Array.isArray(cp.evidenceIds) ||
+        cp.evidenceIds.some(
+          (id) => !snapshot.evidence.some((e) => e.id === id),
+        ) ||
+        (cp.status === "passed" && !hasPassEvidence(snapshot, cp)),
+    ) ||
+    (snapshot.status === "delivered" && !canDeliver(snapshot, snapshot.result))
+  )
+    return reject();
+  return {
+    ...copy(snapshot),
+    connection: "connected",
+    notice:
+      "Fixture scope transition reconciled. Previous run and intent retained in history; no action was replayed.",
+  };
+}
+
+export function freezeSubmission(command) {
+  const freeze = (value) => {
+    if (value && typeof value === "object") {
+      Object.values(value).forEach(freeze);
+      Object.freeze(value);
+    }
+    return value;
+  };
+  return freeze(copy(command));
+}
+
 export function revise(state, feedback, commandId) {
   if (!feedback.text?.trim()) throw new Error("Describe the change you want.");
   const previous = copy(state);
@@ -222,6 +341,17 @@ export function revise(state, feedback, commandId) {
   return {
     ...copy(state),
     revision,
+    transition: {
+      authority: "fixture-adapter",
+      kind: "feedback",
+      commandId,
+      parent: {
+        taskId: state.taskId,
+        runId: state.runId,
+        revision: state.revision,
+        category: "fixture",
+      },
+    },
     runId: `${state.taskId}-r${revision}`,
     seq: 0,
     seen: [],

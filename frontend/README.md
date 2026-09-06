@@ -11,9 +11,9 @@ Open from the workspace root with `ao preview frontend/index.html`. AO serves th
 - **Restart release example** clears the example session and starts with planned checkpoints.
 - **New request** preserves your text and constraints, asks a fixed fixture clarification, and records a verbatim checkpoint. There is no backend interpretation or execution for arbitrary requests.
 - **Results** exposes labeled JSON artifacts. Feedback records an explicit new revision and retains earlier requirements, evidence, artifacts and rejected candidates under **History**.
-- Disconnect/reconnect retains current state without submitting work. The acknowledgement-loss control demonstrates reusing the same command ID after an uncertain response.
+- Disconnect/reconnect retains current state without submitting work. The acknowledgement-loss control freezes the submitted ID/payload/revision. **Check submission status** looks up that identity without replaying work. After an unresolved submission is reloaded, a recovery-uncertainty notice blocks new work until the local fixture session is explicitly discarded.
 
-Everything lives in page memory. Reload resets the example. This is deliberate provisional tooling, not a durable task system. Live deduplication, persistence, authorization and replay safety are backend responsibilities still awaiting agreement.
+Task content and deduplication live in page memory. Only a pending command-ID marker survives in per-tab session storage; it contains no task text. Reload resets the example and warns if the prior submission is unresolved. This is deliberate provisional tooling, not a durable task system. Live deduplication, persistence, authorization and replay safety are backend responsibilities still awaiting agreement.
 
 ## Implementation boundary
 

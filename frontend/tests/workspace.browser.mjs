@@ -174,7 +174,7 @@ test("uncertain request acknowledgement retries the same submission without dupl
   await expect(
     page.getByRole("button", { name: "Create fixture task", exact: true }),
   ).toBeDisabled();
-  await page.getByRole("button", { name: "Retry same submission" }).click();
+  await page.getByRole("button", { name: "Check submission status" }).click();
   await expect(page.getByText("0 of 1 fixture passes")).toBeVisible();
   await expect(
     page.getByText("Revision 1", { exact: false }).first(),
@@ -299,7 +299,7 @@ test("feedback acknowledgement loss retries one revision and preserves history",
   await expect(
     page.getByRole("tab", { name: "Overview", exact: true }),
   ).toBeDisabled();
-  await page.getByRole("button", { name: "Retry same submission" }).click();
+  await page.getByRole("button", { name: "Check submission status" }).click();
   await expect(page.locator(".history-record")).toHaveCount(1);
   await expect(page.locator(".current-revision")).toContainText("Revision 2");
 });
@@ -350,4 +350,105 @@ test("a failed reconnect preserves evidence and can be retried safely", async ({
     "Fixture connection restored.",
   );
   await expect(page.getByText("1 of 3 fixture passes")).toBeVisible();
+});
+
+test("unknown acknowledgement freezes input and reload reports unrecoverable local identity without resubmitting", async ({
+  page,
+}) => {
+  await controls(page);
+  await page.getByLabel("Lose the next submission acknowledgement").check();
+  await page.getByRole("button", { name: "New request", exact: true }).click();
+  await page
+    .getByLabel("Your request", { exact: true })
+    .fill("Do not duplicate this request.");
+  await page.getByRole("button", { name: "Review clarification" }).click();
+  await page.getByLabel("Where should the result be shared?").fill("Just here");
+  await page
+    .getByRole("button", { name: "Create fixture task", exact: true })
+    .click();
+  await expect(page.getByRole("alert")).toContainText(
+    "Acknowledgement unknown",
+  );
+  await expect(
+    page.getByLabel("Where should the result be shared?"),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Edit request", exact: true }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "New request", exact: true }),
+  ).toBeDisabled();
+  const marker = await page.evaluate(() =>
+    sessionStorage.getItem("epoch.fixture.pending"),
+  );
+  expect(marker).toContain("id");
+  expect(marker).not.toContain("Do not duplicate");
+  await page.reload();
+  await expect(page.getByRole("alert")).toContainText(
+    "Previous submission status is unknown",
+  );
+  await expect(page.getByRole("alert")).toContainText(
+    "No request was resubmitted",
+  );
+  await expect(
+    page.getByRole("button", { name: "New request", exact: true }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Check submission status" }),
+  ).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Discard lost fixture session" })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "New request", exact: true }),
+  ).toBeEnabled();
+  expect(
+    await page.evaluate(() => sessionStorage.getItem("epoch.fixture.pending")),
+  ).toBeNull();
+  await expect(
+    page.getByRole("heading", { name: "Prepare the Atlas 2.4 release" }),
+  ).toBeVisible();
+});
+
+test("accepted submission clears the uncertainty marker before reload", async ({
+  page,
+}) => {
+  await page.getByRole("tab", { name: "Results", exact: true }).click();
+  await page
+    .getByLabel("Your feedback", { exact: true })
+    .fill("Keep the deadline.");
+  await page.getByRole("button", { name: "Create fixture revision" }).click();
+  await expect(page.locator(".current-revision")).toContainText("Revision 2");
+  expect(
+    await page.evaluate(() => sessionStorage.getItem("epoch.fixture.pending")),
+  ).toBeNull();
+  await page.reload();
+  await expect(
+    page.getByText("Previous submission status is unknown"),
+  ).toHaveCount(0);
+});
+
+test("unavailable marker storage refuses submission before any fixture action starts", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    Storage.prototype.setItem = function () {
+      throw new DOMException("Storage unavailable", "QuotaExceededError");
+    };
+  });
+  await page.getByRole("tab", { name: "Results", exact: true }).click();
+  await page
+    .getByLabel("Your feedback", { exact: true })
+    .fill("Preserve this draft.");
+  await page.getByRole("button", { name: "Create fixture revision" }).click();
+  await expect(page.getByRole("alert")).toContainText(
+    "This action was not submitted",
+  );
+  await expect(page.getByLabel("Your feedback", { exact: true })).toHaveValue(
+    "Preserve this draft.",
+  );
+  await expect(page.getByLabel("Your feedback", { exact: true })).toBeEnabled();
+  await page.getByRole("tab", { name: "History", exact: true }).click();
+  await expect(page.locator(".current-revision")).toContainText("Revision 1");
+  await expect(page.locator(".history-record")).toHaveCount(0);
 });
