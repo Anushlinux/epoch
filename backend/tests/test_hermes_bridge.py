@@ -1,5 +1,6 @@
 """Adapter lifecycle/security checks using an explicitly fake executor, never inference."""
 
+import io
 import json
 import logging
 import subprocess
@@ -121,7 +122,11 @@ def test_process_protocol_ignores_unstructured_output_and_filters_environment(
 
     monkeypatch.setattr(bridge.subprocess, "Popen", launch)
     events = []
-    assert bridge.execute(_request(tmp_path), events.append, threading.Event()) == result
+    assert bridge.execute(_request(tmp_path), events.append, threading.Event()) == {
+        **result,
+        "turns_used": 0,
+        "session_turns_used": 0,
+    }
     assert events == [items[0]["data"]]
     assert "UNRELATED_API_KEY" not in observed["env"]
     assert observed["env"]["HERMES_HOME"] == "hermes-home"
@@ -132,7 +137,7 @@ def test_process_protocol_ignores_unstructured_output_and_filters_environment(
 
 @pytest.mark.parametrize(
     "field,value",
-    [("max_turns", 31), ("max_turns", True), ("timeout_seconds", 601), ("timeout_seconds", 0)],
+    [("max_turns", 21), ("max_turns", True), ("timeout_seconds", 601), ("timeout_seconds", 0)],
 )
 def test_rejects_unbounded_limits(tmp_path, fake_installation, field, value):
     request = _request(tmp_path)
@@ -171,7 +176,8 @@ def test_wall_clock_limit_terminates_child(tmp_path, monkeypatch, fake_installat
 
 
 @pytest.mark.parametrize(
-    "unexpected_tool,probe_only", [(False, False), (True, False), (True, True)]
+    "unexpected_tool,probe_only,continuation",
+    [(False, False, False), (True, False, False), (True, True, False), (False, False, True)],
 )
 def test_worker_scopes_tools_preserves_settings_and_redacts_token(
     tmp_path,
@@ -180,6 +186,7 @@ def test_worker_scopes_tools_preserves_settings_and_redacts_token(
     fake_installation,
     unexpected_tool,
     probe_only,
+    continuation,
 ):
     source = Path(fake_installation["home"])
     source.mkdir()
@@ -219,8 +226,9 @@ def test_worker_scopes_tools_preserves_settings_and_redacts_token(
             self._cached_system_prompt = "Fixed test-only prompt"
             self._cached_system_prompt_static = "Fixed test-only prompt"
 
-        def run_conversation(self, brief, task_id):
+        def run_conversation(self, brief, task_id, conversation_history=None):
             observed["ran"] = True
+            observed.setdefault("conversations", []).append((brief, conversation_history))
             observed["step_callback"](1, None)
             observed["tool_start_callback"]("call-1", "mcp_epoch_discover_tools", {})
             observed["tool_complete_callback"](
@@ -230,6 +238,13 @@ def test_worker_scopes_tools_preserves_settings_and_redacts_token(
                 "completed": True,
                 "final_response": "PRIVATE-TEST-TOKEN must be hidden",
                 "api_calls": 1,
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "content": "PRIVATE-HISTORY",
+                        "reasoning": "PRIVATE-REASONING",
+                    }
+                ],
             }
 
         def close(self):
@@ -272,10 +287,26 @@ def test_worker_scopes_tools_preserves_settings_and_redacts_token(
     }
     if probe_only:
         monkeypatch.setattr(bridge, "_read_token", lambda *_: pytest.fail("Probe read credentials"))
+    if continuation:
+        request["session_mode"] = True
+        commands = [
+            {"command": "run", "instruction": text, "max_turns": 4, "timeout_seconds": 10}
+            for text in ("Original intent", "Complete only the omitted step")
+        ]
+        monkeypatch.setattr(
+            sys, "stdin", io.StringIO("\n".join(json.dumps(command) for command in commands) + "\n")
+        )
     code = bridge._worker(request)
     output = capsys.readouterr().out
     assert "PRIVATE-TEST-TOKEN" not in output
     assert "PRIVATE-REFRESH" not in output
+    assert "PRIVATE-HISTORY" not in output
+    assert "PRIVATE-REASONING" not in output
+    if continuation:
+        assert len(observed["conversations"]) == 2
+        assert observed["conversations"][0][1] is None
+        assert observed["conversations"][1][1][0]["content"] == "PRIVATE-HISTORY"
+        assert '"history_retained": true' in output
     assert (source / "config.yaml").read_text() == original_config
     assert (source / "auth.json").read_text() == original_auth
     assert "PRIVATE" not in (isolated / "config.yaml").read_text()
@@ -306,3 +337,161 @@ def test_worker_scopes_tools_preserves_settings_and_redacts_token(
         assert '"user_settings_unchanged": true' in output
         assert '"system_prompt_unchanged": true' in output
         assert "executor.tool_completed" in output
+
+
+_SESSION_SCRIPT = r"""
+import json, sys
+from pathlib import Path
+count = 0
+while True:
+    line = sys.stdin.readline()
+    if not line:
+        break
+    command = json.loads(line)
+    if command.get("command") != "run":
+        break
+    event = {"kind": "request_admission", "data": {"request": count + 1}}
+    print("EPOCH_BRIDGE:" + json.dumps(event), flush=True)
+    ack = json.loads(sys.stdin.readline())
+    assert ack == {"command": "admit", "request": count + 1}
+    count += 1
+    Path("requests-dispatched.txt").write_text(str(count))
+    print("EPOCH_BRIDGE:" + json.dumps({"kind": "result", "data": {
+        "success": True, "final_response": command["instruction"], "baseline": {},
+        "missing_evidence": [], "history_retained": True,
+    }}), flush=True)
+"""
+
+
+def _session_process(monkeypatch):
+    real_popen = subprocess.Popen
+    processes = []
+
+    def launch(command, **kwargs):
+        if command[0] == "taskkill":
+            return real_popen(command, **kwargs)
+        process = real_popen([sys.executable, "-c", _SESSION_SCRIPT], **kwargs)
+        processes.append(process)
+        return process
+
+    monkeypatch.setattr(bridge.subprocess, "Popen", launch)
+    return processes
+
+
+def test_session_continuations_share_process_and_never_reset_turn_allowance(
+    tmp_path, monkeypatch, fake_installation
+):
+    processes = _session_process(monkeypatch)
+    events = []
+    request = {**_request(tmp_path), "max_turns": 2}
+    with bridge.Session(request, events.append, threading.Event()) as session:
+        first = session.run("First deliverable")
+        second = session.run("Only the missing deliverable", max_turns=2)
+        third = session.run("Must not execute", max_turns=2)
+        assert first["turns_used"] == second["turns_used"] == 1
+        assert second["session_turns_used"] == 2
+        assert third["error"]["code"] == "turn_limit"
+    assert len(processes) == 1
+    assert processes[0].poll() is not None
+    assert (tmp_path / "work" / "requests-dispatched.txt").read_text() == "2"
+    assert [event["data"]["segment"] for event in events] == [1, 2]
+
+
+def test_parent_can_veto_before_any_model_request_is_dispatched(
+    tmp_path, monkeypatch, fake_installation
+):
+    processes = _session_process(monkeypatch)
+
+    def exhausted_shared_budget():
+        raise RuntimeError("Debugger has consumed the remaining operation allowance")
+
+    with bridge.Session(
+        _request(tmp_path), lambda _: None, threading.Event(), exhausted_shared_budget
+    ) as session:
+        result = session.run("Must not dispatch")
+    assert result["error"]["code"] == "budget_exhausted"
+    assert result["turns_used"] == 0
+    assert not (tmp_path / "work" / "requests-dispatched.txt").exists()
+    assert processes[0].poll() is not None
+
+
+def test_session_time_limit_does_not_reset_on_continuation(
+    tmp_path, monkeypatch, fake_installation
+):
+    _session_process(monkeypatch)
+    with bridge.Session(_request(tmp_path), lambda _: None, threading.Event()) as session:
+        assert session.run("First")["success"]
+        session.deadline = time.monotonic() - 1
+        result = session.run("Must not dispatch", timeout_seconds=600)
+    assert result["error"]["code"] == "timeout"
+    assert (tmp_path / "work" / "requests-dispatched.txt").read_text() == "1"
+
+
+def test_request_gate_counts_retry_and_summary_http_dispatches_without_reading_bodies():
+    import httpx
+
+    dispatched = []
+    admitted = []
+
+    def allow():
+        admitted.append(True)
+        if len(admitted) > 2:
+            raise RuntimeError("No more provider requests")
+
+    def transport(request):
+        dispatched.append(request.url.path)
+        return httpx.Response(200, json={"ok": True})
+
+    restore = bridge._install_request_gate(allow)
+    try:
+        with httpx.Client(transport=httpx.MockTransport(transport)) as client:
+            client.get("https://provider.test/models")
+            client.post("https://provider.test/responses", json={"input": "first"})
+            client.post("https://provider.test/responses", json={"input": "retry"})
+            with pytest.raises(RuntimeError, match="No more"):
+                client.post("https://provider.test/responses", json={"input": "summary"})
+    finally:
+        restore()
+    assert dispatched == ["/models", "/responses", "/responses"]
+    assert len(admitted) == 3
+
+
+def test_request_gate_covers_async_sdk_dispatches():
+    import asyncio
+
+    import httpx
+
+    dispatched = []
+
+    def deny():
+        raise RuntimeError("Denied before async inference")
+
+    async def run():
+        async with httpx.AsyncClient(
+            transport=httpx.MockTransport(lambda request: dispatched.append(request))
+        ) as client:
+            with pytest.raises(RuntimeError, match="Denied before"):
+                await client.post("https://provider.test/v1/chat/completions")
+
+    restore = bridge._install_request_gate(deny)
+    try:
+        asyncio.run(run())
+    finally:
+        restore()
+    assert dispatched == []
+
+
+def test_cancellation_during_admission_never_acknowledges_dispatch(
+    tmp_path, monkeypatch, fake_installation
+):
+    _session_process(monkeypatch)
+    cancelled = threading.Event()
+
+    def event_callback(event):
+        if event["type"] == "executor.model_request":
+            cancelled.set()
+
+    with bridge.Session(_request(tmp_path), event_callback, cancelled) as session:
+        result = session.run("Cancel immediately before sending")
+    assert result["error"]["code"] == "cancelled"
+    assert not (tmp_path / "work" / "requests-dispatched.txt").exists()

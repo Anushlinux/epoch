@@ -1,8 +1,10 @@
 # Existing Hermes execution
 
 Epoch uses an existing Hermes checkout and its own Python environment. It does not
-install, upgrade or rewrite Hermes. The narrow Phase 3 integration delivers an
-explicit release brief; automatic planning, continuation and repairs remain later phases.
+install, upgrade or rewrite Hermes. Phase 3 delivers an explicit release brief. Phase 4 adds a persistent private
+executor session for bounded supervisor continuations. OpenAI `gpt-5.6-luna` is the
+separate debugger; Hermes keeps its existing executor route and model. Generated
+environment repairs remain Phase 5 work.
 
 ## Installation discovery
 
@@ -71,6 +73,27 @@ execution evidence before any compatibility claim.
 a literal placeholder credential, never reads the existing access token, and returns
 before `run_conversation`. Unit tests verify that it cannot invoke inference.
 
+## Supervisor continuation
+
+`Session(request, on_event, cancel_event, before_model_request=callback)` keeps one
+actual `AIAgent` and its MCP process alive across `session.run(instruction,
+max_turns=remaining_turns, timeout_seconds=remaining_seconds)` calls. Each conversation
+passes the previous result's `messages` to Hermes's supported `conversation_history`
+argument. Full history, including any provider-internal reasoning, stays inside the
+child process and never becomes debugger input or API evidence. The bridge returns
+only visible final output, observable events, baselines and request counts. It
+refuses another continuation if Hermes did not retain usable history.
+
+The executor cannot change checkpoint decisions. The supervisor inspects trusted
+saved sandbox state and records each follow-up instruction separately. Continuation
+uses the same sandbox and session; completed effects remain available through
+ordinary tools. The one-call `execute` function remains available for Phase 3 callers.
+
+The session baseline spans every continuation. Initial brief identity remains
+separate from continuation instruction hashes. Implementation, user settings,
+discovery definitions and effective full/static prompts are compared throughout
+the session; a changed baseline prevents a success claim or another continuation.
+
 ## Evidence and limits
 
 The adapter reports visible assistant messages, tool start/completion callbacks,
@@ -92,12 +115,32 @@ compared between controlled runs. Hermes still includes the conversation date, s
 comparisons on different dates must disclose that difference instead of claiming
 an unchanged complete prompt.
 
-Wall time and turn counts are bounded externally by the parent and by Hermes's
-iteration/run budgets. Cancellation and timeout terminate only the run worker and
-its process descendants. A failed/timed-out run can have partial effects; trusted
+The default and maximum operation allowance is **20 model requests and 600 seconds**.
+Phase 4 shares that allowance between debugger calls and Hermes requests. The bridge
+also keeps its own cumulative session counter and monotonic deadline; continuation
+cannot reset either. Its per-segment allowance can only consume the remaining total.
+The root supervisor supplies the current remaining time/requests after debugger work.
+
+Hermes's ordinary iteration counter is insufficient for this guarantee: the installed
+version resets it on `run_conversation`, swallows ordinary step-callback exceptions,
+and can request an extra summary after exhaustion. Epoch therefore instruments HTTPX
+transport inside its child and requires a parent acknowledgment immediately before
+each model POST is dispatched. This covers normal, retry and summary requests; the
+hook reads no request body or credentials. The parent's `before_model_request`
+callback can reject admission when the shared debugger/executor allowance is gone.
+No acknowledgment means no request dispatch. `executor.model_request` records an
+admitted request, and results return segment `turns_used` and cumulative
+`session_turns_used`; progress `executor.step` is not the spending counter.
+
+Per-run `agent.api_max_retries: 1` selects one application attempt, and
+`HERMES_STREAM_RETRIES=0` disables stream retries. The installed Hermes request client
+sets OpenAI SDK `max_retries=0`; the HTTP gate also counts a future SDK retry if one
+occurs. This transport integration is verified only for the inspected installed
+HTTPX-based route. Cancellation and timeout terminate only the run worker and its
+process descendants. A failed/timed-out run can have partial effects; trusted
 state checks and idempotent operations must determine what happened before retry.
 These limits do not provide secure arbitrary-code isolation or a guaranteed dollar
-spend cap. No generated candidate code runs in Phase 3.
+spend cap. No generated candidate code runs in Phases 3 or 4.
 Abrupt parent/worker crash containment has not been demonstrated against a real
 model and is not guaranteed by an OS job or container. Startup recovery records
 interrupted runs; stronger process-crash containment remains future work.
@@ -111,7 +154,9 @@ test doubles, installed execution and unverified integrations.
 ## Verified source interfaces
 
 This adapter was checked against the local checkout's `run_agent.py`,
-`agent/agent_init.py`, `agent/turn_facade.py`, `agent/tool_executor.py`,
+`agent/agent_init.py`, `agent/turn_facade.py`, `agent/turn_context.py`,
+`agent/turn_iteration_prep.py`, `agent/turn_finalizer.py`,
+`agent/client_lifecycle.py`, `agent/chat_completion_helpers.py`, `agent/tool_executor.py`,
 `hermes_cli/runtime_provider.py`, `tools/mcp_tool_discovery.py` and
 `tools/mcp_tool_registration.py`. Those sources establish the constructor callbacks,
 bounded conversation API, explicit credential route and `mcp-epoch` toolset naming.

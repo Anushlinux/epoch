@@ -10,15 +10,28 @@ from hashlib import sha256
 from pathlib import Path
 from uuid import UUID, uuid4
 
-from epoch_backend import hermes_bridge
+from epoch_backend import debugger_bridge, hermes_bridge
 from epoch_backend.config import Settings
 from epoch_backend.contracts import Checkpoint, SourceReference, Task, TaskBrief, TaskStatus
 from epoch_backend.execution_contracts import ExecutionRecord, ReleaseRunRequest, RuntimeInfo
 from epoch_backend.execution_store import ExecutionStore
 from epoch_backend.sandbox import Sandbox, SandboxError
 from epoch_backend.storage import RequestConflict, SQLiteStore
+from epoch_backend.supervision_contracts import (
+    FeedbackRequest,
+    SupervisionOperation,
+    SupervisionState,
+)
 
-TERMINAL = {"completed", "failed", "cancelled", "interrupted"}
+TERMINAL = {"completed", "failed", "cancelled", "interrupted", "needs_input", "blocked"}
+
+
+def task_status(status: str) -> TaskStatus:
+    if status == "needs_input":
+        return TaskStatus.awaiting_clarification
+    if status == "interrupted":
+        return TaskStatus.blocked
+    return TaskStatus(status)
 
 
 class ExecutionError(Exception):
@@ -145,6 +158,14 @@ class ExecutionService:
                         "code": "server_restarted",
                         "message": "Execution was interrupted.",
                     }
+                    if record.supervision:
+                        operation = record.supervision.operations[-1]
+                        operation.status = "interrupted"
+                        operation.finished_at = datetime.now(UTC)
+                        operation.error = dict(record.error)
+                        operation.missing_evidence.append(
+                            "Server stopped before the operation completed; no automatic replay."
+                        )
                     self.store.save(record)
                     self.tasks.set_task_status(record.task_id, TaskStatus.blocked)
                     try:
@@ -171,13 +192,15 @@ class ExecutionService:
     def runtime_info(self) -> RuntimeInfo:
         installation = hermes_bridge.detect_installation()
         available = bool(installation.get("available"))
+        debugger = debugger_bridge.detect_debugger()
+        enabled = self.settings.enable_hermes and available and not self._unresolved_state
         return RuntimeInfo(
-            execution_enabled=self.settings.enable_hermes
-            and available
-            and not self._unresolved_state,
+            execution_enabled=enabled,
             hermes_available=available,
             active_run_id=self.active_run_id,
             installation=installation,
+            debugger=debugger,
+            supervision_enabled=enabled and bool(debugger.get("available")),
         )
 
     def sandbox(self, record: ExecutionRecord) -> Sandbox:
@@ -200,7 +223,7 @@ class ExecutionService:
                 raise ExecutionError("not_found", "Task not found.", 404)
             existing = self.store.find_request(task_id, request.client_request_id)
             if existing:
-                if existing.request != request:
+                if existing.request.model_dump() != request.model_dump():
                     raise RequestConflict("Run request ID belongs to different input.")
                 return existing, False
             if self._unresolved_state:
@@ -211,9 +234,14 @@ class ExecutionService:
                 )
             if self.active_run_id is not None:
                 raise ExecutionError("executor_busy", "Another run is active; wait or cancel it.")
-            if not self.runtime_info().execution_enabled:
+            runtime = self.runtime_info()
+            if not runtime.execution_enabled:
                 raise ExecutionError(
                     "hermes_unavailable", "Hermes is unavailable or execution is disabled.", 503
+                )
+            if request.supervised and not runtime.supervision_enabled:
+                raise ExecutionError(
+                    "debugger_unavailable", "OpenAI Luna debugger is unavailable; see runtime.", 503
                 )
             run_id = uuid4()
             sandbox = Sandbox(
@@ -231,17 +259,36 @@ class ExecutionService:
                 id=run_id,
                 task_id=task_id,
                 request=request,
-                status="running",
+                status="planning" if request.supervised else "running",
                 brief=release_brief(task, run_id, sandbox.metadata()),
                 created_at=now,
                 updated_at=now,
             )
+            if request.supervised:
+                operation = SupervisionOperation(
+                    id=uuid4(),
+                    client_request_id=request.client_request_id,
+                    trigger="initial",
+                    user_input=task.request.message,
+                    request=request.model_dump(mode="json"),
+                    created_at=now,
+                    max_turns=request.max_turns,
+                    timeout_seconds=request.timeout_seconds,
+                )
+                record.supervision = SupervisionState(
+                    current_revision_id=operation.id, operations=[operation]
+                )
             self.store.insert(record)
             worker = None
             try:
-                self.tasks.set_task_status(task_id, TaskStatus.running)
-                sandbox.record_event("brief.created", record.brief.model_dump(mode="json"))
-                sandbox.record_event("run.started", {"status": "running", "simulation_only": True})
+                self.tasks.set_task_status(task_id, task_status(record.status))
+                sandbox.record_event(
+                    "brief.template_prepared" if request.supervised else "brief.created",
+                    record.brief.model_dump(mode="json"),
+                )
+                sandbox.record_event(
+                    "run.started", {"status": record.status, "simulation_only": True}
+                )
                 self._cancel = threading.Event()
                 self.active_run_id = run_id
                 worker = threading.Thread(target=self._execute, args=(record,), daemon=True)
@@ -264,6 +311,10 @@ class ExecutionService:
                     "message": f"Execution could not start ({type(exc).__name__}).",
                 }
                 record.missing_evidence.append("Hermes execution did not start.")
+                if record.supervision:
+                    operation.status = "failed"
+                    operation.error = dict(record.error)
+                    operation.finished_at = datetime.now(UTC)
                 try:
                     self.tasks.set_task_status(task_id, TaskStatus.failed)
                     sandbox.record_event(
@@ -289,6 +340,105 @@ class ExecutionService:
                 ) from exc
             return record, True
 
+    def feedback(
+        self, run_id: UUID, request: FeedbackRequest, *, clarification: bool = False
+    ) -> tuple[ExecutionRecord, bool]:
+        """A new explicit operation keeps the same sandbox and immutable prior outcomes."""
+        with self._lock:
+            record = self.get(run_id)
+            if not record.supervision:
+                raise ExecutionError("not_supervised", "Feedback requires a supervised run.")
+            trigger = "clarification" if clarification else "feedback"
+            request_json = request.model_dump(mode="json")
+            for previous in record.supervision.operations:
+                if previous.client_request_id == request.client_request_id:
+                    if previous.trigger != trigger or previous.request != request_json:
+                        raise RequestConflict("Feedback ID belongs to different input.")
+                    return record, False
+            if self._unresolved_state:
+                raise ExecutionError(
+                    "execution_state_unresolved", "Inspect execution storage before retrying.", 503
+                )
+            if self.active_run_id is not None:
+                raise ExecutionError("executor_busy", "Another operation is active.")
+            if record.status not in TERMINAL:
+                raise ExecutionError("run_not_finished", "Wait for the current operation to end.")
+            if request.expected_revision_id != record.supervision.current_revision_id:
+                raise ExecutionError("stale_revision", "Reload the latest revision before editing.")
+            if clarification and record.status != "needs_input":
+                raise ExecutionError("no_clarification_pending", "This run is not awaiting input.")
+            if not self.runtime_info().supervision_enabled:
+                raise ExecutionError(
+                    "debugger_unavailable", "Supervised execution is unavailable.", 503
+                )
+            operation = SupervisionOperation(
+                id=uuid4(),
+                client_request_id=request.client_request_id,
+                previous_revision_id=record.supervision.current_revision_id,
+                trigger=trigger,
+                user_input=request.message,
+                request=request_json,
+                created_at=datetime.now(UTC),
+                max_turns=request.max_turns,
+                timeout_seconds=request.timeout_seconds,
+                verification_before=record.verification,
+            )
+            record.supervision.operations.append(operation)
+            record.supervision.current_revision_id = operation.id
+            record.status = "planning"
+            record.error = None
+            record.final_response = None
+            record.executor_success = None
+            record.missing_evidence = []
+            sandbox = self.sandbox(record)
+            worker = None
+            # Save the submitted input and parent revision before any model call.
+            self.store.save(record)
+            try:
+                self.tasks.set_task_status(record.task_id, TaskStatus.planning)
+                sandbox.record_event(
+                    "intent.submitted",
+                    {"revision_id": str(operation.id), **request_json, "trigger": trigger},
+                )
+                self._cancel = threading.Event()
+                self.active_run_id = run_id
+                worker = threading.Thread(target=self._execute, args=(record,), daemon=True)
+                self._thread = worker
+                worker.start()
+            except Exception as exc:
+                self._cancel.set()
+                if worker is not None and worker.is_alive():
+                    self._unresolved_state = True
+                    raise ExecutionError(
+                        "execution_state_unresolved", "Inspect uncertain startup.", 503
+                    ) from exc
+                self._thread = None
+                record.status = operation.status = "failed"
+                record.error = operation.error = {
+                    "code": "execution_admission_failed",
+                    "message": "Feedback execution could not start.",
+                }
+                operation.finished_at = datetime.now(UTC)
+                operation.missing_evidence.append("No model operation started.")
+                try:
+                    self.tasks.set_task_status(record.task_id, TaskStatus.failed)
+                    sandbox.record_event(
+                        "run.finished", {"status": "failed", "error": record.error}
+                    )
+                    self.store.save(record)
+                except Exception:
+                    self._unresolved_state = True
+                    operation.missing_evidence.append("Admission cleanup could not be confirmed.")
+                    try:
+                        self.store.save(record)
+                    except Exception:
+                        pass
+                self.active_run_id = run_id if self._unresolved_state else None
+                raise ExecutionError(
+                    "execution_admission_failed", "Inspect the saved feedback operation.", 503
+                ) from exc
+            return record, True
+
     def cancel(self, run_id: UUID) -> ExecutionRecord:
         with self._lock:
             record = self.get(run_id)
@@ -300,6 +450,15 @@ class ExecutionService:
     def _execute(self, record: ExecutionRecord):
         sandbox = self.sandbox(record)
         try:
+            if record.supervision is not None:
+                from epoch_backend.supervisor import run_supervised
+
+                def persist():
+                    self.store.save(record)
+                    self.tasks.set_task_status(record.task_id, task_status(record.status))
+
+                run_supervised(record, sandbox, self._cancel, persist)
+                return
 
             def on_event(event: dict):
                 sandbox.record_event(
@@ -372,8 +531,20 @@ class ExecutionService:
             }
             record.missing_evidence.append("Executor did not produce a complete result.")
         finally:
+
+            def sync_operation():
+                if record.supervision:
+                    operation = record.supervision.operations[-1]
+                    operation.status = record.status
+                    operation.error = dict(record.error) if record.error else None
+                    operation.finished_at = operation.finished_at or datetime.now(UTC)
+                    operation.missing_evidence = list(
+                        dict.fromkeys([*operation.missing_evidence, *record.missing_evidence])
+                    )
+
+            sync_operation()
             try:
-                self.tasks.set_task_status(record.task_id, TaskStatus(record.status))
+                self.tasks.set_task_status(record.task_id, task_status(record.status))
                 sandbox.record_event(
                     "run.finished",
                     {
@@ -393,6 +564,7 @@ class ExecutionService:
                     "message": "Final state could not be recorded consistently; inspect storage.",
                 }
                 record.missing_evidence.append("Final status or event persistence failed.")
+                sync_operation()
                 try:
                     self.store.save(record)
                     self.tasks.set_task_status(record.task_id, TaskStatus.failed)

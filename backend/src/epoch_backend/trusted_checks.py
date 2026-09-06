@@ -8,7 +8,23 @@ import json
 import re
 from hashlib import sha256
 
-EVALUATOR_VERSION = "release-state-v2"
+EVALUATOR_VERSION = "release-state-v3"
+
+CRITERIA_FIELDS = (
+    "expected_items",
+    "qa_channel",
+    "qa_owner",
+    "ticket_title",
+    "checklist_title",
+    "require_qa_owner",
+    "evaluator_version",
+    "required_message_phrases",
+)
+
+
+def criteria_from_metadata(metadata: dict) -> dict:
+    """Preserve the original field set when inspecting historical criteria."""
+    return {key: metadata[key] for key in CRITERIA_FIELDS if key in metadata}
 
 
 def release_criteria(project_id: str, release: str, scenario: str) -> dict:
@@ -27,6 +43,7 @@ def release_criteria(project_id: str, release: str, scenario: str) -> dict:
         "checklist_title": f"Release checklist {release}",
         "require_qa_owner": scenario == "missing_lookup",
         "evaluator_version": EVALUATOR_VERSION,
+        "required_message_phrases": [],
     }
 
 
@@ -98,6 +115,22 @@ def evaluate_release(metadata: dict, snapshot: dict, state_event_ids: list[str])
                 {"matching_object_ids": [item["id"] for item in matching]},
             )
         )
+    phrases = metadata.get("required_message_phrases", [])
+    if phrases:
+        matching = [
+            item
+            for item in messages
+            if all(phrase in item["text"] for phrase in phrases)
+            and (not metadata["require_qa_owner"] or metadata["qa_owner"] in item["text"])
+        ]
+        definitions.append(
+            (
+                "qa_message_content",
+                "One correctly linked QA notice contains every user-required phrase",
+                bool(matching),
+                {"matching_object_ids": [item["id"] for item in matching]},
+            )
+        )
     checks = [
         {
             "id": check_id,
@@ -112,7 +145,7 @@ def evaluate_release(metadata: dict, snapshot: dict, state_event_ids: list[str])
         "simulated": True,
         "passed": all(check["passed"] for check in checks),
         "checks": checks,
-        "evaluator_version": EVALUATOR_VERSION,
+        "evaluator_version": metadata["evaluator_version"],
         "criteria_sha256": metadata["criteria_sha256"],
         "state_sha256": sha256(json.dumps(snapshot, sort_keys=True).encode()).hexdigest(),
         "missing_evidence": [] if state_event_ids else ["No state mutation events recorded."],

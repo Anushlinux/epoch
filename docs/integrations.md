@@ -1,6 +1,6 @@
 # Integration verification and remaining checks
 
-**Local sandbox services, the MCP connection and actual Hermes execution are implemented.** Installed Hermes has executed both the healthy release workflow and the deliberately broken checklist workflow. Trusted checks inspect simulated application state independently of Hermes's completion message. The [status record](status.md) records final acceptance, run identifiers and remaining limitations; checked items below describe only demonstrated scope.
+**Local sandbox services, MCP, actual Hermes and opt-in OpenAI Luna supervision are implemented.** Installed Hermes has executed both the healthy release workflow and the deliberately broken checklist workflow. Trusted checks inspect simulated application state independently of Hermes's completion message. The [status record](status.md) records final acceptance, run identifiers and remaining limitations; checked items below describe only demonstrated scope.
 
 Neatlogs, Raindrop Workshop, generated repairs and live Jira/Notion/Slack connections remain unimplemented and unverified. Anushrut owns the separate UI. Backend setup, simulation commands and execution entrypoints are in the [backend README](../backend/README.md); provider isolation and installed-source verification are in [Hermes setup](../backend/docs/HERMES_SETUP.md).
 
@@ -16,7 +16,7 @@ The supplied direction records these official sources as checked on **September 
 | Raindrop Workshop | [Workshop overview](https://www.raindrop.ai/docs/workshop/overview/) | Trace access, explicit interoperability and configured safe replay |
 | Illustrative Notion adapter constraint | [Page property values](https://developers.notion.com/reference/page-property-values), [Page](https://developers.notion.com/reference/page) | Selected contract/version and simulation fidelity; live adapter deferred |
 
-Task 02 now supplies local traces and trusted checks. Phase 3 covers the actual-executor portion of Task 03; its supervision/feedback portion remains Phase 4. Task 07 still owns future Neatlogs/Workshop wiring. Local traces do not satisfy those vendors' integration acceptance.
+Task 02 now supplies local traces and trusted checks. Phase 3 covers the actual-executor portion of Task 03; Phase 4 adds supervision and additive feedback; see the current status for actual acceptance. Task 07 still owns future Neatlogs/Workshop wiring. Local traces do not satisfy those vendors' integration acceptance.
 
 ## Current installed execution record
 
@@ -25,7 +25,8 @@ Task 02 now supplies local traces and trusted checks. Phase 3 covers the actual-
 - **Provider:** the user's existing `openai-codex` route, `gpt-6-astra`, `https://chatgpt.com/backend-api/codex`, retaining configured inference options. Synthetic briefs, tool schemas, tool results and visible assistant messages go to this remote provider. Business writes remain in local SQLite simulations.
 - **Credentials:** the worker reads the existing selected access token into memory; no token is placed in Epoch config, request JSON or emitted events. It performs no login or token refresh. The current route has installed execution evidence; the adapter's other supported API-key routes remain unverified.
 - **Evidence:** [recorded Phase 2 simulation results](../backend/fixtures/sandbox/phase2_evidence.json), [real stdio protocol tests](../backend/tests/test_mcp_server.py), [registry checks](../backend/tests/test_tool_registry.py), [bridge tests](../backend/tests/test_hermes_bridge.py), and the [final runtime validation record](status.md). Bridge tests use an explicit test double and cannot substitute for the actual model runs.
-- **Limits:** bounded turns, wall time, cancellation and process cleanup; call counts are reported when supplied by Hermes. There is no guaranteed monetary spend cap, generated-code isolation, runtime repair or claim of full model-provider telemetry.
+- **Debugger:** exact `gpt-5.6-luna`, structured output, no business tools. The existing Codex route has an actual probe; the API-key route has transport tests only. See [debugger setup](../backend/docs/DEBUGGER_SETUP.md).
+- **Limits:** at most 20 shared debugger/executor provider requests and 600 seconds per explicitly submitted operation; parent admission precedes every Hermes request, including retries and final summaries. Cancellation and process cleanup preserve partial state. There is no guaranteed monetary spend cap, generated-code isolation, runtime repair or claim of full model-provider telemetry.
 
 The original acceptance pair performed the expected business operations but exposed prompt differences caused by run paths and Git-status snapshots. Supported configuration was corrected before final acceptance. Two discovery-only probes with separate fresh homes then produced byte-identical full prompts. The [final actual-run evidence](../backend/fixtures/hermes/README.md) records passing control and expected defective outcomes with all 12 compared baselines present and equal, including initial/full/static prompt hashes, model settings, implementation, discovery and initial briefs. Earlier failed or unequal-baseline attempts are preserved separately.
 

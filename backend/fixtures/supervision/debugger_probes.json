@@ -1,0 +1,91 @@
+{
+  "description": "Actual initial transport probes, including pre-fix failed results; not full supervision acceptance.",
+  "attempts": {
+    "corrected-result.json": {
+      "success": true,
+      "output": {
+        "status": "ready"
+      },
+      "model": "gpt-5.6-luna",
+      "provider": "openai-codex",
+      "usage": {
+        "input_tokens": 77,
+        "output_tokens": 16,
+        "total_tokens": 93
+      },
+      "baseline": {
+        "model": "gpt-5.6-luna",
+        "provider": "openai-codex",
+        "endpoint": "https://chatgpt.com/backend-api/codex/responses",
+        "instructions_sha256": "0c7edeca673907818e6bedb5460236b196388112011e42708a5867e2bf87f885",
+        "input_sha256": "22253d08450a9491c3a125583f5fdc09a52fbd56540b12505f71f8e8c980cf24",
+        "schema_sha256": "f30d4d30d160aa8af20dae968200b7bb060bcaee59853945438acbb15c361885",
+        "bridge_sha256": "bdccd23f2d3b551dd96f602949ec6e223f1cb84e50bb31af3c1b5cc5434eef5a",
+        "reasoning_effort": "low",
+        "tools": [],
+        "store": false,
+        "automatic_retries": 0,
+        "requested_max_output_tokens": 256,
+        "output_token_limit_supported": false,
+        "response_model": "gpt-5.6-luna",
+        "credential_file_unchanged": true
+      },
+      "missing_evidence": [],
+      "error": null
+    },
+    "response-shape.json": {
+      "result": {
+        "success": false,
+        "output": null,
+        "model": "gpt-5.6-luna",
+        "provider": "openai-codex",
+        "usage": {},
+        "baseline": {
+          "credential_file_unchanged": true
+        },
+        "missing_evidence": [
+          "Debugger did not return a complete validated decision"
+        ],
+        "error": {
+          "code": "invalid_output",
+          "message": "Debugger did not return a JSON object"
+        }
+      },
+      "observable_shape": {
+        "status": "completed",
+        "model": "gpt-5.6-luna",
+        "output": []
+      }
+    },
+    "result.json": {
+      "success": false,
+      "output": null,
+      "model": "gpt-5.6-luna",
+      "provider": "openai-codex",
+      "usage": {},
+      "baseline": {
+        "model": "gpt-5.6-luna",
+        "provider": "openai-codex",
+        "endpoint": "https://chatgpt.com/backend-api/codex/responses",
+        "instructions_sha256": "0c7edeca673907818e6bedb5460236b196388112011e42708a5867e2bf87f885",
+        "input_sha256": "22253d08450a9491c3a125583f5fdc09a52fbd56540b12505f71f8e8c980cf24",
+        "schema_sha256": "f30d4d30d160aa8af20dae968200b7bb060bcaee59853945438acbb15c361885",
+        "bridge_sha256": "b8d66c900e45f28fc0d641bf770d0de2fdac7375885a433531ea938a2a85b3ba",
+        "reasoning_effort": "low",
+        "tools": [],
+        "store": false,
+        "automatic_retries": 0,
+        "requested_max_output_tokens": 256,
+        "output_token_limit_supported": false,
+        "credential_file_unchanged": true
+      },
+      "missing_evidence": [
+        "Debugger did not return a complete validated decision"
+      ],
+      "error": {
+        "code": "invalid_output",
+        "message": "Debugger did not return a JSON object"
+      }
+    }
+  }
+}

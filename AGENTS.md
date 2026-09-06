@@ -1,6 +1,6 @@
 # Repository instructions
 
-Epoch should supervise task delivery through sourced checkpoints and improve an executor's tools and context through verified environment repairs. **Task intake, scoped local simulations, trusted checks, MCP and explicit Hermes release execution are implemented; automatic supervision/feedback/repair remain unimplemented.** Consult docs/status.md for actual validation and gaps. The current supervisor flow and Anushrut/Rajdeep ownership in README.md record a later user decision than the preserved direction.
+Epoch should supervise task delivery through sourced checkpoints and improve an executor's tools and context through verified environment repairs. **Task intake, local simulations, trusted checks, MCP, actual Hermes and opt-in Luna supervision/additive feedback are implemented. Phase 4 actual-model acceptance is recorded; generated environment repair remains unimplemented.** Consult docs/status.md for actual validation and gaps. The current supervisor flow and Anushrut/Rajdeep ownership in README.md record a later user decision than the preserved direction.
 
 ## Start here
 
@@ -27,6 +27,8 @@ Keep `docs/direction.md` byte-for-byte unchanged; record later decisions separat
 ## Verify and hand off
 
 Run relevant checks and report actual commands, outcomes, evidence and unexecuted checks. Maintain [docs/status.md](docs/status.md) from demonstrated results; distinguish decisions, requirements, assumptions and implemented facts.
+
+For every backend environment change, update `backend/.env.example` and the relevant setup documentation, distinguish app-file settings from process-only variables, and explicitly report required versus optional changes and migration steps to the user. Never include secret values in examples or handoffs.
 
 For docs, check source identity, links/anchors, entrypoints, task structure, assigned scope and `git diff --check`. Preserve and report the source's original Markdown hard-break exception. Follow the AO preview guide when available; open `ao preview README.md` without adding a preview dependency.
 

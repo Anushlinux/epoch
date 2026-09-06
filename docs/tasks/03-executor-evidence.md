@@ -1,6 +1,6 @@
 # Task 03: Actual Hermes integration and frozen configuration proof
 
-Status: executor integration is implemented under Phase 3; acceptance evidence is recorded in [status](../status.md). This broader task also includes Phase 4 supervision and feedback, which remain unstarted. Do not mark all of Task 03 complete when only Phase 3 passes. See [phase boundaries](../../backend/PHASES.md) and [Hermes setup](../../backend/docs/HERMES_SETUP.md).
+Status: Phases 3 and 4 are implemented and verified. Actual omission recovery and feedback acceptance are recorded in [status](../status.md#phase-4-validation-record). See [phase boundaries](../../backend/PHASES.md), [Hermes setup](../../backend/docs/HERMES_SETUP.md), and [debugger setup](../../backend/docs/DEBUGGER_SETUP.md).
 
 ## Goal
 

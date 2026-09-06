@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, TypeAdapte
 from epoch_backend.sandbox import Sandbox, SandboxError
 
 TOOL_INTERFACE_VERSION = "epoch-tools-v1"
-TOOL_VERSION = "sandbox-v1"
+TOOL_VERSION = "sandbox-v2"
 Text = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
 Title = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=300)]
 ShortText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
@@ -44,10 +44,22 @@ class CreateChecklist(Arguments):
     idempotency_key: IdempotencyKey
 
 
+class UpdateChecklist(Arguments):
+    checklist_id: Title
+    items: list[Text] = Field(min_length=1, max_length=50)
+    idempotency_key: IdempotencyKey
+
+
 class SendMessage(Arguments):
     channel: ShortText
     text: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=8000)]
     links: list[Text] = Field(min_length=1, max_length=20)
+    idempotency_key: IdempotencyKey
+
+
+class UpdateMessage(Arguments):
+    message_id: Title
+    text: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=8000)]
     idempotency_key: IdempotencyKey
 
 
@@ -126,6 +138,15 @@ _TOOLS = (
         False,
     ),
     ToolDefinition(
+        "checklists.update",
+        "Replace items on an existing simulated checklist in this run, preserving its "
+        "identity, title and ticket link. Supply all required items; use a new idempotency "
+        "key for changed content and reuse it only for identical retries.",
+        UpdateChecklist,
+        "update_checklist",
+        False,
+    ),
+    ToolDefinition(
         "checklists.list",
         "List simulated checklists in the current run and project.",
         NoArguments,
@@ -138,6 +159,15 @@ _TOOLS = (
         "objects in the current run. Reuse an idempotency key only for identical retries.",
         SendMessage,
         "send_message",
+        False,
+    ),
+    ToolDefinition(
+        "messages.update",
+        "Replace text on an existing simulated message in this run, preserving its "
+        "identity, channel and links. Use a new idempotency key for changed content "
+        "and reuse it only for identical retries.",
+        UpdateMessage,
+        "update_message",
         False,
     ),
     ToolDefinition(
@@ -162,8 +192,10 @@ _OUTPUTS = {
     "tickets.create": TypeAdapter(TicketResult),
     "tickets.list": TypeAdapter(list[TicketResult]),
     "checklists.create": TypeAdapter(ChecklistResult),
+    "checklists.update": TypeAdapter(ChecklistResult),
     "checklists.list": TypeAdapter(list[ChecklistResult]),
     "messages.send": TypeAdapter(MessageResult),
+    "messages.update": TypeAdapter(MessageResult),
     "messages.list": TypeAdapter(list[MessageResult]),
     "runbooks.read": TypeAdapter(RunbookResult),
 }

@@ -1,0 +1,1929 @@
+{
+  "description": "Implemented Phase 4 debugger decisions, feedback requests and revision history. Trusted checks determine completion; model output does not authorize repair.",
+  "models": {
+    "FeedbackRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "client_request_id": {
+          "format": "uuid",
+          "title": "Client Request Id",
+          "type": "string"
+        },
+        "expected_revision_id": {
+          "format": "uuid",
+          "title": "Expected Revision Id",
+          "type": "string"
+        },
+        "max_turns": {
+          "default": 20,
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Max Turns",
+          "type": "integer"
+        },
+        "message": {
+          "maxLength": 16000,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "timeout_seconds": {
+          "default": 600,
+          "maximum": 600,
+          "minimum": 10,
+          "title": "Timeout Seconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "client_request_id",
+        "expected_revision_id",
+        "message"
+      ],
+      "title": "FeedbackRequest",
+      "type": "object"
+    },
+    "PlannedCheckpoint": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "release_ticket",
+            "release_checklist",
+            "qa_notification",
+            "qa_owner"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "source_quote": {
+          "maxLength": 1000,
+          "title": "Source Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "description",
+        "source_quote"
+      ],
+      "title": "PlannedCheckpoint",
+      "type": "object"
+    },
+    "SourcedRequirement": {
+      "additionalProperties": false,
+      "properties": {
+        "source_quote": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Source Quote",
+          "type": "string"
+        },
+        "value": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value",
+        "source_quote"
+      ],
+      "title": "SourcedRequirement",
+      "type": "object"
+    },
+    "SupervisionOperation": {
+      "$defs": {
+        "Checkpoint": {
+          "additionalProperties": false,
+          "properties": {
+            "depends_on": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Depends On",
+              "type": "array"
+            },
+            "description": {
+              "minLength": 1,
+              "title": "Description",
+              "type": "string"
+            },
+            "evaluator_version": {
+              "minLength": 1,
+              "title": "Evaluator Version",
+              "type": "string"
+            },
+            "evidence_refs": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Evidence Refs",
+              "type": "array"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "scope": {
+              "minLength": 1,
+              "title": "Scope",
+              "type": "string"
+            },
+            "source_refs": {
+              "items": {
+                "$ref": "#/$defs/SourceReference"
+              },
+              "minItems": 1,
+              "title": "Source Refs",
+              "type": "array"
+            },
+            "status": {
+              "default": "pending",
+              "enum": [
+                "pending",
+                "verified",
+                "failed",
+                "blocked"
+              ],
+              "title": "Status",
+              "type": "string"
+            },
+            "uncertainty": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Uncertainty"
+            },
+            "verification_rule": {
+              "minLength": 1,
+              "title": "Verification Rule",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "description",
+            "source_refs",
+            "scope",
+            "verification_rule",
+            "evaluator_version"
+          ],
+          "title": "Checkpoint",
+          "type": "object"
+        },
+        "IntentRevision": {
+          "additionalProperties": false,
+          "properties": {
+            "created_at": {
+              "format": "date-time",
+              "title": "Created At",
+              "type": "string"
+            },
+            "feedback": {
+              "minLength": 1,
+              "title": "Feedback",
+              "type": "string"
+            },
+            "feedback_id": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Feedback Id"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "previous_revision_id": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Previous Revision Id"
+            },
+            "reason": {
+              "enum": [
+                "omitted_requirement",
+                "evaluation_mistake",
+                "new_preference"
+              ],
+              "title": "Reason",
+              "type": "string"
+            },
+            "retained_evidence_refs": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Retained Evidence Refs",
+              "type": "array"
+            },
+            "source_refs": {
+              "items": {
+                "$ref": "#/$defs/SourceReference"
+              },
+              "minItems": 1,
+              "title": "Source Refs",
+              "type": "array"
+            },
+            "task_id": {
+              "format": "uuid",
+              "title": "Task Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "task_id",
+            "feedback",
+            "reason",
+            "source_refs",
+            "created_at"
+          ],
+          "title": "IntentRevision",
+          "type": "object"
+        },
+        "PlannedCheckpoint": {
+          "additionalProperties": false,
+          "properties": {
+            "description": {
+              "maxLength": 500,
+              "minLength": 1,
+              "title": "Description",
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                "release_ticket",
+                "release_checklist",
+                "qa_notification",
+                "qa_owner"
+              ],
+              "title": "Kind",
+              "type": "string"
+            },
+            "source_quote": {
+              "maxLength": 1000,
+              "title": "Source Quote",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "description",
+            "source_quote"
+          ],
+          "title": "PlannedCheckpoint",
+          "type": "object"
+        },
+        "SourceReference": {
+          "additionalProperties": false,
+          "properties": {
+            "attribution": {
+              "enum": [
+                "explicit",
+                "inferred"
+              ],
+              "title": "Attribution",
+              "type": "string"
+            },
+            "excerpt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Excerpt"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                "user_request",
+                "user_feedback",
+                "document",
+                "tool_contract"
+              ],
+              "title": "Kind",
+              "type": "string"
+            },
+            "locator": {
+              "minLength": 1,
+              "title": "Locator",
+              "type": "string"
+            },
+            "version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Version"
+            }
+          },
+          "required": [
+            "id",
+            "kind",
+            "locator",
+            "attribution"
+          ],
+          "title": "SourceReference",
+          "type": "object"
+        },
+        "SourcedRequirement": {
+          "additionalProperties": false,
+          "properties": {
+            "source_quote": {
+              "maxLength": 1000,
+              "minLength": 1,
+              "title": "Source Quote",
+              "type": "string"
+            },
+            "value": {
+              "maxLength": 500,
+              "minLength": 1,
+              "title": "Value",
+              "type": "string"
+            }
+          },
+          "required": [
+            "value",
+            "source_quote"
+          ],
+          "title": "SourcedRequirement",
+          "type": "object"
+        },
+        "SupervisorIntervention": {
+          "additionalProperties": false,
+          "properties": {
+            "checkpoint_refs": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "minItems": 1,
+              "title": "Checkpoint Refs",
+              "type": "array"
+            },
+            "created_at": {
+              "format": "date-time",
+              "title": "Created At",
+              "type": "string"
+            },
+            "evidence_refs": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Evidence Refs",
+              "type": "array"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "instruction": {
+              "minLength": 1,
+              "title": "Instruction",
+              "type": "string"
+            },
+            "reason": {
+              "minLength": 1,
+              "title": "Reason",
+              "type": "string"
+            },
+            "run_id": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            },
+            "task_id": {
+              "format": "uuid",
+              "title": "Task Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "task_id",
+            "run_id",
+            "checkpoint_refs",
+            "instruction",
+            "reason",
+            "created_at"
+          ],
+          "title": "SupervisorIntervention",
+          "type": "object"
+        },
+        "SupervisorPlan": {
+          "additionalProperties": false,
+          "properties": {
+            "additional_checklist_items": {
+              "items": {
+                "$ref": "#/$defs/SourcedRequirement"
+              },
+              "maxItems": 20,
+              "title": "Additional Checklist Items",
+              "type": "array"
+            },
+            "checkpoints": {
+              "items": {
+                "$ref": "#/$defs/PlannedCheckpoint"
+              },
+              "maxItems": 4,
+              "title": "Checkpoints",
+              "type": "array"
+            },
+            "classification": {
+              "enum": [
+                "omitted_requirement",
+                "evaluation_mistake",
+                "new_preference"
+              ],
+              "title": "Classification",
+              "type": "string"
+            },
+            "instructions": {
+              "maxLength": 16000,
+              "minLength": 1,
+              "title": "Instructions",
+              "type": "string"
+            },
+            "outcome": {
+              "enum": [
+                "ready",
+                "needs_input",
+                "unsupported"
+              ],
+              "title": "Outcome",
+              "type": "string"
+            },
+            "questions": {
+              "items": {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 5,
+              "title": "Questions",
+              "type": "array"
+            },
+            "required_message_phrases": {
+              "items": {
+                "$ref": "#/$defs/SourcedRequirement"
+              },
+              "maxItems": 20,
+              "title": "Required Message Phrases",
+              "type": "array"
+            },
+            "summary": {
+              "maxLength": 16000,
+              "minLength": 1,
+              "title": "Summary",
+              "type": "string"
+            }
+          },
+          "required": [
+            "outcome",
+            "summary",
+            "instructions",
+            "checkpoints",
+            "additional_checklist_items",
+            "required_message_phrases",
+            "classification",
+            "questions"
+          ],
+          "title": "SupervisorPlan",
+          "type": "object"
+        },
+        "TaskBrief": {
+          "additionalProperties": false,
+          "properties": {
+            "checkpoints": {
+              "items": {
+                "$ref": "#/$defs/Checkpoint"
+              },
+              "minItems": 1,
+              "title": "Checkpoints",
+              "type": "array"
+            },
+            "clarification_requests": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Clarification Requests",
+              "type": "array"
+            },
+            "constraints": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Constraints",
+              "type": "array"
+            },
+            "created_at": {
+              "format": "date-time",
+              "title": "Created At",
+              "type": "string"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "instructions": {
+              "minLength": 1,
+              "title": "Instructions",
+              "type": "string"
+            },
+            "intent_revision_id": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Intent Revision Id"
+            },
+            "schema_version": {
+              "const": 1,
+              "default": 1,
+              "title": "Schema Version",
+              "type": "integer"
+            },
+            "task_id": {
+              "format": "uuid",
+              "title": "Task Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "task_id",
+            "instructions",
+            "checkpoints",
+            "created_at"
+          ],
+          "title": "TaskBrief",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "brief": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TaskBrief"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "client_request_id": {
+          "format": "uuid",
+          "title": "Client Request Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "criteria_after": {
+          "additionalProperties": true,
+          "title": "Criteria After",
+          "type": "object"
+        },
+        "criteria_before": {
+          "additionalProperties": true,
+          "title": "Criteria Before",
+          "type": "object"
+        },
+        "deadline_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Deadline At"
+        },
+        "debugger_calls": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Debugger Calls",
+          "type": "array"
+        },
+        "debugger_turns": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Debugger Turns",
+          "type": "integer"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "executor_passes": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Executor Passes",
+          "type": "array"
+        },
+        "executor_turns": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Executor Turns",
+          "type": "integer"
+        },
+        "final_response": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Final Response"
+        },
+        "finished_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Finished At"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "intent_revision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/IntentRevision"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "interventions": {
+          "items": {
+            "$ref": "#/$defs/SupervisorIntervention"
+          },
+          "title": "Interventions",
+          "type": "array"
+        },
+        "max_turns": {
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Max Turns",
+          "type": "integer"
+        },
+        "missing_evidence": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Missing Evidence",
+          "type": "array"
+        },
+        "plan": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SupervisorPlan"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "previous_revision_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Previous Revision Id"
+        },
+        "questions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Questions",
+          "type": "array"
+        },
+        "request": {
+          "additionalProperties": true,
+          "title": "Request",
+          "type": "object"
+        },
+        "started_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Started At"
+        },
+        "state_after": {
+          "additionalProperties": true,
+          "title": "State After",
+          "type": "object"
+        },
+        "state_before": {
+          "additionalProperties": true,
+          "title": "State Before",
+          "type": "object"
+        },
+        "status": {
+          "default": "planning",
+          "enum": [
+            "planning",
+            "running",
+            "verifying",
+            "completed",
+            "needs_input",
+            "blocked",
+            "failed",
+            "cancelled",
+            "interrupted"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "timeout_seconds": {
+          "maximum": 600,
+          "minimum": 10,
+          "title": "Timeout Seconds",
+          "type": "integer"
+        },
+        "trigger": {
+          "enum": [
+            "initial",
+            "feedback",
+            "clarification"
+          ],
+          "title": "Trigger",
+          "type": "string"
+        },
+        "turns_used": {
+          "default": 0,
+          "maximum": 20,
+          "minimum": 0,
+          "title": "Turns Used",
+          "type": "integer"
+        },
+        "user_input": {
+          "maxLength": 16000,
+          "minLength": 1,
+          "title": "User Input",
+          "type": "string"
+        },
+        "verification": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Verification"
+        },
+        "verification_before": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Verification Before"
+        }
+      },
+      "required": [
+        "id",
+        "client_request_id",
+        "trigger",
+        "user_input",
+        "request",
+        "created_at",
+        "max_turns",
+        "timeout_seconds"
+      ],
+      "title": "SupervisionOperation",
+      "type": "object"
+    },
+    "SupervisionState": {
+      "$defs": {
+        "Checkpoint": {
+          "additionalProperties": false,
+          "properties": {
+            "depends_on": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Depends On",
+              "type": "array"
+            },
+            "description": {
+              "minLength": 1,
+              "title": "Description",
+              "type": "string"
+            },
+            "evaluator_version": {
+              "minLength": 1,
+              "title": "Evaluator Version",
+              "type": "string"
+            },
+            "evidence_refs": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Evidence Refs",
+              "type": "array"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "scope": {
+              "minLength": 1,
+              "title": "Scope",
+              "type": "string"
+            },
+            "source_refs": {
+              "items": {
+                "$ref": "#/$defs/SourceReference"
+              },
+              "minItems": 1,
+              "title": "Source Refs",
+              "type": "array"
+            },
+            "status": {
+              "default": "pending",
+              "enum": [
+                "pending",
+                "verified",
+                "failed",
+                "blocked"
+              ],
+              "title": "Status",
+              "type": "string"
+            },
+            "uncertainty": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Uncertainty"
+            },
+            "verification_rule": {
+              "minLength": 1,
+              "title": "Verification Rule",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "description",
+            "source_refs",
+            "scope",
+            "verification_rule",
+            "evaluator_version"
+          ],
+          "title": "Checkpoint",
+          "type": "object"
+        },
+        "IntentRevision": {
+          "additionalProperties": false,
+          "properties": {
+            "created_at": {
+              "format": "date-time",
+              "title": "Created At",
+              "type": "string"
+            },
+            "feedback": {
+              "minLength": 1,
+              "title": "Feedback",
+              "type": "string"
+            },
+            "feedback_id": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Feedback Id"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "previous_revision_id": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Previous Revision Id"
+            },
+            "reason": {
+              "enum": [
+                "omitted_requirement",
+                "evaluation_mistake",
+                "new_preference"
+              ],
+              "title": "Reason",
+              "type": "string"
+            },
+            "retained_evidence_refs": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Retained Evidence Refs",
+              "type": "array"
+            },
+            "source_refs": {
+              "items": {
+                "$ref": "#/$defs/SourceReference"
+              },
+              "minItems": 1,
+              "title": "Source Refs",
+              "type": "array"
+            },
+            "task_id": {
+              "format": "uuid",
+              "title": "Task Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "task_id",
+            "feedback",
+            "reason",
+            "source_refs",
+            "created_at"
+          ],
+          "title": "IntentRevision",
+          "type": "object"
+        },
+        "PlannedCheckpoint": {
+          "additionalProperties": false,
+          "properties": {
+            "description": {
+              "maxLength": 500,
+              "minLength": 1,
+              "title": "Description",
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                "release_ticket",
+                "release_checklist",
+                "qa_notification",
+                "qa_owner"
+              ],
+              "title": "Kind",
+              "type": "string"
+            },
+            "source_quote": {
+              "maxLength": 1000,
+              "title": "Source Quote",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "description",
+            "source_quote"
+          ],
+          "title": "PlannedCheckpoint",
+          "type": "object"
+        },
+        "SourceReference": {
+          "additionalProperties": false,
+          "properties": {
+            "attribution": {
+              "enum": [
+                "explicit",
+                "inferred"
+              ],
+              "title": "Attribution",
+              "type": "string"
+            },
+            "excerpt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Excerpt"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                "user_request",
+                "user_feedback",
+                "document",
+                "tool_contract"
+              ],
+              "title": "Kind",
+              "type": "string"
+            },
+            "locator": {
+              "minLength": 1,
+              "title": "Locator",
+              "type": "string"
+            },
+            "version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Version"
+            }
+          },
+          "required": [
+            "id",
+            "kind",
+            "locator",
+            "attribution"
+          ],
+          "title": "SourceReference",
+          "type": "object"
+        },
+        "SourcedRequirement": {
+          "additionalProperties": false,
+          "properties": {
+            "source_quote": {
+              "maxLength": 1000,
+              "minLength": 1,
+              "title": "Source Quote",
+              "type": "string"
+            },
+            "value": {
+              "maxLength": 500,
+              "minLength": 1,
+              "title": "Value",
+              "type": "string"
+            }
+          },
+          "required": [
+            "value",
+            "source_quote"
+          ],
+          "title": "SourcedRequirement",
+          "type": "object"
+        },
+        "SupervisionOperation": {
+          "additionalProperties": false,
+          "properties": {
+            "brief": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/TaskBrief"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "client_request_id": {
+              "format": "uuid",
+              "title": "Client Request Id",
+              "type": "string"
+            },
+            "created_at": {
+              "format": "date-time",
+              "title": "Created At",
+              "type": "string"
+            },
+            "criteria_after": {
+              "additionalProperties": true,
+              "title": "Criteria After",
+              "type": "object"
+            },
+            "criteria_before": {
+              "additionalProperties": true,
+              "title": "Criteria Before",
+              "type": "object"
+            },
+            "deadline_at": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Deadline At"
+            },
+            "debugger_calls": {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "title": "Debugger Calls",
+              "type": "array"
+            },
+            "debugger_turns": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Debugger Turns",
+              "type": "integer"
+            },
+            "error": {
+              "anyOf": [
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Error"
+            },
+            "executor_passes": {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "title": "Executor Passes",
+              "type": "array"
+            },
+            "executor_turns": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Executor Turns",
+              "type": "integer"
+            },
+            "final_response": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Final Response"
+            },
+            "finished_at": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Finished At"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "intent_revision": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/IntentRevision"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "interventions": {
+              "items": {
+                "$ref": "#/$defs/SupervisorIntervention"
+              },
+              "title": "Interventions",
+              "type": "array"
+            },
+            "max_turns": {
+              "maximum": 20,
+              "minimum": 1,
+              "title": "Max Turns",
+              "type": "integer"
+            },
+            "missing_evidence": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Missing Evidence",
+              "type": "array"
+            },
+            "plan": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SupervisorPlan"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "previous_revision_id": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Previous Revision Id"
+            },
+            "questions": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Questions",
+              "type": "array"
+            },
+            "request": {
+              "additionalProperties": true,
+              "title": "Request",
+              "type": "object"
+            },
+            "started_at": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Started At"
+            },
+            "state_after": {
+              "additionalProperties": true,
+              "title": "State After",
+              "type": "object"
+            },
+            "state_before": {
+              "additionalProperties": true,
+              "title": "State Before",
+              "type": "object"
+            },
+            "status": {
+              "default": "planning",
+              "enum": [
+                "planning",
+                "running",
+                "verifying",
+                "completed",
+                "needs_input",
+                "blocked",
+                "failed",
+                "cancelled",
+                "interrupted"
+              ],
+              "title": "Status",
+              "type": "string"
+            },
+            "timeout_seconds": {
+              "maximum": 600,
+              "minimum": 10,
+              "title": "Timeout Seconds",
+              "type": "integer"
+            },
+            "trigger": {
+              "enum": [
+                "initial",
+                "feedback",
+                "clarification"
+              ],
+              "title": "Trigger",
+              "type": "string"
+            },
+            "turns_used": {
+              "default": 0,
+              "maximum": 20,
+              "minimum": 0,
+              "title": "Turns Used",
+              "type": "integer"
+            },
+            "user_input": {
+              "maxLength": 16000,
+              "minLength": 1,
+              "title": "User Input",
+              "type": "string"
+            },
+            "verification": {
+              "anyOf": [
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Verification"
+            },
+            "verification_before": {
+              "anyOf": [
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Verification Before"
+            }
+          },
+          "required": [
+            "id",
+            "client_request_id",
+            "trigger",
+            "user_input",
+            "request",
+            "created_at",
+            "max_turns",
+            "timeout_seconds"
+          ],
+          "title": "SupervisionOperation",
+          "type": "object"
+        },
+        "SupervisorIntervention": {
+          "additionalProperties": false,
+          "properties": {
+            "checkpoint_refs": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "minItems": 1,
+              "title": "Checkpoint Refs",
+              "type": "array"
+            },
+            "created_at": {
+              "format": "date-time",
+              "title": "Created At",
+              "type": "string"
+            },
+            "evidence_refs": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Evidence Refs",
+              "type": "array"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "instruction": {
+              "minLength": 1,
+              "title": "Instruction",
+              "type": "string"
+            },
+            "reason": {
+              "minLength": 1,
+              "title": "Reason",
+              "type": "string"
+            },
+            "run_id": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            },
+            "task_id": {
+              "format": "uuid",
+              "title": "Task Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "task_id",
+            "run_id",
+            "checkpoint_refs",
+            "instruction",
+            "reason",
+            "created_at"
+          ],
+          "title": "SupervisorIntervention",
+          "type": "object"
+        },
+        "SupervisorPlan": {
+          "additionalProperties": false,
+          "properties": {
+            "additional_checklist_items": {
+              "items": {
+                "$ref": "#/$defs/SourcedRequirement"
+              },
+              "maxItems": 20,
+              "title": "Additional Checklist Items",
+              "type": "array"
+            },
+            "checkpoints": {
+              "items": {
+                "$ref": "#/$defs/PlannedCheckpoint"
+              },
+              "maxItems": 4,
+              "title": "Checkpoints",
+              "type": "array"
+            },
+            "classification": {
+              "enum": [
+                "omitted_requirement",
+                "evaluation_mistake",
+                "new_preference"
+              ],
+              "title": "Classification",
+              "type": "string"
+            },
+            "instructions": {
+              "maxLength": 16000,
+              "minLength": 1,
+              "title": "Instructions",
+              "type": "string"
+            },
+            "outcome": {
+              "enum": [
+                "ready",
+                "needs_input",
+                "unsupported"
+              ],
+              "title": "Outcome",
+              "type": "string"
+            },
+            "questions": {
+              "items": {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 5,
+              "title": "Questions",
+              "type": "array"
+            },
+            "required_message_phrases": {
+              "items": {
+                "$ref": "#/$defs/SourcedRequirement"
+              },
+              "maxItems": 20,
+              "title": "Required Message Phrases",
+              "type": "array"
+            },
+            "summary": {
+              "maxLength": 16000,
+              "minLength": 1,
+              "title": "Summary",
+              "type": "string"
+            }
+          },
+          "required": [
+            "outcome",
+            "summary",
+            "instructions",
+            "checkpoints",
+            "additional_checklist_items",
+            "required_message_phrases",
+            "classification",
+            "questions"
+          ],
+          "title": "SupervisorPlan",
+          "type": "object"
+        },
+        "TaskBrief": {
+          "additionalProperties": false,
+          "properties": {
+            "checkpoints": {
+              "items": {
+                "$ref": "#/$defs/Checkpoint"
+              },
+              "minItems": 1,
+              "title": "Checkpoints",
+              "type": "array"
+            },
+            "clarification_requests": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Clarification Requests",
+              "type": "array"
+            },
+            "constraints": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Constraints",
+              "type": "array"
+            },
+            "created_at": {
+              "format": "date-time",
+              "title": "Created At",
+              "type": "string"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "instructions": {
+              "minLength": 1,
+              "title": "Instructions",
+              "type": "string"
+            },
+            "intent_revision_id": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Intent Revision Id"
+            },
+            "schema_version": {
+              "const": 1,
+              "default": 1,
+              "title": "Schema Version",
+              "type": "integer"
+            },
+            "task_id": {
+              "format": "uuid",
+              "title": "Task Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "task_id",
+            "instructions",
+            "checkpoints",
+            "created_at"
+          ],
+          "title": "TaskBrief",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "current_revision_id": {
+          "format": "uuid",
+          "title": "Current Revision Id",
+          "type": "string"
+        },
+        "debugger_model": {
+          "const": "gpt-5.6-luna",
+          "default": "gpt-5.6-luna",
+          "title": "Debugger Model",
+          "type": "string"
+        },
+        "operations": {
+          "items": {
+            "$ref": "#/$defs/SupervisionOperation"
+          },
+          "title": "Operations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "current_revision_id",
+        "operations"
+      ],
+      "title": "SupervisionState",
+      "type": "object"
+    },
+    "SupervisorDecision": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "continue",
+            "needs_input",
+            "environment_defect"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "instruction": {
+          "maxLength": 16000,
+          "title": "Instruction",
+          "type": "string"
+        },
+        "questions": {
+          "items": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 5,
+          "title": "Questions",
+          "type": "array"
+        },
+        "reason": {
+          "maxLength": 16000,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "action",
+        "reason",
+        "instruction",
+        "questions"
+      ],
+      "title": "SupervisorDecision",
+      "type": "object"
+    },
+    "SupervisorPlan": {
+      "$defs": {
+        "PlannedCheckpoint": {
+          "additionalProperties": false,
+          "properties": {
+            "description": {
+              "maxLength": 500,
+              "minLength": 1,
+              "title": "Description",
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                "release_ticket",
+                "release_checklist",
+                "qa_notification",
+                "qa_owner"
+              ],
+              "title": "Kind",
+              "type": "string"
+            },
+            "source_quote": {
+              "maxLength": 1000,
+              "title": "Source Quote",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "description",
+            "source_quote"
+          ],
+          "title": "PlannedCheckpoint",
+          "type": "object"
+        },
+        "SourcedRequirement": {
+          "additionalProperties": false,
+          "properties": {
+            "source_quote": {
+              "maxLength": 1000,
+              "minLength": 1,
+              "title": "Source Quote",
+              "type": "string"
+            },
+            "value": {
+              "maxLength": 500,
+              "minLength": 1,
+              "title": "Value",
+              "type": "string"
+            }
+          },
+          "required": [
+            "value",
+            "source_quote"
+          ],
+          "title": "SourcedRequirement",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "additional_checklist_items": {
+          "items": {
+            "$ref": "#/$defs/SourcedRequirement"
+          },
+          "maxItems": 20,
+          "title": "Additional Checklist Items",
+          "type": "array"
+        },
+        "checkpoints": {
+          "items": {
+            "$ref": "#/$defs/PlannedCheckpoint"
+          },
+          "maxItems": 4,
+          "title": "Checkpoints",
+          "type": "array"
+        },
+        "classification": {
+          "enum": [
+            "omitted_requirement",
+            "evaluation_mistake",
+            "new_preference"
+          ],
+          "title": "Classification",
+          "type": "string"
+        },
+        "instructions": {
+          "maxLength": 16000,
+          "minLength": 1,
+          "title": "Instructions",
+          "type": "string"
+        },
+        "outcome": {
+          "enum": [
+            "ready",
+            "needs_input",
+            "unsupported"
+          ],
+          "title": "Outcome",
+          "type": "string"
+        },
+        "questions": {
+          "items": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 5,
+          "title": "Questions",
+          "type": "array"
+        },
+        "required_message_phrases": {
+          "items": {
+            "$ref": "#/$defs/SourcedRequirement"
+          },
+          "maxItems": 20,
+          "title": "Required Message Phrases",
+          "type": "array"
+        },
+        "summary": {
+          "maxLength": 16000,
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "outcome",
+        "summary",
+        "instructions",
+        "checkpoints",
+        "additional_checklist_items",
+        "required_message_phrases",
+        "classification",
+        "questions"
+      ],
+      "title": "SupervisorPlan",
+      "type": "object"
+    }
+  },
+  "schema_version": 1
+}

@@ -46,7 +46,16 @@ def test_discovery_and_descriptions_expose_only_granted_business_operations(tmp_
 
 
 @pytest.mark.parametrize(
-    "forbidden", ["reset", "evaluate", "sandbox.metadata", "directory.lookup", "grants.update"]
+    "forbidden",
+    [
+        "reset",
+        "evaluate",
+        "sandbox.metadata",
+        "directory.lookup",
+        "grants.update",
+        "revise_requirements",
+        "requirements.revise",
+    ],
 )
 def test_administration_trusted_answers_and_missing_lookup_are_not_tools(sandbox, forbidden):
     registry = ToolRegistry(sandbox)

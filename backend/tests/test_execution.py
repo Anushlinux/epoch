@@ -7,7 +7,7 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from epoch_backend import hermes_bridge
+from epoch_backend import debugger_bridge, hermes_bridge
 from epoch_backend.app import create_app
 from epoch_backend.config import Settings
 from epoch_backend.execution import ExecutionError
@@ -18,6 +18,7 @@ from epoch_backend.tool_registry import ToolRegistry
 @pytest.fixture
 def configured(tmp_path, monkeypatch):
     monkeypatch.setattr(hermes_bridge, "detect_installation", lambda: {"available": True})
+    monkeypatch.setattr(debugger_bridge, "detect_debugger", lambda: {"available": False})
     return Settings(data_dir=tmp_path, enable_hermes=True, _env_file=None)
 
 

@@ -302,5 +302,5 @@ def test_release_notice_accepts_sentence_punctuation_but_not_other_versions(
     sandbox.send_message(metadata["qa_channel"], notice, [ticket["url"], checklist["url"]], "msg")
     verification = sandbox.evaluate()
     assert verification["passed"] is expected
-    assert verification["evaluator_version"] == "release-state-v2"
-    assert metadata["evaluator_version"] == "release-state-v2"
+    assert verification["evaluator_version"] == "release-state-v3"
+    assert metadata["evaluator_version"] == "release-state-v3"

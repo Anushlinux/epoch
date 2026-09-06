@@ -1,6 +1,6 @@
 # Backend implementation phases
 
-Status: Phases 1–3 complete; Phases 4–8 unstarted. Owner: Rajdeep. Anushrut owns the separate UI and can use the [published backend contracts](docs/FRONTEND_HANDOFF.md). See [setup](README.md) and [validation evidence](../docs/status.md#phases-2-and-3-validation-record).
+Status: Phases 1–4 complete; Phases 5–8 unstarted. Owner: Rajdeep. Anushrut owns the separate UI and can use the [published backend contracts](docs/FRONTEND_HANDOFF.md). This implementation changes no frontend files. See [setup](README.md) and the [Phase 4 validation record](../docs/status.md#phase-4-validation-record).
 
 All backend source, package configuration, tests, fixtures, development scripts, and runtime setup belong under `backend/`. Secrets and generated runtime data must not be committed. Shared repository instructions and product documentation remain at the repository root and under `docs/`.
 
@@ -48,9 +48,15 @@ Existing brief: [Task 02](../docs/tasks/02-local-environment.md).
 
 **Pass condition:** actual Hermes performs a control task and encounters the seeded adapter failure, with both outcomes visible in independent state checks and correlated traces. A mocked executor does not pass.
 
-Existing brief: the executor-integration part of [Task 03](../docs/tasks/03-executor-evidence.md). Task 03 is not complete until Phase 4 also passes.
+Existing brief: the executor-integration part of [Task 03](../docs/tasks/03-executor-evidence.md). Phase 4 below completes the supervision acceptance for Task 03.
 
 ## Phase 4 — Supervisor, checkpoints, and user feedback
+
+**Complete:** opt-in OpenAI `gpt-5.6-luna` planning/review, sourced release checkpoints, checks at meaningful events, same-session Hermes continuations, explicit feedback/clarification operations, durable revision history and backend-enforced budgets. The [actual acceptance harness](scripts/run_phase4_acceptance.py) passed omission recovery and a sourced feedback revision. The final local checks passed 264 tests, lint/format checks, contract-export checks and the actual no-model HTTP/restart smoke test; two upstream warnings remain. See the [saved supervision evidence](fixtures/supervision/README.md) and [validation record](../docs/status.md#phase-4-validation-record).
+
+Direct release execution remains the default. `--supervised` or API `supervised: true` enables the debugger while preserving the configured Hermes executor and recording supervisory instructions separately. Each initial, feedback or clarification operation shares **20 model-request turns / 600 seconds** across Luna and Hermes; explicit later feedback starts a new bounded operation. The debugger uses an OpenAI API key when configured, otherwise the observed existing Hermes Codex route, with no model substitution. [DEBUGGER_SETUP.md](docs/DEBUGGER_SETUP.md) records the exact route and limitations.
+
+Supported revisions add user-sourced checklist items or exact QA-message phrases, reuse existing objects, retain earlier requirements and preserve prior outcomes. Removing/replacing requirements or requesting unsupported criteria is not silently accepted. Trusted evaluator code remains outside model control. Phase 4 does not repair tools/context, publish environment versions or alter the frontend.
 
 - Convert a user request into an enhanced brief and sourced, verifiable checkpoints. Preserve explicit constraints and surface material ambiguity.
 - Evaluate progress at meaningful execution events. For an omitted step, issue a bounded targeted continuation to Hermes that reuses completed work.
@@ -58,6 +64,8 @@ Existing brief: the executor-integration part of [Task 03](../docs/tasks/03-exec
 - Enforce continuation/time limits, handle interruption and needs-input states, and keep checkpoint pass decisions in trusted evaluation code.
 
 **Pass condition:** a deliberately omitted step is completed after a recorded supervisor instruction; a user-feedback revision updates the result without duplicating completed effects or silently weakening criteria. This demonstrates supervision, not persistent environment learning.
+
+**Demonstrated:** the initial operation used 15 shared turns (2 Luna / 13 Hermes), one targeted intervention and two passes in the same Hermes session to satisfy all three original checks. Feedback used 7 shared turns (1 Luna / 6 Hermes), added `Security review complete` to the checklist and `QA sign-off required` to the QA message, and passed all four revised checks. Exactly one ticket, checklist and message remained, with the same object IDs; earlier operation data stayed unchanged and an identical feedback retry created no new operation. The earlier provider-stream failure is retained separately. Task 03's Phase 4 pass condition is met; environment repair remains Phase 5.
 
 Existing brief: the supervision part of [Task 03](../docs/tasks/03-executor-evidence.md).
 
@@ -106,4 +114,4 @@ Existing brief: [Task 07](../docs/tasks/07-demo-evidence.md).
 
 ## Phase handoff
 
-For every phase report: implemented scope, changed files, exact checks and outcomes, evidence locations, known limitations, and whether its pass condition is met. Keep user-task success, isolated verification, and persistent-learning claims separate. The next implementation request should name Phase 4 or another explicitly assigned scope; no later phase has started.
+For every phase report: implemented scope, changed files, exact checks and outcomes, evidence locations, known limitations, and whether its pass condition is met. Keep user-task success, isolated verification, and persistent-learning claims separate. Report Phase 4's completed evidence before any push, as requested by the user. Phase 5 or another later phase requires a separate explicit implementation request; no later phase has started.

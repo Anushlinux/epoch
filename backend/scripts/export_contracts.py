@@ -7,6 +7,7 @@ from uuid import UUID
 
 from epoch_backend import contracts as c
 from epoch_backend import execution_contracts as execution
+from epoch_backend import supervision_contracts as supervision
 
 BACKEND = Path(__file__).resolve().parents[1]
 STAMP = "2026-09-06T10:00:00Z"
@@ -184,7 +185,8 @@ def documents() -> dict[Path, dict]:
         BACKEND / "contracts" / "execution-schemas.json": {
             "schema_version": 1,
             "description": (
-                "Implemented Phase 3 run and trace interfaces. No automatic supervision."
+                "Implemented Phase 4 run, trace and opt-in OpenAI supervision interfaces. "
+                "Environment repair is not implemented."
             ),
             "models": {
                 name: value.model_json_schema()
@@ -192,6 +194,20 @@ def documents() -> dict[Path, dict]:
                 if isinstance(value, type)
                 and issubclass(value, c.Contract)
                 and value.__module__ == execution.__name__
+            },
+        },
+        BACKEND / "contracts" / "supervision-schemas.json": {
+            "schema_version": 1,
+            "description": (
+                "Implemented Phase 4 debugger decisions, feedback requests and revision history. "
+                "Trusted checks determine completion; model output does not authorize repair."
+            ),
+            "models": {
+                name: value.model_json_schema()
+                for name, value in vars(supervision).items()
+                if isinstance(value, type)
+                and issubclass(value, c.Contract)
+                and value.__module__ == supervision.__name__
             },
         },
         BACKEND / "contracts" / "schemas.json": {

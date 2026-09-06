@@ -171,117 +171,315 @@ def probe_tools(
     )
 
 
+class Session:
+    """One private Hermes child, with an externally admitted provider-request budget.
+
+    Conversation messages stay in child memory. ``before_model_request`` is called
+    with no arguments before each provider request and can raise to deny admission.
+    The caller uses it to share a budget with debugger calls. The child cannot send
+    the request until this parent acknowledges it through stdin.
+    """
+
+    def __init__(
+        self,
+        request: dict[str, Any],
+        on_event: Callable[[dict], None],
+        cancel_event: threading.Event,
+        before_model_request: Callable[[], None] | None = None,
+    ):
+        self.request = dict(request)
+        self.on_event = on_event
+        self.cancel_event = cancel_event
+        self.before_model_request = before_model_request
+        self.process: subprocess.Popen[str] | None = None
+        self.reader: threading.Thread | None = None
+        self.output: queue.Queue[str | None] = queue.Queue()
+        self.baseline: dict = {}
+        self.turns_used = 0
+        self.max_turns = request.get("max_turns", 20)
+        self.timeout_seconds = request.get("timeout_seconds", 600)
+        self.deadline = time.monotonic() + (
+            self.timeout_seconds if type(self.timeout_seconds) is int else 0
+        )
+        self.closed = False
+        self.segment = 0
+
+    def __enter__(self) -> Session:
+        return self
+
+    def __exit__(self, *_: Any) -> None:
+        self.close()
+
+    def _failure(self, code: str, message: str, segment_start: int = 0) -> dict:
+        return {
+            **_failure(code, message, self.baseline),
+            "turns_used": self.turns_used - segment_start,
+            "session_turns_used": self.turns_used,
+        }
+
+    def _launch(self) -> dict | None:
+        if self.cancel_event.is_set():
+            return self._failure("cancelled", "Execution cancelled before startup")
+        installation = detect_installation()
+        if not installation.get("available"):
+            return self._failure(
+                "hermes_unavailable", str(installation.get("error", "Hermes unconfigured"))
+            )
+        if type(self.timeout_seconds) is not int or not 1 <= self.timeout_seconds <= 600:
+            return self._failure(
+                "invalid_limits", "timeout_seconds must be an integer from 1 to 600"
+            )
+        if type(self.max_turns) is not int or not 1 <= self.max_turns <= 20:
+            return self._failure("invalid_limits", "max_turns must be an integer from 1 to 20")
+        work = Path(self.request["work_dir"]).resolve()
+        work.mkdir(parents=True, exist_ok=True)
+        isolated_home = work / "hermes-home"
+        if isolated_home.exists():
+            return self._failure(
+                "used_workspace", "Use a fresh run directory to prevent memory reuse"
+            )
+        isolated_home.mkdir()
+        payload = {
+            **self.request,
+            "timeout_seconds": self.timeout_seconds,
+            "max_turns": self.max_turns,
+            "installation": installation,
+            "isolated_home": str(isolated_home),
+            "session_mode": True,
+        }
+        request_path = work / "executor-request.json"
+        request_path.write_text(json.dumps(payload), encoding="utf-8")
+        environment = {key: value for key, value in os.environ.items() if key.upper() in _SAFE_ENV}
+        environment.update(
+            {
+                "HERMES_HOME": "hermes-home",
+                "TERMINAL_CWD": str(Path(__file__).resolve().parents[2]),
+                "PYTHONIOENCODING": "utf-8",
+                "PYTHONDONTWRITEBYTECODE": "1",
+                "HERMES_ENABLE_PROJECT_PLUGINS": "0",
+                "HERMES_INTERACTIVE": "0",
+                "HERMES_TELEMETRY_ENABLED": "false",
+                "HERMES_STREAM_RETRIES": "0",
+            }
+        )
+        self.process = subprocess.Popen(
+            [installation["python"], str(Path(__file__).resolve()), "--worker", str(request_path)],
+            cwd=work,
+            env=environment,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            **_process_options(),
+        )
+
+        def read_output() -> None:
+            assert self.process is not None and self.process.stdout is not None
+            try:
+                for line in self.process.stdout:
+                    if line.startswith(_PREFIX):
+                        self.output.put(line[len(_PREFIX) :])
+            finally:
+                self.output.put(None)
+
+        self.reader = threading.Thread(target=read_output, daemon=True)
+        self.reader.start()
+        return None
+
+    def _send(self, data: dict) -> None:
+        assert self.process is not None and self.process.stdin is not None
+        self.process.stdin.write(json.dumps(data) + "\n")
+        self.process.stdin.flush()
+
+    def run(
+        self,
+        instruction: str,
+        max_turns: int | None = None,
+        timeout_seconds: int | None = None,
+    ) -> dict[str, Any]:
+        """Continue the same agent/history with a smaller remaining allowance."""
+        started = self.turns_used
+        if self.closed:
+            return self._failure("session_closed", "Executor session is closed", started)
+        if self.process is None:
+            failure = self._launch()
+            if failure:
+                self.close()
+                return failure
+        if self.turns_used >= self.max_turns:
+            self.close()
+            return self._failure("turn_limit", "Executor session allowance exhausted", started)
+        turns = self.max_turns - self.turns_used if max_turns is None else max_turns
+        seconds = self.timeout_seconds if timeout_seconds is None else timeout_seconds
+        if type(turns) is not int or not 1 <= turns <= 20:
+            self.close()
+            return self._failure(
+                "invalid_limits", "max_turns must be an integer from 1 to 20", started
+            )
+        if type(seconds) is not int or not 1 <= seconds <= 600:
+            self.close()
+            return self._failure(
+                "invalid_limits", "timeout_seconds must be an integer from 1 to 600", started
+            )
+        deadline = min(self.deadline, time.monotonic() + seconds)
+        turn_ceiling = min(self.max_turns, started + turns)
+        self.segment += 1
+        try:
+            self._send(
+                {
+                    "command": "run",
+                    "instruction": instruction,
+                    "max_turns": turns,
+                    "timeout_seconds": seconds,
+                    "segment": self.segment,
+                }
+            )
+            while True:
+                if self.cancel_event.is_set():
+                    self.close()
+                    return self._failure(
+                        "cancelled", "Execution cancelled; inspect state before retry", started
+                    )
+                if time.monotonic() >= deadline:
+                    self.close()
+                    return self._failure(
+                        "timeout",
+                        "Executor time limit reached; inspect state before retry",
+                        started,
+                    )
+                try:
+                    line = self.output.get(timeout=0.05)
+                except queue.Empty:
+                    continue
+                if line is None:
+                    self.close()
+                    return self._failure(
+                        "executor_failed", "Hermes exited without a result", started
+                    )
+                try:
+                    item = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if item.get("kind") == "result":
+                    result = item["data"]
+                    self.baseline = result.get("baseline", self.baseline)
+                    return {
+                        **result,
+                        "turns_used": self.turns_used - started,
+                        "session_turns_used": self.turns_used,
+                    }
+                if item.get("kind") == "request_admission":
+                    if self.turns_used >= turn_ceiling:
+                        self.close()
+                        return self._failure(
+                            "turn_limit", "Executor request allowance exhausted", started
+                        )
+                    if self.before_model_request is not None:
+                        try:
+                            self.before_model_request()
+                        except Exception:
+                            self.close()
+                            return self._failure(
+                                "budget_exhausted",
+                                "Shared model request budget denied admission",
+                                started,
+                            )
+                    self.turns_used += 1
+                    self.on_event(
+                        {
+                            "type": "executor.model_request",
+                            "data": {
+                                "segment": self.segment,
+                                "turn": self.turns_used,
+                                "segment_turn": self.turns_used - started,
+                            },
+                        }
+                    )
+                    if self.cancel_event.is_set() or time.monotonic() >= deadline:
+                        self.close()
+                        return self._failure(
+                            "cancelled" if self.cancel_event.is_set() else "timeout",
+                            "Execution stopped before provider request dispatch",
+                            started,
+                        )
+                    self._send({"command": "admit", "request": item["data"]["request"]})
+                elif item.get("kind") == "event":
+                    event = item["data"]
+                    if event.get("type") == "executor.baseline":
+                        self.baseline = event["data"]
+                    self.on_event(event)
+        except (OSError, ValueError, KeyError):
+            self.close()
+            return self._failure(
+                "protocol_error", "Executor protocol failed; inspect state before retry", started
+            )
+
+    def close(self) -> None:
+        if self.closed:
+            return
+        self.closed = True
+        if self.process is not None:
+            # Do not wait for another model/tool action. Closing a completed session
+            # allows cleanup; a running process is killed with its MCP descendants.
+            _terminate(self.process)
+            if self.process.stdin:
+                try:
+                    self.process.stdin.close()
+                except OSError:
+                    pass
+            if self.reader:
+                self.reader.join(timeout=1)
+            if self.process.stdout:
+                self.process.stdout.close()
+
+
 def execute(
     request: dict[str, Any],
     on_event: Callable[[dict], None],
     cancel_event: threading.Event,
 ) -> dict[str, Any]:
-    """Run one pre-authored brief, streaming observable events and bounding wall time.
+    """Execute one brief through the same bounded session used for continuations."""
+    with Session(request, on_event, cancel_event) as session:
+        return session.run(request.get("brief", ""))
 
-    ``success`` describes executor completion only. Independent state evaluation is
-    the caller's responsibility. Callers must supply trusted process arguments.
+
+def _install_request_gate(admit: Callable[[], None]) -> Callable[[], None]:
+    """Instrument HTTPX transport before imports; retain no request body or headers.
+
+    Hermes retry and exhausted-budget summary paths do not all emit step_callback.
+    The gate therefore sits immediately before HTTP dispatch, including SDK retries.
+    It changes no installed Hermes code or model instructions.
     """
-    if cancel_event.is_set():
-        return _failure("cancelled", "Execution cancelled before startup")
-    installation = detect_installation()
-    if not installation.get("available"):
-        return _failure("hermes_unavailable", str(installation.get("error", "Hermes unconfigured")))
-    timeout = request.get("timeout_seconds", 180)
-    turns = request.get("max_turns", 12)
-    if isinstance(timeout, bool) or not isinstance(timeout, int) or not 1 <= timeout <= 600:
-        return _failure("invalid_limits", "timeout_seconds must be an integer from 1 to 600")
-    if isinstance(turns, bool) or not isinstance(turns, int) or not 1 <= turns <= 30:
-        return _failure("invalid_limits", "max_turns must be an integer from 1 to 30")
-    work = Path(request["work_dir"]).resolve()
-    work.mkdir(parents=True, exist_ok=True)
-    isolated_home = work / "hermes-home"
-    if isolated_home.exists():
-        return _failure("used_workspace", "Use a fresh run directory to prevent memory reuse")
-    isolated_home.mkdir()
-    payload = {
-        **request,
-        "timeout_seconds": timeout,
-        "max_turns": turns,
-        "installation": installation,
-        "isolated_home": str(isolated_home),
-    }
-    request_path = work / "executor-request.json"
-    request_path.write_text(json.dumps(payload), encoding="utf-8")
-    environment = {key: value for key, value in os.environ.items() if key.upper() in _SAFE_ENV}
-    environment.update(
-        {
-            # Hermes preserves relative home paths. The OS cwd remains this run's
-            # work directory, so storage is fresh while profile wording is stable.
-            "HERMES_HOME": "hermes-home",
-            "TERMINAL_CWD": str(Path(__file__).resolve().parents[2]),
-            "PYTHONIOENCODING": "utf-8",
-            "PYTHONDONTWRITEBYTECODE": "1",
-            "HERMES_ENABLE_PROJECT_PLUGINS": "0",
-            "HERMES_INTERACTIVE": "0",
-            "HERMES_TELEMETRY_ENABLED": "false",
-        }
-    )
-    process = subprocess.Popen(
-        [installation["python"], str(Path(__file__).resolve()), "--worker", str(request_path)],
-        cwd=work,
-        env=environment,
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        **_process_options(),
-    )
-    output: queue.Queue[str | None] = queue.Queue()
+    import httpx
 
-    def read_output() -> None:
-        assert process.stdout is not None
-        try:
-            for line in process.stdout:
-                if line.startswith(_PREFIX):
-                    output.put(line[len(_PREFIX) :])
-        finally:
-            output.put(None)
+    original_send = httpx.Client.send
+    original_async_send = httpx.AsyncClient.send
 
-    reader = threading.Thread(target=read_output, daemon=True)
-    reader.start()
-    deadline = time.monotonic() + timeout
-    baseline: dict = {}
-    result = None
-    try:
-        while True:
-            if cancel_event.is_set():
-                return _failure(
-                    "cancelled", "Execution cancelled; inspect state before retry", baseline
-                )
-            if time.monotonic() >= deadline:
-                return _failure(
-                    "timeout", "Executor time limit reached; inspect state before retry", baseline
-                )
-            try:
-                line = output.get(timeout=0.1)
-            except queue.Empty:
-                continue
-            if line is None:
-                break
-            try:
-                item = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if item.get("kind") == "result":
-                result = item["data"]
-            elif item.get("kind") == "event":
-                event = item["data"]
-                if event.get("type") == "executor.baseline":
-                    baseline = event["data"]
-                on_event(event)
-        return result or _failure("executor_failed", "Hermes exited without a result", baseline)
-    finally:
-        _terminate(process)
-        if process.stdout:
-            process.stdout.close()
-        reader.join(timeout=1)
+    def needs_admission(request: Any) -> bool:
+        return request.method.upper() == "POST" and request.url.path.rstrip("/").endswith(
+            ("/responses", "/chat/completions", "/messages", "/completions")
+        )
+
+    def send(client: Any, request: Any, *args: Any, **kwargs: Any) -> Any:
+        if needs_admission(request):
+            admit()
+        return original_send(client, request, *args, **kwargs)
+
+    async def async_send(client: Any, request: Any, *args: Any, **kwargs: Any) -> Any:
+        if needs_admission(request):
+            admit()
+        return await original_async_send(client, request, *args, **kwargs)
+
+    httpx.Client.send = send
+    httpx.AsyncClient.send = async_send
+
+    def restore() -> None:
+        httpx.Client.send = original_send
+        httpx.AsyncClient.send = original_async_send
+
+    return restore
 
 
 def _read_model(home: Path) -> tuple[dict, dict]:
@@ -382,6 +580,43 @@ def _worker(request: dict) -> int:
     agent = None
     baseline: dict = {}
     observed_prompt_hashes: set[str] = set()
+    restore_gate: Callable[[], None] | None = None
+    request_lock = threading.Lock()
+    requests_sent = 0
+    active_segment = False
+    segment_allowance = 0
+    segment_requests = 0
+    session_deadline = time.monotonic() + request.get("timeout_seconds", 600)
+    segment_deadline = session_deadline
+
+    def admit_request() -> None:
+        nonlocal requests_sent, segment_requests
+        with request_lock:
+            if not active_segment:
+                raise ValueError("Provider request outside an admitted conversation")
+            if time.monotonic() >= min(session_deadline, segment_deadline):
+                raise ValueError("Executor wall-clock allowance exhausted")
+            if segment_requests >= segment_allowance or requests_sent >= request["max_turns"]:
+                raise ValueError("Executor provider-request allowance exhausted")
+            if baseline:
+                if _digest(getattr(agent, "tools", [])) != baseline["discovery_sha256"]:
+                    raise ValueError("Hermes discovery changed before provider request")
+                prompt = getattr(agent, "_cached_system_prompt", None)
+                expected = baseline.get("system_prompt_initial_sha256")
+                if expected and _digest(prompt) != expected:
+                    raise ValueError("Hermes system prompt changed before provider request")
+            if request.get("session_mode"):
+                emit("request_admission", {"request": requests_sent + 1})
+                line = sys.stdin.readline()
+                if not line:
+                    raise ValueError("Parent closed the provider request gate")
+                admission = json.loads(line)
+                if admission != {"command": "admit", "request": requests_sent + 1}:
+                    raise ValueError("Invalid provider request admission")
+            if time.monotonic() >= min(session_deadline, segment_deadline):
+                raise ValueError("Executor allowance expired while awaiting admission")
+            requests_sent += 1
+            segment_requests += 1
 
     def on_step(step: int, _: Any) -> None:
         prompt = getattr(agent, "_cached_system_prompt", None)
@@ -460,6 +695,7 @@ def _worker(request: dict) -> int:
             "platform_toolsets": {"cli": ["mcp-epoch"]},
             "agent": {
                 "max_turns": request["max_turns"],
+                "api_max_retries": 1,
                 "coding_context": "off",
                 **inference_options,
             },
@@ -473,6 +709,7 @@ def _worker(request: dict) -> int:
             (isolated_home / name).mkdir()
         sys.path.insert(0, str(checkout))
         logging.disable(logging.CRITICAL)
+        restore_gate = _install_request_gate(admit_request)
         from run_agent import AIAgent
         from tools.mcp_tool_discovery import discover_mcp_tools
 
@@ -572,53 +809,136 @@ def _worker(request: dict) -> int:
             "bridge_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         }
         event("executor.baseline", **baseline)
-        result = agent.run_conversation(request["brief"], task_id=request["task_id"])
-        prompt = getattr(agent, "_cached_system_prompt", None)
-        baseline["system_prompt_sha256"] = _digest(prompt) if prompt is not None else None
-        baseline["system_prompt_unchanged"] = bool(observed_prompt_hashes) and (
-            observed_prompt_hashes == {baseline["system_prompt_sha256"]}
-        )
-        static_prompt = getattr(agent, "_cached_system_prompt_static", None)
-        baseline["system_prompt_static_sha256"] = (
-            _digest(static_prompt) if static_prompt is not None else None
-        )
-        baseline["implementation_unchanged"] = (
-            _source_baseline(checkout)["implementation_sha256"] == baseline["implementation_sha256"]
-        )
-        baseline["user_settings_unchanged"] = _settings_identity(source_home) == settings_before
-        missing = (
-            [] if prompt is not None else ["Hermes did not expose the effective system prompt"]
-        )
-        if not observed_prompt_hashes:
-            missing.append("No pre-inference step callback captured the initial system prompt")
-        final = str(result.get("final_response") or "")
-        success = bool(result.get("completed", False)) and not result.get("failed")
-        if not baseline["implementation_unchanged"]:
-            success = False
-            missing.append("Hermes implementation changed during the run")
-        if not baseline["user_settings_unchanged"]:
-            success = False
-            missing.append("User Hermes settings changed concurrently during the run")
-        if observed_prompt_hashes and not baseline["system_prompt_unchanged"]:
-            success = False
-            missing.append("Effective system prompt changed during the run")
-        event("executor.baseline", **baseline)
-        if final:
-            event("executor.message", content=final, final=True)
-        outcome = {
-            "success": success,
-            "final_response": final,
-            "baseline": baseline,
-            "missing_evidence": missing,
-            "api_calls": result.get("api_calls"),
-        }
-        if not success:
-            outcome["error"] = {
-                "code": "executor_incomplete",
-                "message": "Hermes did not complete its conversation",
+        history = None
+        segment_number = 0
+        while True:
+            if request.get("session_mode"):
+                line = sys.stdin.readline()
+                if not line:
+                    return 0
+                command = json.loads(line)
+                if command.get("command") == "close":
+                    return 0
+                if command.get("command") != "run":
+                    raise ValueError("Expected a conversation command")
+            else:
+                command = {
+                    "instruction": request["brief"],
+                    "max_turns": request["max_turns"],
+                    "timeout_seconds": request["timeout_seconds"],
+                }
+            segment_number += 1
+            segment_allowance = command.get("max_turns")
+            seconds = command.get("timeout_seconds")
+            if type(segment_allowance) is not int or not 1 <= segment_allowance <= 20:
+                raise ValueError("Invalid continuation turn allowance")
+            if type(seconds) is not int or not 1 <= seconds <= 600:
+                raise ValueError("Invalid continuation time allowance")
+            instruction = command.get("instruction")
+            if not isinstance(instruction, str) or not instruction.strip():
+                raise ValueError("Continuation requires an instruction")
+            if segment_number > 1 and history is None:
+                raise ValueError("Hermes did not retain conversation history for continuation")
+            if (
+                _source_baseline(checkout)["implementation_sha256"]
+                != baseline["implementation_sha256"]
+            ):
+                raise ValueError("Hermes implementation changed before continuation")
+            if _settings_identity(source_home) != settings_before:
+                raise ValueError("User Hermes settings changed before continuation")
+            if _digest(getattr(agent, "tools", [])) != baseline["discovery_sha256"]:
+                raise ValueError("Hermes discovery changed before continuation")
+            segment_deadline = min(session_deadline, time.monotonic() + seconds)
+            segment_requests = 0
+            agent.max_iterations = segment_allowance
+            agent.run_budget_seconds = max(0.01, segment_deadline - time.monotonic())
+            event(
+                "executor.segment_started",
+                segment=segment_number,
+                continuation=segment_number > 1,
+                instruction_sha256=hashlib.sha256(instruction.encode()).hexdigest(),
+            )
+            active_segment = True
+            try:
+                kwargs = {"task_id": request["task_id"]}
+                if history is not None:
+                    kwargs["conversation_history"] = history
+                result = agent.run_conversation(instruction, **kwargs)
+            finally:
+                active_segment = False
+            # This is the only copy of the full conversation; never serialize it to
+            # the parent, API events, debugger context, request files or evidence.
+            history = result.get("messages")
+            if not isinstance(history, list):
+                history = None
+            prompt = getattr(agent, "_cached_system_prompt", None)
+            baseline["system_prompt_sha256"] = _digest(prompt) if prompt is not None else None
+            baseline["system_prompt_unchanged"] = bool(observed_prompt_hashes) and (
+                observed_prompt_hashes == {baseline["system_prompt_sha256"]}
+            )
+            static_prompt = getattr(agent, "_cached_system_prompt_static", None)
+            static_fingerprint = _digest(static_prompt) if static_prompt is not None else None
+            if "system_prompt_static_sha256" not in baseline:
+                baseline["system_prompt_static_sha256"] = static_fingerprint
+            baseline["system_prompt_static_unchanged"] = (
+                static_fingerprint == baseline["system_prompt_static_sha256"]
+            )
+            baseline["implementation_unchanged"] = (
+                _source_baseline(checkout)["implementation_sha256"]
+                == baseline["implementation_sha256"]
+            )
+            baseline["user_settings_unchanged"] = _settings_identity(source_home) == settings_before
+            baseline["discovery_unchanged"] = (
+                _digest(getattr(agent, "tools", [])) == baseline["discovery_sha256"]
+            )
+            baseline["request_gate"] = "parent_ack_before_httpx_model_request"
+            baseline["api_max_retries"] = 1
+            baseline["stream_retries"] = 0
+            missing = (
+                [] if prompt is not None else ["Hermes did not expose the effective system prompt"]
+            )
+            if not observed_prompt_hashes:
+                missing.append("No pre-inference step callback captured the initial system prompt")
+            final = str(result.get("final_response") or "")
+            success = bool(result.get("completed", False)) and not result.get("failed")
+            invariants = {
+                "implementation_unchanged": "Hermes implementation changed during the session",
+                "user_settings_unchanged": (
+                    "User Hermes settings changed concurrently during the session"
+                ),
+                "system_prompt_unchanged": "Effective system prompt changed during the session",
+                "system_prompt_static_unchanged": "Static system prompt changed during the session",
+                "discovery_unchanged": "Hermes discovery changed during the session",
             }
-        emit("result", outcome)
-        return 0
+            for key, message in invariants.items():
+                if not baseline[key]:
+                    success = False
+                    missing.append(message)
+            event("executor.baseline", **baseline)
+            if final:
+                event("executor.message", content=final, final=True)
+            outcome = {
+                "success": success,
+                "final_response": final,
+                "baseline": dict(baseline),
+                "missing_evidence": missing,
+                "api_calls": result.get("api_calls"),
+                "turns_used": segment_requests,
+                "session_turns_used": requests_sent,
+                "history_retained": history is not None,
+                "segment": segment_number,
+            }
+            if not success:
+                outcome["error"] = {
+                    "code": "executor_incomplete",
+                    "message": "Hermes did not complete its conversation",
+                }
+            emit("result", outcome)
+            if not request.get("session_mode"):
+                return 0
+            if missing:
+                return 1
+
     except Exception as exc:
         # Known configuration failures are ours; external exceptions may contain secrets.
         message = (
@@ -628,6 +948,8 @@ def _worker(request: dict) -> int:
         emit("result", _failure("bridge_error", message, baseline))
         return 1
     finally:
+        if restore_gate is not None:
+            restore_gate()
         if agent is not None:
             try:
                 agent.close()
