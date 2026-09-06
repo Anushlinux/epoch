@@ -1,61 +1,227 @@
-import { IntakeWorkspace } from './intake-api.mjs';
-const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const $ = (selector) => document.querySelector(selector);
-let draft = { message: '', project: 'demo' };
-let lastSubmission = 'idle';
+import { IntakeWorkspace } from "./intake-api.mjs";
+import {
+  $,
+  escape,
+  icon,
+  badge,
+  empty,
+  welcome,
+  shell,
+  pipeline,
+  stageNames,
+  currentPage,
+  urlFor,
+  routeLink,
+  View,
+  installNavigation,
+  installInspector,
+} from "./ui.mjs";
+
+const root = $("#intake");
+const view = new View(root);
+const inspect = installInspector();
+let draft = { message: "", project: "demo" };
+let settings = false;
+let lastSubmission = "idle";
+let selected = new URLSearchParams(location.search).get("task") || "";
 let storage;
-try { storage = window.sessionStorage; } catch { storage = { getItem() { throw new Error('Storage unavailable'); } }; }
-const workspace = new IntakeWorkspace({ storage, onChange: render });
-if (workspace.state.pending) draft = { message: workspace.state.pending.payload.message, project: workspace.state.pending.payload.project_id };
-const stamp = (date) => new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(date));
-function render(state = workspace.state) {
-  const focus = document.activeElement?.id;
-  if (state.submission === 'saved' && lastSubmission !== 'saved') draft.message = '';
-  lastSubmission = state.submission;
-  const locked = state.busy || !!state.pending || state.recovery;
-  $('#intake').innerHTML = `
-    <aside class="intake-rail"><a class="intake-brand" href="./index.html"><img src="./mark.svg" alt="" width="29" height="29" /> Epoch</a>
-      <nav aria-label="Workspace"><a href="./index.html" aria-current="page">Saved tasks</a><a href="./fixtures.html">Future workflow · fixtures</a></nav>
-      <div class="intake-rail-note"><strong>Local workspace</strong><p>Task intake & storage<br>Phase 1</p><a href="./README.md">Setup & evidence</a></div>
-    </aside>
-    <main id="workspace" class="intake-main" tabindex="-1">
-      <header class="intake-header"><div><h1>Saved tasks</h1><p>Capture the request. Keep the original intent.</p></div><span class="intake-status">${state.connected ? 'Connected · local API' : 'Not connected'}</span></header>
-      <section class="intake-boundary" aria-labelledby="phase-heading"><div><h2 id="phase-heading">Requests are saved. Execution is not enabled.</h2><p>Phase 1 stores tasks as pending. Checkpoints, activity, feedback and repairs are not available for these tasks.</p></div><a href="./fixtures.html">Explore labeled fixtures</a></section>
-      <details class="intake-connection" ${!state.connected ? 'open' : ''}><summary>Local API connection <span>${escape(state.origin)}</span></summary>
-        <form id="connection-form"><div><label for="api-origin">API origin</label><input id="api-origin" type="url" required value="${escape(state.origin)}" ${state.busy || state.pending ? 'disabled' : ''} /><p id="cors-help">The backend must allow this browser origin: <code>${escape(location.origin)}</code>. No credentials are used.</p></div><button id="connect" ${state.busy ? 'disabled' : ''}>${state.busy ? 'Please wait…' : state.connected ? 'Refresh connection' : 'Connect / reconnect'}</button></form>
-      </details>
-      ${state.error ? `<div class="intake-alert" role="alert">${escape(state.error)}</div>` : ''}
-      ${state.recovery ? '<p class="intake-alert">Recovery identity is unavailable. Read-only task inspection is available after connecting; this page will not submit work.</p>' : ''}
-      ${state.notice ? `<p class="intake-notice">${escape(state.notice)}</p>` : ''}
-      <div class="intake-grid"><section class="intake-compose" aria-labelledby="request-heading"><h2 id="request-heading">New request</h2><p>Describe the result you want, including constraints and any details already clarified.</p>
-        <form id="request-form"><label for="request-message">What needs to be done?</label><textarea id="request-message" required rows="7" placeholder="Prepare the Atlas release checklist. Include QA ownership and rollback steps." aria-describedby="message-help" ${locked ? 'disabled' : ''}>${escape(draft.message)}</textarea><p id="message-help">Up to 16,000 characters. The backend trims outer whitespace and preserves the submitted text.</p>
-          <label for="project-id">Project label</label><input id="project-id" required value="${escape(draft.project)}" aria-describedby="project-help" ${locked ? 'disabled' : ''} /><p id="project-help">Up to 100 characters. A grouping label, not an access boundary.</p>
-          <div class="intake-submit"><button id="save-request" class="primary" ${locked || !state.connected ? 'disabled' : ''}>${state.submission === 'sending' ? 'Saving request…' : 'Save request'}</button><span>Save only · no execution</span></div>
-        </form>
-        ${state.pending ? `<section class="intake-pending"><h3>${state.submission === 'rejected' ? 'Submission rejected' : 'Submission awaiting confirmation'}</h3><p>The ID and content below are frozen. A pending payload stays in this tab’s session storage until acknowledged.</p><code>${escape(state.pending.payload.client_request_id)}</code><details><summary>Inspect frozen submission</summary><pre>${escape(JSON.stringify(state.pending.payload, null, 2))}</pre></details>${state.submission === 'rejected' ? `<button id="edit-rejected" ${state.busy ? 'disabled' : ''}>Return rejected content to draft</button>` : `<button id="retry-submission" ${state.busy || !state.connected || state.recovery ? 'disabled' : ''}>Retry exact submission</button>`}</section>` : ''}
-      </section><section class="intake-tasks" aria-labelledby="tasks-heading"><div class="intake-section-heading"><h2 id="tasks-heading">Stored requests${state.list ? ` (${state.list.total})` : ''}</h2><button id="refresh-list" ${state.busy || !state.connected ? 'disabled' : ''}>Refresh list</button></div>
-        ${state.list && !state.connected ? '<p class="intake-stale">Last loaded records · connection unavailable</p>' : ''}
-        ${state.list?.items.length ? `<ol class="intake-task-list">${state.list.items.map((task) => `<li><button data-task="${escape(task.id)}" aria-pressed="${state.task?.id === task.id}" ${state.busy || !state.connected ? 'disabled' : ''}><span class="intake-task-title">${escape(task.request.message)}</span><span class="intake-task-meta">${escape(task.request.project_id)} · ${escape(stamp(task.created_at))}</span><span class="intake-pending-label">Pending · no execution</span></button></li>`).join('')}</ol>` : `<div class="intake-empty"><h3>${state.list ? 'No saved requests yet' : 'Connect to load your requests'}</h3><p>${state.list ? 'Your first saved request will appear here with its original text and receipt.' : 'This list comes from the local API. Fixture records never appear here.'}</p></div>`}
-        ${state.list ? `<div class="intake-pagination"><button id="previous-page" ${state.busy || !state.connected || state.offset === 0 ? 'disabled' : ''}>Newer</button><span>${state.list.total ? state.offset + 1 : 0}–${state.offset + state.list.items.length} of ${state.list.total}</span><button id="next-page" ${state.busy || !state.connected || state.offset + state.list.items.length >= state.list.total ? 'disabled' : ''}>Older</button></div>` : ''}
-      </section></div>
-      <section class="intake-detail" aria-labelledby="detail-heading"><h2 id="detail-heading">${state.task ? 'Saved request detail' : 'Request detail'}</h2>${state.task ? `<div class="intake-detail-heading"><span class="intake-pending-label">${state.taskUnavailable ? "Unavailable · last loaded record" : "Pending · no execution"}</span><button id="refresh-detail" ${state.busy || !state.connected ? 'disabled' : ''}>Reload detail</button></div>${state.taskUnavailable ? '<p class="intake-stale">The API could not find this task. This is a retained copy, not a current stored record.</p>' : ''}${!state.connected ? '<p class="intake-stale">Last loaded detail · reconnect to verify the current stored record</p>' : ''}<blockquote>${escape(state.task.request.message)}</blockquote><dl><div><dt>Task ID</dt><dd>${escape(state.task.id)}</dd></div><div><dt>Project</dt><dd>${escape(state.task.request.project_id)}</dd></div><div><dt>Request ID</dt><dd>${escape(state.task.request.client_request_id)}</dd></div><div><dt>Saved</dt><dd>${escape(stamp(state.task.created_at))}</dd></div></dl><details><summary>Inspect API record · intake only</summary><pre id="task-record">${escape(JSON.stringify(state.task, null, 2))}</pre></details><p class="intake-detail-note">This receipt proves task intake only. No task result, run, checkpoint or repair evidence is available.</p>` : '<p>Select a stored request to inspect its original text, IDs and API record.</p>'}</section>
-    </main>`;
-  $('#connection-form').onsubmit = (event) => { event.preventDefault(); workspace.connect($('#api-origin').value); };
-  $('#request-message').oninput = (event) => { draft.message = event.target.value; };
-  $('#project-id').oninput = (event) => { draft.project = event.target.value; };
-  $('#request-form').onsubmit = async (event) => { event.preventDefault(); await workspace.submit(draft.message, draft.project); if (workspace.state.submission === 'saved') focusDetail(); };
-  const bind = (id, callback) => { const el = $(id); if (el) el.onclick = callback; };
-  bind('#refresh-list', () => workspace.read());
-  bind('#previous-page', () => workspace.read(null, Math.max(0, state.offset - 20)));
-  bind('#next-page', () => workspace.read(null, state.offset + 20));
-  bind('#refresh-detail', () => workspace.read(state.task.id));
-  bind('#retry-submission', () => workspace.retry());
-  bind('#edit-rejected', () => { workspace.editRejected(); $('#request-message').focus(); });
-  document.querySelectorAll('[data-task]').forEach((el) => { el.onclick = async () => { await workspace.read(el.dataset.task); if (workspace.state.task?.id === el.dataset.task) focusDetail(); }; });
-  if (focus) document.getElementById(focus)?.focus({ preventScroll: true });
-  $('#detail-heading').setAttribute('tabindex', '-1');
-  $('#announcement').textContent = state.busy ? 'Loading from the local API.' : state.error || state.notice || (state.connected ? 'Connected. Execution is disabled.' : 'Not connected.');
+try {
+  storage = window.sessionStorage;
+} catch {
+  storage = {
+    getItem() {
+      throw new Error("Storage unavailable");
+    },
+  };
 }
-function focusDetail() { $('#detail-heading').focus(); }
+const workspace = new IntakeWorkspace({ storage, onChange: () => render() });
+if (workspace.state.pending)
+  draft = {
+    message: workspace.state.pending.payload.message,
+    project: workspace.state.pending.payload.project_id,
+  };
+const stamp = (date) =>
+  new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(date));
+const task = () =>
+  selected && workspace.state.task?.id === selected
+    ? workspace.state.task
+    : null;
+const locked = () =>
+  workspace.state.busy || !!workspace.state.pending || workspace.state.recovery;
+const navigate = installNavigation(root, routeChanged, newChat);
+
+function navigation(state) {
+  let html = "";
+  if (state.list && !state.connected)
+    html +=
+      '<p class="intake-stale">Last loaded records · connection unavailable</p>';
+  html += state.list?.items.length
+    ? state.list.items
+        .map(
+          (t) =>
+            `<a data-route data-task="${escape(t.id)}" class="session-item" href="${urlFor(false, currentPage(), t.id)}" ${selected === t.id ? 'aria-current="page"' : ""}>${icon("chat")}<span><strong>${escape(t.request.message)}</strong><small>${escape(t.request.project_id)} · Pending</small></span></a>`,
+        )
+        .join("")
+    : `<div class="sidebar-empty">${icon("chat")}<p>${state.list ? "No chats yet" : "Connect to see your chats"}</p></div>`;
+  if (state.list)
+    html += `<div class="pagination"><button id="previous-page" data-action="previous" ${state.busy || !state.connected || !state.offset ? "disabled" : ""}>Newer</button><span>${state.list.total ? state.offset + 1 : 0}–${state.offset + state.list.items.length} of ${state.list.total}</span><button id="next-page" data-action="next" ${state.busy || !state.connected || state.offset + state.list.items.length >= state.list.total ? "disabled" : ""}>Older</button></div>`;
+  return html;
+}
+function connection(state) {
+  if (!settings) return "";
+  return `<section class="connection-panel" aria-labelledby="connection-heading"><div class="panel-heading"><h2 id="connection-heading">Local connection</h2><button class="icon-button" data-action="settings-close" aria-label="Close connection settings">${icon("close")}</button></div><form id="connection-form"><div><label for="api-origin">API origin</label><input id="api-origin" type="url" required value="${escape(state.origin)}" ${state.busy || state.pending ? "disabled" : ""}></div><button id="connect" ${state.busy ? "disabled" : ""}>${state.busy ? "Connecting…" : state.connected ? "Refresh connection" : "Connect / reconnect"}</button></form><p>Connect to your local Epoch backend. Requests are saved as pending.</p><details class="disclosure" data-key="connection-details"><summary>Connection details ${icon("down")}</summary><p>The backend must allow <code>${escape(location.origin)}</code>. No credentials are used.</p><a class="text-button" href="/README.md" target="_blank" rel="noopener">Setup instructions ↗</a></details></section>`;
+}
+function notices(state) {
+  if (!state.error && !state.notice && !state.recovery) return "";
+  return `<div class="banner-stack">${state.error ? `<div class="alert" role="alert">${escape(state.error)}${!state.connected ? '<br><button data-action="settings">Connection settings</button>' : ""}</div>` : ""}${state.recovery ? '<p class="alert">Recovery identity is unavailable. Connect for read-only inspection; new submissions are blocked.</p>' : ""}${state.notice ? `<p class="notice intake-notice">${escape(state.notice)}</p>` : ""}</div>`;
+}
+function pending(state) {
+  if (!state.pending) return "";
+  return `<section class="pending-card"><h2>${state.submission === "rejected" ? "Submission rejected" : "Submission awaiting confirmation"}</h2><p>This request may already be saved. Its original ID and content are retained in this tab until confirmed.</p><code>${escape(state.pending.payload.client_request_id)}</code><details class="disclosure" data-key="pending"><summary>Inspect frozen submission ${icon("down")}</summary><pre>${escape(JSON.stringify(state.pending.payload, null, 2))}</pre></details>${state.submission === "rejected" ? `<button id="edit-rejected" data-action="edit-rejected" ${state.busy ? "disabled" : ""}>Return rejected content to draft</button>` : `<button id="retry-submission" data-action="retry" ${state.busy || !state.connected || state.recovery ? "disabled" : ""}>Retry exact submission</button>`}</section>`;
+}
+function receipt(t, state) {
+  return `<section class="intake-detail"><div class="inline-row"><h2 id="detail-heading" tabindex="-1">Saved request detail</h2><button class="text-button" id="refresh-detail" data-action="refresh-detail" ${state.busy || !state.connected ? "disabled" : ""}>${icon("refresh")} Reload detail</button></div><p class="intake-stale">${state.taskUnavailable ? "Unavailable · last loaded record" : "Pending · no execution"}</p>${state.taskUnavailable ? '<p class="intake-stale">The API could not find this task. This is a retained copy, not a current stored record.</p>' : ""}${!state.connected ? '<p class="intake-stale">Last loaded detail · reconnect to verify the stored record</p>' : ""}<dl class="metadata"><dt>Task ID</dt><dd>${escape(t.id)}</dd><dt>Project</dt><dd>${escape(t.request.project_id)}</dd><dt>Request ID</dt><dd>${escape(t.request.client_request_id)}</dd><dt>Saved</dt><dd>${escape(stamp(t.created_at))}</dd></dl><details class="disclosure" data-key="api-record"><summary>Inspect API record · intake only ${icon("down")}</summary><pre id="task-record">${escape(JSON.stringify(t, null, 2))}</pre><button class="text-button" data-action="inspect-record">Open record inspector ${icon("arrow")}</button></details></section>`;
+}
+function chat(state) {
+  const t = task();
+  if (!t) {
+    if (selected)
+      return empty(
+        state.busy ? "Loading request…" : "Request not loaded",
+        state.connected
+          ? "This request could not be loaded. Refresh the connection or choose another chat."
+          : "Connect to the local backend to load this request.",
+      );
+    return `${welcome()}${state.pending ? `<div class="conversation pending-conversation">${pending(state)}</div>` : ""}`;
+  }
+  return `<div class="conversation"><div class="message user"><div class="message-body"><blockquote>${escape(t.request.message)}</blockquote></div></div><div class="system-receipt">${icon("info")}<div><strong>System receipt</strong><p>${state.taskUnavailable ? "The previously saved request is currently unavailable." : "Request saved. Execution is not available yet."}</p></div></div><details class="disclosure" data-key="receipt" open><summary>Request details ${icon("down")}</summary><div class="disclosure-body">${receipt(t, state)}</div></details>${routeLink(false, "debugger", selected, "Open debugger", "pipeline", 'class="back-link"')}${pending(state)}</div>`;
+}
+function debuggerPage(state) {
+  const t = task();
+  return `<div class="debugger"><header class="debug-heading"><p class="eyebrow">Epoch / debugger</p><h1>No execution recorded</h1><p>${t ? "Your request is saved. The pipeline will reflect execution evidence when it becomes available." : "Select a saved chat to inspect its request. No execution or repair evidence is available yet."}</p></header><div class="debug-layout"><div>${pipeline(stageNames.map(() => ({ status: "Not started", summary: "No execution evidence available." })))}</div><aside class="context-column"><h2>Original request</h2>${t ? `<blockquote>${escape(t.request.message)}</blockquote><h3>System receipt</h3><p>Request saved. Execution is not available yet.</p><h3>Saved request</h3>${badge("pending", "Pending")}<dl class="metadata"><dt>Project</dt><dd>${escape(t.request.project_id)}</dd><dt>Task ID</dt><dd>${escape(t.id)}</dd></dl><button class="text-button" data-action="inspect-record">Inspect saved record ${icon("arrow")}</button>${state.taskUnavailable ? '<p class="intake-stale">Unavailable · last loaded record</p>' : ""}` : "<p>No chat selected.</p>"}</aside></div>${pending(state)}</div>`;
+}
+function composer(state) {
+  const disabled = locked() || !!selected;
+  return `<div class="composer-dock"><form id="request-form" class="composer-box"><label class="sr-only" for="request-message">What needs to be done?</label><textarea id="request-message" data-autogrow data-submit rows="1" required placeholder="${selected ? "Start a new chat to save another request" : "What should we work on?"}" ${disabled ? "disabled" : ""}>${escape(selected ? "" : draft.message)}</textarea><div class="composer-tools"><div class="composer-tools-left"><details class="project-menu" data-key="project"><summary>${icon("plus")}<span id="project-label">${escape(draft.project)}</span>${icon("down")}</summary><div class="popover"><label for="project-id">Project label</label><input id="project-id" value="${escape(draft.project)}" ${disabled ? "disabled" : ""}><p>A label to organize this request. Up to 100 characters.</p></div></details></div><div class="composer-tools-right"><span class="composer-hint">${selected ? "Follow-up execution unavailable" : state.busy ? "Saving…" : "Enter to save · Shift Enter for a new line"}</span><button id="save-request" class="send-button" aria-label="Save request" ${disabled || !state.connected ? "disabled" : ""}>${icon("send")}</button></div></div></form><p class="composer-caption">${selected ? '<button class="text-button" data-action="new">New chat</button>' : !state.connected ? '<button class="text-button" data-action="settings">Connect your local backend to save a request</button>' : "Requests are saved only. Execution is not available yet."}</p></div>`;
+}
+function render(options = {}) {
+  const state = workspace.state;
+  if (state.submission === "saved" && lastSubmission !== "saved") {
+    draft.message = "";
+    selected = state.task.id;
+    history.replaceState(null, "", urlFor(false, "chat", selected));
+    options.focus = "detail-heading";
+    options.bottom = true;
+  }
+  lastSubmission = state.submission;
+  const page = currentPage();
+  const t = task();
+  const content = `${notices(state)}${connection(state)}${page === "debugger" ? debuggerPage(state) : chat(state)}`;
+  view.render(
+    shell({
+      page,
+      task: selected,
+      title: t?.request.message || "New chat",
+      nav: navigation(state),
+      content,
+      locked: locked(),
+      composer: page === "chat" ? composer(state) : "",
+      status: `<span class="connection-state ${state.connected ? "connected" : ""}" title="${state.connected ? "Connected · local API" : "Not connected"}"><i></i>${state.connected ? "Connected · local API" : "Not connected"}</span>`,
+      actions: `<button class="icon-button" data-action="settings" aria-label="Connection settings">${icon("settings")}</button>`,
+      bottom: `<button class="nav-item" data-action="settings">${icon("settings")}Connection settings</button>`,
+    }),
+    `${page}:${selected}`,
+    options,
+  );
+  const refresh = $("#refresh-list");
+  if (refresh) refresh.disabled = state.busy || !state.connected;
+  $("#announcement").textContent = state.busy
+    ? "Loading from the local API."
+    : state.error ||
+      state.notice ||
+      (state.connected
+        ? "Connected. Execution is disabled."
+        : "Not connected.");
+}
+async function routeChanged() {
+  selected = new URLSearchParams(location.search).get("task") || "";
+  render();
+  if (selected && workspace.state.connected && task()?.id !== selected)
+    await workspace.read(selected);
+  if (currentPage() === "debugger")
+    $("#workspace")?.focus({ preventScroll: true });
+  else if (task()) render({ focus: "detail-heading" });
+}
+function newChat() {
+  if (locked()) return;
+  navigate(urlFor(false, "chat"));
+  $("#request-message")?.focus();
+}
+root.addEventListener("input", (e) => {
+  if (e.target.id === "request-message") draft.message = e.target.value;
+  if (e.target.id === "project-id") {
+    draft.project = e.target.value;
+    $("#project-label").textContent = e.target.value || "Project";
+  }
+});
+root.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (e.target.id === "connection-form") {
+    await workspace.connect($("#api-origin").value);
+    if (workspace.state.connected) {
+      settings = false;
+      render();
+      if (selected && !task()) await workspace.read(selected);
+    }
+  }
+  if (e.target.id === "request-form" && !selected)
+    await workspace.submit(draft.message, draft.project);
+});
+root.addEventListener("click", async (e) => {
+  const button = e.target.closest("button");
+  if (!button || button.disabled) return;
+  switch (button.dataset.action) {
+    case "new":
+      newChat();
+      break;
+    case "settings":
+      settings = true;
+      render({ focus: "api-origin" });
+      $("#page-scroll").scrollTop = 0;
+      break;
+    case "settings-close":
+      settings = false;
+      render();
+      break;
+    case "refresh-list":
+      await workspace.read();
+      break;
+    case "previous":
+      await workspace.read(null, Math.max(0, workspace.state.offset - 20));
+      break;
+    case "next":
+      await workspace.read(null, workspace.state.offset + 20);
+      break;
+    case "refresh-detail":
+      if (selected) await workspace.read(selected);
+      break;
+    case "retry":
+      await workspace.retry();
+      break;
+    case "edit-rejected":
+      if (workspace.editRejected()) {
+        selected = "";
+        history.replaceState(null, "", urlFor(false, "chat"));
+        render({ focus: "request-message" });
+      }
+      break;
+    case "inspect-record":
+      if (task()) inspect("Saved request · intake only", task());
+      break;
+  }
+});
 render();
-// Opening or reloading this page never submits. Connecting is an explicit read-only action.
+// Opening, refreshing, and navigating never submit or auto-connect.

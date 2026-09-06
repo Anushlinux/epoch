@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-09-06T13:56:40.764Z",
+  "verified_at": "2026-09-06T14:47:33.497Z",
   "category": "actual-local-phase-1-http",
   "backend_base": "0a062dde6fcf5f10f792cf77813fe8adbaf117e3",
   "isolated_temporary_database": true,
@@ -11,15 +11,15 @@
   },
   "task": {
     "schema_version": 1,
-    "id": "b02812f3-9284-4856-b1eb-5d0c0447947f",
+    "id": "0fd1766b-9016-4e4d-ba3a-aa82824a6883",
     "request": {
-      "client_request_id": "7738e789-4a29-455d-bc24-83dd387f3d86",
+      "client_request_id": "187fe605-11d1-45ed-896b-e7cf24014ae9",
       "message": "Persisted HTTP intake proof · no execution",
       "project_id": "integration-proof"
     },
     "status": "pending",
-    "created_at": "2026-09-06T13:56:28.968156Z",
-    "updated_at": "2026-09-06T13:56:28.968156Z"
+    "created_at": "2026-09-06T14:47:17.565093Z",
+    "updated_at": "2026-09-06T14:47:17.565093Z"
   },
   "checks": {
     "create": 201,
@@ -34,10 +34,10 @@
     "restart_identical_retry": 200
   },
   "execution_occurred": false,
-  "browser_origin": "http://127.0.0.1:5173",
+  "browser_origin": "http://127.0.0.1:5175",
   "limitations": [
     "Temporary local intake/storage only; no executor or repair",
-    "Actual frontend dev server at 127.0.0.1:5173 and unchanged backend; no source interception or security bypass",
+    "Actual frontend dev server at http://127.0.0.1:5175 and unchanged backend; no source interception or security bypass",
     "Unknown acknowledgement and offline browser cases inject transport faults, not backend failures"
   ]
 }
