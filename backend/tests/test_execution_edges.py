@@ -10,7 +10,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from epoch_backend import hermes_bridge
+from epoch_backend import debugger_bridge, hermes_bridge
 from epoch_backend.config import Settings
 from epoch_backend.contracts import TaskCreate, TaskStatus
 from epoch_backend.execution import ExecutionError, ExecutionService, release_brief
@@ -23,6 +23,7 @@ from epoch_backend.storage import SQLiteStore
 @pytest.fixture
 def service(tmp_path, monkeypatch):
     monkeypatch.setattr(hermes_bridge, "detect_installation", lambda: {"available": True})
+    monkeypatch.setattr(debugger_bridge, "detect_debugger", lambda: {"available": False})
     settings = Settings(data_dir=tmp_path, enable_hermes=True, _env_file=None)
     tasks = SQLiteStore(settings.database_path)
     tasks.initialize()

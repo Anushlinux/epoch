@@ -48,7 +48,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         version="0.1.0",
         description=(
             "Local task intake, simulated release tools and bounded actual Hermes execution. "
-            "Automatic supervision and environment repair are not enabled."
+            "Optional Luna supervision and explicit feedback revisions; no environment repair."
         ),
         lifespan=lifespan,
     )

@@ -4,13 +4,14 @@ import json
 import time
 from uuid import UUID, uuid4
 
-from epoch_backend import hermes_bridge
+from epoch_backend import debugger_bridge, hermes_bridge
 from epoch_backend.config import Settings
 from epoch_backend.contracts import TaskCreate
 from epoch_backend.execution import TERMINAL, ExecutionService
 from epoch_backend.execution_contracts import ReleaseRunRequest
 from epoch_backend.sandbox import Sandbox, SandboxError
 from epoch_backend.storage import SQLiteStore
+from epoch_backend.supervision_contracts import FeedbackRequest
 from epoch_backend.tool_registry import ToolRegistry
 
 SCENARIOS = ["control", "broken_checklist", "missing_lookup", "outdated_context"]
@@ -18,6 +19,7 @@ SCENARIOS = ["control", "broken_checklist", "missing_lookup", "outdated_context"
 
 def add_commands(subparsers):
     subparsers.add_parser("hermes-info", help="Inspect the existing Hermes installation safely")
+    subparsers.add_parser("debugger-info", help="Inspect the configured OpenAI debugger route")
     sandbox = subparsers.add_parser("sandbox", help="Operate explicitly labelled local simulations")
     actions = sandbox.add_subparsers(dest="action", required=True)
     initialize = actions.add_parser("init")
@@ -40,13 +42,31 @@ def add_commands(subparsers):
     run.add_argument("--project", default="demo")
     run.add_argument("--release", default="1.0")
     run.add_argument("--scenario", choices=SCENARIOS, default="control")
-    run.add_argument("--timeout", type=int, default=180)
-    run.add_argument("--max-turns", type=int, default=16)
+    run.add_argument("--timeout", type=int, default=600)
+    run.add_argument("--max-turns", type=int, default=20)
+    run.add_argument("--supervised", action="store_true", help="Enable the OpenAI debugger")
+    run.add_argument(
+        "--demo-omit-notification",
+        action="store_true",
+        help="Demonstrate supervised recovery of an initially omitted QA notification",
+    )
+    for name in ("feedback", "clarify"):
+        command = subparsers.add_parser(name, help="Submit explicit input to a supervised run")
+        command.add_argument("run_id", type=UUID)
+        command.add_argument("--message", required=True)
+        command.add_argument("--expected-revision", type=UUID, required=True)
+        command.add_argument("--request-id", type=UUID, help="Reuse this ID for an identical retry")
+        command.add_argument("--max-turns", type=int, default=20)
+        command.add_argument("--timeout", type=int, default=600)
 
 
 def handle_command(args, settings: Settings) -> int:
-    if args.command == "hermes-info":
-        result = hermes_bridge.detect_installation()
+    if args.command in {"hermes-info", "debugger-info"}:
+        result = (
+            debugger_bridge.detect_debugger()
+            if args.command == "debugger-info"
+            else hermes_bridge.detect_installation()
+        )
         print(json.dumps(result, indent=2))
         return 0 if result.get("available") else 1
     if args.command == "sandbox":
@@ -99,18 +119,32 @@ def handle_command(args, settings: Settings) -> int:
     service.initialize()
     record = None
     try:
-        request = ReleaseRunRequest(
-            client_request_id=uuid4(),
-            workflow="release",
-            release=args.release,
-            scenario=args.scenario,
-            max_turns=args.max_turns,
-            timeout_seconds=args.timeout,
-        )
-        task, _ = tasks.create_task(
-            TaskCreate(client_request_id=uuid4(), message=args.message, project_id=args.project)
-        )
-        record, _ = service.start(task.id, request)
+        if args.command in {"feedback", "clarify"}:
+            feedback = FeedbackRequest(
+                client_request_id=args.request_id or uuid4(),
+                expected_revision_id=args.expected_revision,
+                message=args.message,
+                max_turns=args.max_turns,
+                timeout_seconds=args.timeout,
+            )
+            record, _ = service.feedback(
+                args.run_id, feedback, clarification=args.command == "clarify"
+            )
+        else:
+            request = ReleaseRunRequest(
+                client_request_id=uuid4(),
+                workflow="release",
+                release=args.release,
+                scenario=args.scenario,
+                max_turns=args.max_turns,
+                timeout_seconds=args.timeout,
+                supervised=args.supervised,
+                demo_omit_notification=args.demo_omit_notification,
+            )
+            task, _ = tasks.create_task(
+                TaskCreate(client_request_id=uuid4(), message=args.message, project_id=args.project)
+            )
+            record, _ = service.start(task.id, request)
         while (record := service.get(record.id)).status not in TERMINAL:
             time.sleep(0.2)
         print(record.model_dump_json(indent=2))

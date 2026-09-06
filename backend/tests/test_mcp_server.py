@@ -128,6 +128,94 @@ def test_real_stdio_discovery_description_invocation_and_restart(tmp_path):
     assert all(event["run_id"] == run_id and event["task_id"] == task_id for event in events)
 
 
+def test_real_stdio_updates_existing_objects_after_host_sourced_revision(tmp_path):
+    task_id, run_id = str(uuid4()), str(uuid4())
+    database = tmp_path / "revision.sqlite3"
+    sandbox = Sandbox(database, task_id, run_id)
+    metadata = sandbox.initialize()
+    ticket = sandbox.create_ticket(metadata["ticket_title"], metadata["release"], "ticket")
+    checklist = sandbox.create_checklist(
+        ticket["id"], metadata["checklist_title"], metadata["expected_items"], "checklist"
+    )
+    message = sandbox.send_message(
+        metadata["qa_channel"],
+        "Release 1.0 is ready.",
+        [ticket["url"], checklist["url"]],
+        "message",
+    )
+    revised = sandbox.revise_requirements(
+        "feedback-1",
+        ["Security review approved"],
+        ["Deployment at 10:00 UTC"],
+        [{"kind": "user_feedback", "source_id": "feedback-1"}],
+    )
+    assert not sandbox.evaluate()["passed"]
+    parameters = StdioServerParameters(
+        command=sys.executable, args=server_args(database, task_id, run_id)
+    )
+
+    async def exercise():
+        async with stdio_client(parameters) as (read, write):
+            async with ClientSession(
+                read, write, read_timeout_seconds=timedelta(seconds=15)
+            ) as client:
+                await client.initialize()
+                discovered = unpack(await client.call_tool("discover_tools", {}))
+                names = {tool["name"] for tool in discovered["result"]["tools"]}
+                assert "checklists.update" in names and "messages.update" in names
+                assert len(names) == 9
+                for name, arguments in (
+                    (
+                        "checklists.update",
+                        {
+                            "checklist_id": checklist["id"],
+                            "items": revised["expected_items"],
+                            "idempotency_key": "checklist-edit",
+                        },
+                    ),
+                    (
+                        "messages.update",
+                        {
+                            "message_id": message["id"],
+                            "text": "Release 1.0 is ready. Deployment at 10:00 UTC",
+                            "idempotency_key": "message-edit",
+                        },
+                    ),
+                ):
+                    contract = unpack(await client.call_tool("describe_tool", {"name": name}))
+                    assert contract["result"]["input_schema"]["additionalProperties"] is False
+                    result = unpack(
+                        await client.call_tool(
+                            "invoke_tool", {"name": name, "arguments": arguments}
+                        )
+                    )
+                    assert result["ok"] is True
+                    retried = unpack(
+                        await client.call_tool(
+                            "invoke_tool", {"name": name, "arguments": arguments}
+                        )
+                    )
+                    assert retried == result
+                forbidden = unpack(
+                    await client.call_tool(
+                        "invoke_tool", {"name": "requirements.revise", "arguments": {}}
+                    )
+                )
+                assert forbidden["error"]["code"] == "tool_not_found"
+
+    asyncio.run(exercise())
+    assert sandbox.evaluate()["passed"]
+    assert sandbox.list_tickets() == [ticket]
+    assert [item["id"] for item in sandbox.list_checklists()] == [checklist["id"]]
+    assert [item["id"] for item in sandbox.list_messages()] == [message["id"]]
+    updates = [
+        event
+        for event in sandbox.events()
+        if event["type"] == "state.changed" and event["payload"]["operation"].endswith(".update")
+    ]
+    assert len(updates) == 2
+
+
 def test_missing_database_is_not_created_and_stdout_stays_protocol_only(tmp_path):
     database = tmp_path / "missing.sqlite3"
     result = subprocess.run(

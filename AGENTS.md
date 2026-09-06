@@ -1,6 +1,6 @@
 # Repository instructions
 
-Epoch should supervise task delivery through sourced checkpoints and improve an executor's tools and context through verified environment repairs. **Task intake, scoped local simulations, trusted checks, MCP and explicit Hermes release execution are implemented; automatic supervision/feedback/repair remain unimplemented.** Consult docs/status.md for actual validation and gaps. The current supervisor flow and Anushrut/Rajdeep ownership in README.md record a later user decision than the preserved direction.
+Epoch should supervise task delivery through sourced checkpoints and improve an executor's tools and context through verified environment repairs. **Task intake, local simulations, trusted checks, MCP, actual Hermes and opt-in Luna supervision/additive feedback are implemented. Phase 4 actual-model acceptance is recorded; generated environment repair remains unimplemented.** Consult docs/status.md for actual validation and gaps. The current supervisor flow and Anushrut/Rajdeep ownership in README.md record a later user decision than the preserved direction.
 
 ## Start here
 

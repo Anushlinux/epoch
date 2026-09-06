@@ -1,0 +1,14 @@
+{
+  "actual_http_server": true,
+  "model_execution_enabled": false,
+  "run_id": "f54cb5bf-a9b2-4204-9afe-e3fcaf8a2b34",
+  "revisions": 2,
+  "events": 246,
+  "sse_after_1_frames": 245,
+  "final_events": 2,
+  "same_object_counts": true,
+  "feedback_retry_status": 200,
+  "retry_no_events": true,
+  "task_status": "completed",
+  "restart_record_unchanged": true
+}

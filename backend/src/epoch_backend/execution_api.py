@@ -15,6 +15,7 @@ from epoch_backend.execution_contracts import (
     RunEvent,
     RuntimeInfo,
 )
+from epoch_backend.supervision_contracts import FeedbackRequest, SupervisionOperation
 
 
 def execution_router(service: ExecutionService) -> APIRouter:
@@ -47,6 +48,33 @@ def execution_router(service: ExecutionService) -> APIRouter:
     @router.get("/runs/{run_id}", response_model=ExecutionRecord)
     def get_run(run_id: UUID):
         return service.get(run_id)
+
+    @router.get("/runs/{run_id}/revisions", response_model=list[SupervisionOperation])
+    def run_revisions(run_id: UUID):
+        record = service.get(run_id)
+        return record.supervision.operations if record.supervision else []
+
+    @router.post(
+        "/runs/{run_id}/feedback",
+        response_model=ExecutionRecord,
+        status_code=202,
+        responses={200: {"model": ExecutionRecord, "description": "Idempotent retry"}},
+    )
+    def submit_feedback(run_id: UUID, payload: FeedbackRequest, response: Response):
+        record, created = service.feedback(run_id, payload)
+        response.status_code = 202 if created else 200
+        return record
+
+    @router.post(
+        "/runs/{run_id}/clarifications",
+        response_model=ExecutionRecord,
+        status_code=202,
+        responses={200: {"model": ExecutionRecord, "description": "Idempotent retry"}},
+    )
+    def submit_clarification(run_id: UUID, payload: FeedbackRequest, response: Response):
+        record, created = service.feedback(run_id, payload, clarification=True)
+        response.status_code = 202 if created else 200
+        return record
 
     @router.post("/runs/{run_id}/cancel", response_model=ExecutionRecord, status_code=202)
     def cancel_run(run_id: UUID):

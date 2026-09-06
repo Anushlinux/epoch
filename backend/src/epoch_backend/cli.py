@@ -12,7 +12,7 @@ from pydantic_settings import SettingsError
 from epoch_backend.config import Settings
 from epoch_backend.execution import ExecutionError
 from epoch_backend.sandbox import SandboxError
-from epoch_backend.storage import SQLiteStore
+from epoch_backend.storage import RequestConflict, SQLiteStore
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -46,7 +46,14 @@ def main(argv: list[str] | None = None) -> int:
         print(settings.model_dump_json(indent=2))
         return 0
     try:
-        if args.command in {"hermes-info", "sandbox", "run-release"}:
+        if args.command in {
+            "hermes-info",
+            "debugger-info",
+            "sandbox",
+            "run-release",
+            "feedback",
+            "clarify",
+        }:
             from epoch_backend.workflow_cli import handle_command
 
             return handle_command(args, settings)
@@ -69,6 +76,9 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     except (ExecutionError, SandboxError) as exc:
         print(f"{exc.code}: {exc.message}", file=sys.stderr)
+        return 1
+    except RequestConflict:
+        print("request_conflict: This request ID was used for different input.", file=sys.stderr)
         return 1
     except (ValueError, RuntimeError) as exc:
         print(f"Command failed: {exc}", file=sys.stderr)

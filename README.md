@@ -1,10 +1,10 @@
 # Epoch
 
-Epoch is a planned task supervisor and debugger. The user describes the desired result in the interface; Epoch turns that request into verifiable checkpoints, gives Hermes a structured task brief, monitors execution, and directs corrections until the checks pass or a clear limit is reached. When the cause lies in the tools or supplied context, Epoch verifies and publishes an environment repair that benefits future tasks.
+Epoch is a task supervisor with a planned environment-repair debugger. The user describes the desired result in the interface; Epoch turns that request into verifiable checkpoints, gives Hermes a structured task brief, monitors execution, and directs corrections until the checks pass or a clear limit is reached. The planned repair phases will verify and publish changes to tools or supplied context that benefit future tasks.
 
-**Current state: task intake, simulated business services, MCP tools and actual Hermes execution are implemented.** An explicitly selected release workflow can create local tickets/checklists/messages, record activity, and report independently verified results through the API. Submitting a task alone leaves it pending. Automatic supervision, feedback revisions and generated repairs remain unimplemented. See [backend setup](backend/README.md) and the [implementation status](docs/status.md) for validation and remaining gaps.
+**Current state: backend Phases 1–4 are implemented and verified.** OpenAI `gpt-5.6-luna` plans sourced release checkpoints and directs the existing Hermes executor. Trusted checks track saved outcomes; bounded continuations complete omissions, and explicit feedback can add checklist items or exact QA-message phrases while preserving earlier work. Each operation shares at most **20 model requests and 600 seconds** across both agents. Submitting a task alone leaves it pending. Generated environment repairs remain Phase 5. See [backend setup](backend/README.md) and the [implementation status](docs/status.md) for validation and remaining gaps.
 
-The [frontend workspace](frontend/README.md) includes historically verified Phase 1 task intake and a separate future-workflow fixture page. Its committed intake adapter still requires Phase 1 health and pending-only tasks, so it cannot connect to the Phase 3 backend yet. Use the backend CLI or API for current release execution; Anushrut owns the frontend compatibility update. Fixture progress, repairs, test results and artifacts remain authored examples.
+The [frontend workspace](frontend/README.md) includes historically verified Phase 1 task intake and a separate future-workflow fixture page. Its committed intake adapter still requires Phase 1 health and pending-only tasks, so it cannot connect to the Phase 4 backend yet. Use the backend CLI or API for current release execution; Anushrut owns the frontend compatibility update. Fixture progress, repairs, test results and artifacts remain authored examples.
 
 ## Start here
 
@@ -19,7 +19,7 @@ The [frontend workspace](frontend/README.md) includes historically verified Phas
 2. **Checkpoints:** Epoch creates a structured brief with deliverables, constraints, dependencies, and evidence required for completion. Explicit requirements and inferred defaults remain distinguishable.
 3. **Execution:** Hermes receives that brief, plans the operational steps, discovers tools, and performs the business work.
 4. **Monitoring:** Epoch observes tool calls, results, retrieved context, artifacts, and explicit progress summaries. It evaluates at meaningful execution events; it does not depend on private model reasoning or inspecting every token.
-5. **Recovery:** for an omitted or incorrect step, Epoch sends Hermes a targeted continuation instruction that identifies the unmet checkpoint and preserves completed work. For a tool defect, missing capability, or context problem, it stages an environment repair and verifies it before activation.
+5. **Recovery:** for an omitted or incorrect step, Epoch sends Hermes a targeted continuation instruction that identifies the unmet checkpoint and preserves completed work. For a tool defect, missing capability, or context problem, the planned repair phases will stage and verify an environment change before activation; the current supervisor reports a blocker.
 6. **Delivery:** independent checks verify the actual result. Epoch reports completed deliverables, supporting links/artifacts, and any remaining limitations. Retry, time, and access limits can stop an unresolved task.
 7. **User feedback:** if the checks pass but the user is dissatisfied, their feedback identifies a missed requirement, evaluation mistake, or new preference. Epoch records the revised intent and directs Hermes to revise the work; it does not automatically treat every preference as a shared-tool defect.
 
@@ -46,17 +46,17 @@ User -> Epoch interface -> Supervisor: brief + checkpoints -> Hermes
 | **Rajdeep** | Python backend, task planning and checkpoint contracts, Hermes integration, event capture, evaluator, corrective instructions, shared tools/simulators, debugger, isolated verification, persistent versions and rollback | One working supervised task and verified environment-repair loop |
 | **Both** | Agree API/event contracts and task states first; integrate early and rehearse the demo | UI and backend express the same request, checkpoints, evidence, and result |
 
-Both can use Codex in parallel on separately owned files. Anushrut can use live backend events for the implemented release flow; fixture screens for future supervision/repairs remain clearly labelled. Detailed handoffs and acceptance checks are in the [task README](docs/tasks/README.md).
+Both can use Codex in parallel on separately owned files. Anushrut can use live backend events for the implemented release flow; fixture screens for future repairs remain clearly labelled. Detailed handoffs and acceptance checks are in the [task README](docs/tasks/README.md).
 
 ## Intended first demonstration
 
 A user asks Epoch to prepare a release: create a ticket, add a checklist, and notify QA with both links. Epoch turns these into checkpoints and delegates execution to Hermes. A deliberately faulty adapter fails. Epoch should inspect the failure, correct the adapter, test the change, and publish it. Hermes should then complete both the original task and a meaningful fresh variation using the same executor configuration. Show one targeted task correction and one user-feedback revision separately from the persistent repair claim.
 
-Two later scenarios exercise the same loop: generating a missing QA-owner lookup tool, and repairing retrieval that supplied an outdated runbook. The first implementation will use clearly labeled local simulated services. Their inspectable state can prove simulated effects; it cannot prove delivery to Jira, Notion, or Slack.
+Two later scenarios exercise the same loop: generating a missing QA-owner lookup tool, and repairing retrieval that supplied an outdated runbook. The current implementation uses clearly labeled local simulated services. Their inspectable state can prove simulated effects; it cannot prove delivery to Jira, Notion, or Slack.
 
 ## Build direction
 
-- The backend uses Python 3.12, FastAPI/Pydantic, SQLite, the official MCP SDK, uv, pytest and Ruff. See the [initial decisions](backend/DECISIONS.md) and [Phase 2/3 implementation plan](backend/PHASES_2_3_PLAN.md) for boundaries.
+- The backend uses Python 3.12, FastAPI/Pydantic, SQLite, the official MCP SDK, uv, pytest and Ruff. See the [initial decisions](backend/DECISIONS.md), [Phase 2/3 implementation plan](backend/PHASES_2_3_PLAN.md) and [Phase 4 plan](backend/PHASE_4_PLAN.md) for boundaries.
 - Keep a CLI/harness for early backend verification while Anushrut builds the product UI in parallel against agreed contracts. Prove one complete repair loop before expanding the demonstration.
 - Keep Hermes fixed during runtime repair. Protect trusted evaluators, bound maintenance permissions, and prevent duplicate side effects during replay.
 - Persist executable tool or retrieval changes. A successful-looking response, a reminder, or a prerecorded patch is not a repair.
@@ -66,13 +66,13 @@ The 10-hour target is: agree contracts and smoke-test integrations in hour 1; co
 
 ## Working with this repository
 
-Run `npm run dev --prefix frontend` and open `ao preview http://127.0.0.1:5173` to inspect the frontend. Run its state tests with `npm test --prefix frontend`; see the [frontend verification record](frontend/evidence/README.md) for historical Phase 1 HTTP/browser checks. This host serves the existing interface, but its Phase 1-only intake validation currently rejects the Phase 3 backend. The separate fixture page remains illustrative. No frontend source or tests are changed by this backend merge.
+Run `npm run dev --prefix frontend` and open `ao preview http://127.0.0.1:5173` to inspect the frontend. Run its state tests with `npm test --prefix frontend`; see the [frontend verification record](frontend/evidence/README.md) for historical Phase 1 HTTP/browser checks. This host serves the existing interface, but its Phase 1-only intake validation currently rejects the Phase 4 backend. The separate fixture page remains illustrative. This Phase 4 backend change preserves every frontend file.
 
 From `backend/`, run `uv sync --frozen`, then `uv run --frozen epoch-backend serve`. The health check is at `http://127.0.0.1:8000/api/health`; API docs are at `/docs`. Follow the [backend README](backend/README.md) for Python/uv prerequisites, local cache setup, configuration, tests and the live-server smoke check. Claude and Copilot point to [AGENTS.md](AGENTS.md) for shared rules.
 
 For documentation changes, check relative links and anchors, preserve the exact direction source, inspect the diff for scope, and run `git diff --check`. The [documentation validation notes](docs/status.md#documentation-validation) describe the handoff checks and their limits.
 
-The preserved direction remains unchanged. The supervisor flow and named work split above record the user's later decision and supersede the earlier passive-debugger/CLI-only presentation. The implemented release template is an initial executor path; the broader user flow above still requires later phases.
+The preserved direction remains unchanged. The supervisor flow and named work split above record the user's later decision and supersede the earlier passive-debugger/CLI-only presentation. The implemented supervisor is limited to the release workflow and additive feedback. The broader repair and learning flow above still requires later phases.
 
 ## Generic agent startup prompt
 

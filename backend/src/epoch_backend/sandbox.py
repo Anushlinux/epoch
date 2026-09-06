@@ -1,6 +1,6 @@
 """Durable, per-run simulated services and administrative inspection.
 
-Only the seven operations in the tool registry are executor-callable. Setup,
+Only the business operations in the tool registry are executor-callable. Setup,
 reset, criteria and evaluation are developer functions, not business tools.
 """
 
@@ -18,14 +18,21 @@ from epoch_backend.sandbox_adapters import (
     serialize_checklist,
     validate_checklist_payload,
 )
-from epoch_backend.trusted_checks import evaluate_release, release_criteria
+from epoch_backend.trusted_checks import (
+    EVALUATOR_VERSION,
+    criteria_from_metadata,
+    evaluate_release,
+    release_criteria,
+)
 
 TOOL_NAMES = (
     "tickets.create",
     "tickets.list",
     "checklists.create",
+    "checklists.update",
     "checklists.list",
     "messages.send",
+    "messages.update",
     "messages.list",
     "runbooks.read",
 )
@@ -160,7 +167,7 @@ class Sandbox:
                     "scenario": scenario,
                     "project_id": project_id,
                     "release": release,
-                    "grants": granted,
+                    "grants": previous["grants"] if grants is None else granted,
                 }
                 if any(previous[key] != value for key, value in settings.items()):
                     raise SandboxError(
@@ -178,8 +185,9 @@ class Sandbox:
                 "release": release,
                 "grants": granted,
                 "generation": previous["generation"] + 1 if previous else 1,
-                "environment_version": "sandbox-v1",
+                "environment_version": "sandbox-v2",
                 "context_rule_version": "runbook-selector-v1",
+                "requirements_revisions": [],
                 **criteria,
                 "criteria_sha256": sha256(_json(criteria).encode()).hexdigest(),
             }
@@ -202,6 +210,109 @@ class Sandbox:
         with closing(self._connect()) as connection:
             connection.execute("PRAGMA journal_mode=WAL")
         return metadata
+
+    def revise_requirements(
+        self,
+        revision_id: str,
+        additional_items: list[str],
+        required_message_phrases: list[str],
+        source_refs: list[dict],
+    ) -> dict:
+        """Host-only additive intent revision; business tools cannot edit criteria.
+
+        The supervisor validates source authority before calling this method. The
+        transaction retains exact criteria, provenance and the original retry result.
+        Existing requirements, scope, grants and business objects cannot be removed.
+        """
+        revision_id = _text(revision_id, "revision_id", 200)
+
+        def bounded_texts(values, name, maximum):
+            if not isinstance(values, list) or len(values) > maximum:
+                raise SandboxError(
+                    "invalid_arguments", f"{name} must contain at most {maximum} strings."
+                )
+            return list(dict.fromkeys(_text(value, name, 500) for value in values))
+
+        items = bounded_texts(additional_items, "additional_items", 50)
+        phrases = bounded_texts(required_message_phrases, "required_message_phrases", 20)
+        if (
+            not isinstance(source_refs, list)
+            or not 1 <= len(source_refs) <= 32
+            or any(not isinstance(ref, dict) or not ref for ref in source_refs)
+        ):
+            raise SandboxError("invalid_arguments", "Supply 1 to 32 nonempty source references.")
+        try:
+            if any(len(_json(ref)) > 4000 for ref in source_refs):
+                raise ValueError("Source reference too large.")
+            sources = json.loads(_json(source_refs))
+        except (TypeError, ValueError, RecursionError) as error:
+            raise SandboxError(
+                "invalid_arguments", "Source references must be bounded JSON objects."
+            ) from error
+        arguments = {
+            "additional_items": items,
+            "required_message_phrases": phrases,
+            "source_refs": sources,
+        }
+        with closing(self._connect()) as connection, connection:
+            connection.execute("BEGIN IMMEDIATE")
+            metadata = self._metadata(connection)
+            receipt = connection.execute(
+                "SELECT arguments,result FROM sandbox_receipts WHERE operation=? AND key=?",
+                ("requirements.revise", revision_id),
+            ).fetchone()
+            if receipt:
+                if receipt["arguments"] != _json(arguments):
+                    raise SandboxError(
+                        "revision_conflict", "Revision ID already used with different content."
+                    )
+                return json.loads(receipt["result"])
+            history = metadata.get("requirements_revisions", [])
+            if len(history) >= 50:
+                raise SandboxError("revision_limit", "This run already has 50 intent revisions.")
+            expected_items = list(dict.fromkeys([*metadata["expected_items"], *items]))
+            expected_phrases = list(
+                dict.fromkeys([*metadata.get("required_message_phrases", []), *phrases])
+            )
+            if len(expected_items) > 50 or len(expected_phrases) > 20:
+                raise SandboxError(
+                    "invalid_arguments", "Combined requirements exceed checklist or phrase limits."
+                )
+            before = criteria_from_metadata(metadata)
+            after = {
+                **before,
+                "expected_items": expected_items,
+                "required_message_phrases": expected_phrases,
+                "evaluator_version": EVALUATOR_VERSION,
+            }
+            revision = {
+                "revision_id": revision_id,
+                **arguments,
+                "before_criteria": before,
+                "after_criteria": after,
+                "before_sha256": metadata["criteria_sha256"],
+                "after_sha256": sha256(_json(after).encode()).hexdigest(),
+                "created_at": datetime.now(UTC).isoformat(),
+            }
+            result = {
+                **metadata,
+                **after,
+                "criteria_sha256": revision["after_sha256"],
+                "requirements_revisions": [*history, revision],
+            }
+            connection.execute(
+                "UPDATE sandbox_metadata SET record_json=? WHERE id=1", (_json(result),)
+            )
+            connection.execute(
+                "INSERT INTO sandbox_receipts VALUES (?,?,?,?)",
+                ("requirements.revise", revision_id, _json(arguments), _json(result)),
+            )
+            self._event(
+                connection,
+                "requirements.revised",
+                {"generation": metadata["generation"], "simulated": True, **revision},
+            )
+            return result
 
     def _seed(self, connection: sqlite3.Connection, metadata: dict) -> None:
         project = metadata["project_id"]
@@ -298,11 +409,13 @@ class Sandbox:
                 ).fetchall()
             ]
 
-    def _mutate(self, operation: str, key: str, arguments: dict, create) -> dict:
+    def _mutate(self, operation: str, key: str, arguments: dict, create, *, update=False) -> dict:
         key = _text(key, "idempotency_key", 200)
         with closing(self._connect()) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
             metadata = self._metadata(connection)
+            if operation not in metadata["grants"]:
+                raise SandboxError("access_denied", "This run is not permitted to use this tool.")
             receipt = connection.execute(
                 "SELECT arguments,result FROM sandbox_receipts WHERE operation=? AND key=?",
                 (operation, key),
@@ -314,7 +427,15 @@ class Sandbox:
                     )
                 return json.loads(receipt["result"])
             kind, result = create(connection, metadata)
-            self._insert_object(connection, kind, result)
+            before = None
+            if update:
+                before = self._existing_object(connection, metadata, kind, result["id"])
+                connection.execute(
+                    "UPDATE sandbox_objects SET record_json=? WHERE id=? AND kind=?",
+                    (_json(result), result["id"], kind),
+                )
+            else:
+                self._insert_object(connection, kind, result)
             connection.execute(
                 "INSERT INTO sandbox_receipts VALUES (?,?,?,?)",
                 (operation, key, _json(arguments), _json(result)),
@@ -327,9 +448,20 @@ class Sandbox:
                     "generation": metadata["generation"],
                     "operation": operation,
                     "object": result,
+                    **({"before": before, "after": result} if update else {}),
                 },
             )
             return result
+
+    def _existing_object(self, connection, metadata, kind: str, object_id: str) -> dict:
+        record = connection.execute(
+            "SELECT record_json FROM sandbox_objects WHERE id=? AND kind=?", (object_id, kind)
+        ).fetchone()
+        if record is not None:
+            result = json.loads(record[0])
+            if result["project_id"] == metadata["project_id"]:
+                return result
+        raise SandboxError("not_found", "Object does not exist in this sandbox project.")
 
     def _new_object(self, kind: str, metadata: dict, fields: dict) -> dict:
         object_id = str(uuid4())
@@ -375,6 +507,30 @@ class Sandbox:
 
         return self._mutate("checklists.create", idempotency_key, args, create)
 
+    def update_checklist(self, checklist_id: str, items: list[str], idempotency_key: str) -> dict:
+        checklist_id = _text(checklist_id, "checklist_id")
+        if not isinstance(items, list) or not 1 <= len(items) <= 50:
+            raise SandboxError("invalid_arguments", "items must contain 1 to 50 strings.")
+        items = [_text(item, "item", 500) for item in items]
+        args = {"checklist_id": checklist_id, "items": items}
+
+        def update(connection, metadata):
+            previous = self._existing_object(connection, metadata, "checklists", checklist_id)
+            self._existing_object(connection, metadata, "tickets", previous["ticket_id"])
+            wire = serialize_checklist(
+                previous["ticket_id"],
+                previous["title"],
+                items,
+                legacy=metadata["scenario"] == "broken_checklist",
+            )
+            try:
+                validated = validate_checklist_payload(wire)
+            except AdapterContractError as error:
+                raise SandboxError("adapter_contract_error", str(error)) from error
+            return "checklists", {**previous, **validated}
+
+        return self._mutate("checklists.update", idempotency_key, args, update, update=True)
+
     def send_message(self, channel: str, text: str, links: list[str], idempotency_key: str) -> dict:
         channel, text = _text(channel, "channel", 100), _text(text, "text", 8000)
         if not isinstance(links, list) or not 1 <= len(links) <= 20:
@@ -395,6 +551,24 @@ class Sandbox:
             return "messages", self._new_object("messages", metadata, args)
 
         return self._mutate("messages.send", idempotency_key, args, create)
+
+    def update_message(self, message_id: str, text: str, idempotency_key: str) -> dict:
+        message_id, text = _text(message_id, "message_id"), _text(text, "text", 8000)
+        args = {"message_id": message_id, "text": text}
+
+        def update(connection, metadata):
+            previous = self._existing_object(connection, metadata, "messages", message_id)
+            allowed = {
+                item["url"]
+                for kind in ("tickets", "checklists")
+                for item in self._objects(connection, kind)
+                if item["project_id"] == metadata["project_id"]
+            }
+            if any(link not in allowed for link in previous["links"]):
+                raise SandboxError("invalid_reference", "Message references unresolved objects.")
+            return "messages", {**previous, "text": text}
+
+        return self._mutate("messages.update", idempotency_key, args, update, update=True)
 
     def _list(self, kind: str) -> list[dict]:
         with closing(self._connect()) as connection:
