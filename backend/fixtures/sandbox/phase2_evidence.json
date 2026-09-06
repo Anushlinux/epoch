@@ -1,0 +1,2609 @@
+{
+  "artifact_type": "recorded_local_simulation_evidence",
+  "captured_at": "2026-09-06T14:05:02.035690+00:00",
+  "contains_model_execution": false,
+  "cases": [
+    {
+      "scenario": "control",
+      "simulated": true,
+      "verification": {
+        "simulated": true,
+        "passed": true,
+        "checks": [
+          {
+            "id": "release_ticket",
+            "name": "Requested release ticket exists",
+            "passed": true,
+            "evidence_ids": [
+              "f383c1dd-f639-41b8-8b7e-1ee105ab5219",
+              "63d5c969-577f-44be-ade5-aadfb0d0f832",
+              "9cbbe874-f9fc-4e45-b59b-cc0847d76e8e"
+            ],
+            "details": {
+              "matching_object_ids": [
+                "eb7e95b4-8f29-41b1-8c6c-61ba732cb245"
+              ]
+            }
+          },
+          {
+            "id": "release_checklist",
+            "name": "Correct checklist is linked to that ticket",
+            "passed": true,
+            "evidence_ids": [
+              "f383c1dd-f639-41b8-8b7e-1ee105ab5219",
+              "63d5c969-577f-44be-ade5-aadfb0d0f832",
+              "9cbbe874-f9fc-4e45-b59b-cc0847d76e8e"
+            ],
+            "details": {
+              "matching_object_ids": [
+                "5e409c22-f5cd-485e-969d-02c4e9210cb7"
+              ]
+            }
+          },
+          {
+            "id": "qa_notification",
+            "name": "QA receives the release notice with both matching links",
+            "passed": true,
+            "evidence_ids": [
+              "f383c1dd-f639-41b8-8b7e-1ee105ab5219",
+              "63d5c969-577f-44be-ade5-aadfb0d0f832",
+              "9cbbe874-f9fc-4e45-b59b-cc0847d76e8e"
+            ],
+            "details": {
+              "matching_object_ids": [
+                "9bb9af8c-ab28-4a72-9240-226337d5635e"
+              ]
+            }
+          }
+        ],
+        "evaluator_version": "release-state-v2",
+        "criteria_sha256": "8d848f46a01ab4f02f6ddba04d9f51646da93059f3313a108eb8914a91df2d88",
+        "state_sha256": "82f1da0ff09a48b4d7284c86751c086e3b16ea4a70f497db01e661f2a2b390f9",
+        "missing_evidence": [],
+        "evidence_id": "ba94e7f2-d66d-427f-a468-2efc8a4cc9cf"
+      },
+      "business_state": {
+        "tickets": [
+          {
+            "id": "eb7e95b4-8f29-41b1-8c6c-61ba732cb245",
+            "project_id": "demo",
+            "release": "1.0",
+            "simulated": true,
+            "title": "Release demo 1.0",
+            "url": "simulated://f3625053-f543-473d-a2f3-02b4acc8c802/tickets/eb7e95b4-8f29-41b1-8c6c-61ba732cb245"
+          }
+        ],
+        "checklists": [
+          {
+            "id": "5e409c22-f5cd-485e-969d-02c4e9210cb7",
+            "items": [
+              "Smoke tests pass",
+              "Rollback plan reviewed",
+              "Release notes approved"
+            ],
+            "project_id": "demo",
+            "simulated": true,
+            "ticket_id": "eb7e95b4-8f29-41b1-8c6c-61ba732cb245",
+            "title": "Release checklist 1.0",
+            "url": "simulated://f3625053-f543-473d-a2f3-02b4acc8c802/checklists/5e409c22-f5cd-485e-969d-02c4e9210cb7"
+          }
+        ],
+        "messages": [
+          {
+            "channel": "#qa-demo",
+            "id": "9bb9af8c-ab28-4a72-9240-226337d5635e",
+            "links": [
+              "simulated://f3625053-f543-473d-a2f3-02b4acc8c802/tickets/eb7e95b4-8f29-41b1-8c6c-61ba732cb245",
+              "simulated://f3625053-f543-473d-a2f3-02b4acc8c802/checklists/5e409c22-f5cd-485e-969d-02c4e9210cb7"
+            ],
+            "project_id": "demo",
+            "simulated": true,
+            "text": "Release 1.0 ready for QA.",
+            "url": "simulated://f3625053-f543-473d-a2f3-02b4acc8c802/messages/9bb9af8c-ab28-4a72-9240-226337d5635e"
+          }
+        ]
+      },
+      "events": [
+        {
+          "emitted_at": "2026-09-06T14:05:01.633103+00:00",
+          "id": "f24220e1-f9c1-418b-acc1-6520983dbc53",
+          "payload": {
+            "environment_version": "sandbox-v1",
+            "generation": 1,
+            "project_id": "demo",
+            "simulated": true
+          },
+          "run_id": "f3625053-f543-473d-a2f3-02b4acc8c802",
+          "sequence": 1,
+          "task_id": "ed1d3579-c405-4032-80d9-962c13e919b2",
+          "type": "sandbox.initialized"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.651405+00:00",
+          "id": "8701e155-c310-4b7e-a973-255f64be07b1",
+          "payload": {
+            "result": {
+              "interface_version": "epoch-tools-v1",
+              "project_id": "demo",
+              "simulated": true,
+              "tools": [
+                {
+                  "description": "Create a simulated release ticket in the current project. Reuse its idempotency key only when retrying identical content.",
+                  "name": "tickets.create",
+                  "read_only": false,
+                  "required_permission": "tickets.create",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "List simulated tickets in the current run and project.",
+                  "name": "tickets.list",
+                  "read_only": true,
+                  "required_permission": "tickets.list",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "Create a simulated checklist linked to a ticket in the current run. Supply the ticket's id, checklist title, checklist items and a stable idempotency key.",
+                  "name": "checklists.create",
+                  "read_only": false,
+                  "required_permission": "checklists.create",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "List simulated checklists in the current run and project.",
+                  "name": "checklists.list",
+                  "read_only": true,
+                  "required_permission": "checklists.list",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "Send a simulated message to the supplied channel with links to existing objects in the current run. Reuse an idempotency key only for identical retries.",
+                  "name": "messages.send",
+                  "read_only": false,
+                  "required_permission": "messages.send",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "List simulated messages in the current run and project.",
+                  "name": "messages.list",
+                  "read_only": true,
+                  "required_permission": "messages.list",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "Read a simulated project runbook. For current work use purpose=current; a version can be requested explicitly. Inspect the returned document version and current/historical status before using its guidance.",
+                  "name": "runbooks.read",
+                  "read_only": true,
+                  "required_permission": "runbooks.read",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                }
+              ]
+            }
+          },
+          "run_id": "f3625053-f543-473d-a2f3-02b4acc8c802",
+          "sequence": 2,
+          "task_id": "ed1d3579-c405-4032-80d9-962c13e919b2",
+          "type": "tool.discovery"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.651405+00:00",
+          "id": "52d66638-f36e-4d02-bd44-e97baf38d90a",
+          "payload": {
+            "result": {
+              "description": "Create a simulated checklist linked to a ticket in the current run. Supply the ticket's id, checklist title, checklist items and a stable idempotency key.",
+              "input_schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "idempotency_key": {
+                    "maxLength": 200,
+                    "minLength": 1,
+                    "title": "Idempotency Key",
+                    "type": "string"
+                  },
+                  "items": {
+                    "items": {
+                      "maxLength": 500,
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "maxItems": 50,
+                    "minItems": 1,
+                    "title": "Items",
+                    "type": "array"
+                  },
+                  "ticket_id": {
+                    "maxLength": 300,
+                    "minLength": 1,
+                    "title": "Ticket Id",
+                    "type": "string"
+                  },
+                  "title": {
+                    "maxLength": 300,
+                    "minLength": 1,
+                    "title": "Title",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "ticket_id",
+                  "title",
+                  "items",
+                  "idempotency_key"
+                ],
+                "title": "CreateChecklist",
+                "type": "object"
+              },
+              "name": "checklists.create",
+              "output_schema": {
+                "additionalProperties": true,
+                "properties": {
+                  "id": {
+                    "title": "Id",
+                    "type": "string"
+                  },
+                  "items": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "title": "Items",
+                    "type": "array"
+                  },
+                  "project_id": {
+                    "title": "Project Id",
+                    "type": "string"
+                  },
+                  "simulated": {
+                    "const": true,
+                    "title": "Simulated",
+                    "type": "boolean"
+                  },
+                  "ticket_id": {
+                    "title": "Ticket Id",
+                    "type": "string"
+                  },
+                  "title": {
+                    "title": "Title",
+                    "type": "string"
+                  },
+                  "url": {
+                    "pattern": "^simulated://",
+                    "title": "Url",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "project_id",
+                  "simulated",
+                  "url",
+                  "ticket_id",
+                  "title",
+                  "items"
+                ],
+                "title": "ChecklistResult",
+                "type": "object"
+              },
+              "read_only": false,
+              "required_permission": "checklists.create",
+              "simulated": true,
+              "version": "sandbox-v1"
+            },
+            "tool_name": "checklists.create"
+          },
+          "run_id": "f3625053-f543-473d-a2f3-02b4acc8c802",
+          "sequence": 3,
+          "task_id": "ed1d3579-c405-4032-80d9-962c13e919b2",
+          "type": "tool.described"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.664515+00:00",
+          "id": "3e2408a6-667b-4db8-928a-e15a1b9c2a54",
+          "payload": {
+            "arguments": {},
+            "call_id": "79f6e6cd-f50a-430b-bc8e-f7e32d250b10",
+            "tool_name": "runbooks.read",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "f3625053-f543-473d-a2f3-02b4acc8c802",
+          "sequence": 4,
+          "task_id": "ed1d3579-c405-4032-80d9-962c13e919b2",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.667738+00:00",
+          "id": "7376cadc-fb84-42db-a864-cb97859760bd",
+          "payload": {
+            "call_id": "79f6e6cd-f50a-430b-bc8e-f7e32d250b10",
+            "result": {
+              "content": "Release workflow for project demo. Create the release ticket, attach a checklist, and notify QA with the ticket and checklist links. Send the release notice to #qa-demo. Checklist items: Smoke tests pass; Rollback plan reviewed; Release notes approved.",
+              "document_id": "release-demo",
+              "id": "release-runbook-demo-v2",
+              "is_current": true,
+              "project_id": "demo",
+              "requested_purpose": "current",
+              "scope": "project:demo",
+              "selection_rule_version": "runbook-selector-v1",
+              "simulated": true,
+              "url": "simulated://f3625053-f543-473d-a2f3-02b4acc8c802/runbooks/release-demo/v2",
+              "version": "v2"
+            },
+            "tool_name": "runbooks.read",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "f3625053-f543-473d-a2f3-02b4acc8c802",
+          "sequence": 5,
+          "task_id": "ed1d3579-c405-4032-80d9-962c13e919b2",
+          "type": "tool.result"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.674691+00:00",
+          "id": "58572bc8-d4a1-4d79-b1d6-2ef55ac2deec",
+          "payload": {
+            "call_id": "79f6e6cd-f50a-430b-bc8e-f7e32d250b10",
+            "requested": {
+              "purpose": "current",
+              "version": null
+            },
+            "source": {
+              "content": "Release workflow for project demo. Create the release ticket, attach a checklist, and notify QA with the ticket and checklist links. Send the release notice to #qa-demo. Checklist items: Smoke tests pass; Rollback plan reviewed; Release notes approved.",
+              "document_id": "release-demo",
+              "id": "release-runbook-demo-v2",
+              "is_current": true,
+              "project_id": "demo",
+              "requested_purpose": "current",
+              "scope": "project:demo",
+              "selection_rule_version": "runbook-selector-v1",
+              "simulated": true,
+              "url": "simulated://f3625053-f543-473d-a2f3-02b4acc8c802/runbooks/release-demo/v2",
+              "version": "v2"
+            },
+            "tool_name": "runbooks.read",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "f3625053-f543-473d-a2f3-02b4acc8c802",
+          "sequence": 6,
+          "task_id": "ed1d3579-c405-4032-80d9-962c13e919b2",
+          "type": "context.supplied"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.674691+00:00",
+          "id": "15dc4ae2-2987-4224-aa63-8141d7f7e9d3",
+          "payload": {
+            "arguments": {
+              "idempotency_key": "release-ticket",
+              "release": "1.0",
+              "title": "Release demo 1.0"
+            },
+            "call_id": "9c11cd86-6823-4820-9a13-ad428ea93335",
+            "tool_name": "tickets.create",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "f3625053-f543-473d-a2f3-02b4acc8c802",
+          "sequence": 7,
+          "task_id": "ed1d3579-c405-4032-80d9-962c13e919b2",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.681586+00:00",
+          "id": "f383c1dd-f639-41b8-8b7e-1ee105ab5219",
+          "payload": {
+            "generation": 1,
+            "object": {
+              "id": "eb7e95b4-8f29-41b1-8c6c-61ba732cb245",
+              "project_id": "demo",
+              "release": "1.0",
+              "simulated": true,
+              "title": "Release demo 1.0",
+              "url": "simulated://f3625053-f543-473d-a2f3-02b4acc8c802/tickets/eb7e95b4-8f29-41b1-8c6c-61ba732cb245"
+            },
+            "operation": "tickets.create",
+            "simulated": true
+          },
+          "run_id": "f3625053-f543-473d-a2f3-02b4acc8c802",
+          "sequence": 8,
+          "task_id": "ed1d3579-c405-4032-80d9-962c13e919b2",
+          "type": "state.changed"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.681586+00:00",
+          "id": "752404e9-bd22-43f9-b61b-6020cc4d7dd4",
+          "payload": {
+            "call_id": "9c11cd86-6823-4820-9a13-ad428ea93335",
+            "result": {
+              "id": "eb7e95b4-8f29-41b1-8c6c-61ba732cb245",
+              "project_id": "demo",
+              "release": "1.0",
+              "simulated": true,
+              "title": "Release demo 1.0",
+              "url": "simulated://f3625053-f543-473d-a2f3-02b4acc8c802/tickets/eb7e95b4-8f29-41b1-8c6c-61ba732cb245"
+            },
+            "tool_name": "tickets.create",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "f3625053-f543-473d-a2f3-02b4acc8c802",
+          "sequence": 9,
+          "task_id": "ed1d3579-c405-4032-80d9-962c13e919b2",
+          "type": "tool.result"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.688506+00:00",
+          "id": "d45f584e-7dd9-4c30-8513-9e0743e981a1",
+          "payload": {
+            "arguments": {
+              "idempotency_key": "release-checklist",
+              "items": [
+                "Smoke tests pass",
+                "Rollback plan reviewed",
+                "Release notes approved"
+              ],
+              "ticket_id": "eb7e95b4-8f29-41b1-8c6c-61ba732cb245",
+              "title": "Release checklist 1.0"
+            },
+            "call_id": "4776c05c-000c-40c9-a165-362d09304d24",
+            "tool_name": "checklists.create",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "f3625053-f543-473d-a2f3-02b4acc8c802",
+          "sequence": 10,
+          "task_id": "ed1d3579-c405-4032-80d9-962c13e919b2",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.696864+00:00",
+          "id": "63d5c969-577f-44be-ade5-aadfb0d0f832",
+          "payload": {
+            "generation": 1,
+            "object": {
+              "id": "5e409c22-f5cd-485e-969d-02c4e9210cb7",
+              "items": [
+                "Smoke tests pass",
+                "Rollback plan reviewed",
+                "Release notes approved"
+              ],
+              "project_id": "demo",
+              "simulated": true,
+              "ticket_id": "eb7e95b4-8f29-41b1-8c6c-61ba732cb245",
+              "title": "Release checklist 1.0",
+              "url": "simulated://f3625053-f543-473d-a2f3-02b4acc8c802/checklists/5e409c22-f5cd-485e-969d-02c4e9210cb7"
+            },
+            "operation": "checklists.create",
+            "simulated": true
+          },
+          "run_id": "f3625053-f543-473d-a2f3-02b4acc8c802",
+          "sequence": 11,
+          "task_id": "ed1d3579-c405-4032-80d9-962c13e919b2",
+          "type": "state.changed"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.696864+00:00",
+          "id": "02b997b1-1e46-44c8-9a04-cbcad6b3aa55",
+          "payload": {
+            "call_id": "4776c05c-000c-40c9-a165-362d09304d24",
+            "result": {
+              "id": "5e409c22-f5cd-485e-969d-02c4e9210cb7",
+              "items": [
+                "Smoke tests pass",
+                "Rollback plan reviewed",
+                "Release notes approved"
+              ],
+              "project_id": "demo",
+              "simulated": true,
+              "ticket_id": "eb7e95b4-8f29-41b1-8c6c-61ba732cb245",
+              "title": "Release checklist 1.0",
+              "url": "simulated://f3625053-f543-473d-a2f3-02b4acc8c802/checklists/5e409c22-f5cd-485e-969d-02c4e9210cb7"
+            },
+            "tool_name": "checklists.create",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "f3625053-f543-473d-a2f3-02b4acc8c802",
+          "sequence": 12,
+          "task_id": "ed1d3579-c405-4032-80d9-962c13e919b2",
+          "type": "tool.result"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.703282+00:00",
+          "id": "194ffe73-a4f7-4603-802c-21b183e8ef9f",
+          "payload": {
+            "arguments": {
+              "channel": "#qa-demo",
+              "idempotency_key": "qa-message",
+              "links": [
+                "simulated://f3625053-f543-473d-a2f3-02b4acc8c802/tickets/eb7e95b4-8f29-41b1-8c6c-61ba732cb245",
+                "simulated://f3625053-f543-473d-a2f3-02b4acc8c802/checklists/5e409c22-f5cd-485e-969d-02c4e9210cb7"
+              ],
+              "text": "Release 1.0 ready for QA."
+            },
+            "call_id": "9102f79b-f3ec-4b04-9e31-8efe35602408",
+            "tool_name": "messages.send",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "f3625053-f543-473d-a2f3-02b4acc8c802",
+          "sequence": 13,
+          "task_id": "ed1d3579-c405-4032-80d9-962c13e919b2",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.709339+00:00",
+          "id": "9cbbe874-f9fc-4e45-b59b-cc0847d76e8e",
+          "payload": {
+            "generation": 1,
+            "object": {
+              "channel": "#qa-demo",
+              "id": "9bb9af8c-ab28-4a72-9240-226337d5635e",
+              "links": [
+                "simulated://f3625053-f543-473d-a2f3-02b4acc8c802/tickets/eb7e95b4-8f29-41b1-8c6c-61ba732cb245",
+                "simulated://f3625053-f543-473d-a2f3-02b4acc8c802/checklists/5e409c22-f5cd-485e-969d-02c4e9210cb7"
+              ],
+              "project_id": "demo",
+              "simulated": true,
+              "text": "Release 1.0 ready for QA.",
+              "url": "simulated://f3625053-f543-473d-a2f3-02b4acc8c802/messages/9bb9af8c-ab28-4a72-9240-226337d5635e"
+            },
+            "operation": "messages.send",
+            "simulated": true
+          },
+          "run_id": "f3625053-f543-473d-a2f3-02b4acc8c802",
+          "sequence": 14,
+          "task_id": "ed1d3579-c405-4032-80d9-962c13e919b2",
+          "type": "state.changed"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.709339+00:00",
+          "id": "9ea0f927-cc09-4e8f-b088-ac23ec742a6d",
+          "payload": {
+            "call_id": "9102f79b-f3ec-4b04-9e31-8efe35602408",
+            "result": {
+              "channel": "#qa-demo",
+              "id": "9bb9af8c-ab28-4a72-9240-226337d5635e",
+              "links": [
+                "simulated://f3625053-f543-473d-a2f3-02b4acc8c802/tickets/eb7e95b4-8f29-41b1-8c6c-61ba732cb245",
+                "simulated://f3625053-f543-473d-a2f3-02b4acc8c802/checklists/5e409c22-f5cd-485e-969d-02c4e9210cb7"
+              ],
+              "project_id": "demo",
+              "simulated": true,
+              "text": "Release 1.0 ready for QA.",
+              "url": "simulated://f3625053-f543-473d-a2f3-02b4acc8c802/messages/9bb9af8c-ab28-4a72-9240-226337d5635e"
+            },
+            "tool_name": "messages.send",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "f3625053-f543-473d-a2f3-02b4acc8c802",
+          "sequence": 15,
+          "task_id": "ed1d3579-c405-4032-80d9-962c13e919b2",
+          "type": "tool.result"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.716308+00:00",
+          "id": "ba94e7f2-d66d-427f-a468-2efc8a4cc9cf",
+          "payload": {
+            "checks": [
+              {
+                "details": {
+                  "matching_object_ids": [
+                    "eb7e95b4-8f29-41b1-8c6c-61ba732cb245"
+                  ]
+                },
+                "evidence_ids": [
+                  "f383c1dd-f639-41b8-8b7e-1ee105ab5219",
+                  "63d5c969-577f-44be-ade5-aadfb0d0f832",
+                  "9cbbe874-f9fc-4e45-b59b-cc0847d76e8e"
+                ],
+                "id": "release_ticket",
+                "name": "Requested release ticket exists",
+                "passed": true
+              },
+              {
+                "details": {
+                  "matching_object_ids": [
+                    "5e409c22-f5cd-485e-969d-02c4e9210cb7"
+                  ]
+                },
+                "evidence_ids": [
+                  "f383c1dd-f639-41b8-8b7e-1ee105ab5219",
+                  "63d5c969-577f-44be-ade5-aadfb0d0f832",
+                  "9cbbe874-f9fc-4e45-b59b-cc0847d76e8e"
+                ],
+                "id": "release_checklist",
+                "name": "Correct checklist is linked to that ticket",
+                "passed": true
+              },
+              {
+                "details": {
+                  "matching_object_ids": [
+                    "9bb9af8c-ab28-4a72-9240-226337d5635e"
+                  ]
+                },
+                "evidence_ids": [
+                  "f383c1dd-f639-41b8-8b7e-1ee105ab5219",
+                  "63d5c969-577f-44be-ade5-aadfb0d0f832",
+                  "9cbbe874-f9fc-4e45-b59b-cc0847d76e8e"
+                ],
+                "id": "qa_notification",
+                "name": "QA receives the release notice with both matching links",
+                "passed": true
+              }
+            ],
+            "criteria_sha256": "8d848f46a01ab4f02f6ddba04d9f51646da93059f3313a108eb8914a91df2d88",
+            "evaluator_version": "release-state-v2",
+            "missing_evidence": [],
+            "passed": true,
+            "simulated": true,
+            "state_sha256": "82f1da0ff09a48b4d7284c86751c086e3b16ea4a70f497db01e661f2a2b390f9"
+          },
+          "run_id": "f3625053-f543-473d-a2f3-02b4acc8c802",
+          "sequence": 16,
+          "task_id": "ed1d3579-c405-4032-80d9-962c13e919b2",
+          "type": "verification.completed"
+        }
+      ]
+    },
+    {
+      "scenario": "broken_checklist",
+      "simulated": true,
+      "verification": {
+        "simulated": true,
+        "passed": false,
+        "checks": [
+          {
+            "id": "release_ticket",
+            "name": "Requested release ticket exists",
+            "passed": true,
+            "evidence_ids": [
+              "be1a7481-2238-4e13-bd8f-260f9f2579d3"
+            ],
+            "details": {
+              "matching_object_ids": [
+                "750b8b85-04cb-4cb4-a64c-d6223e6b7e89"
+              ]
+            }
+          },
+          {
+            "id": "release_checklist",
+            "name": "Correct checklist is linked to that ticket",
+            "passed": false,
+            "evidence_ids": [
+              "be1a7481-2238-4e13-bd8f-260f9f2579d3"
+            ],
+            "details": {
+              "matching_object_ids": []
+            }
+          },
+          {
+            "id": "qa_notification",
+            "name": "QA receives the release notice with both matching links",
+            "passed": false,
+            "evidence_ids": [
+              "be1a7481-2238-4e13-bd8f-260f9f2579d3"
+            ],
+            "details": {
+              "matching_object_ids": []
+            }
+          }
+        ],
+        "evaluator_version": "release-state-v2",
+        "criteria_sha256": "8d848f46a01ab4f02f6ddba04d9f51646da93059f3313a108eb8914a91df2d88",
+        "state_sha256": "fd4782e506cb083e7448cb5f208df6bea1d248b33476ebcf063a52f8ec08dffd",
+        "missing_evidence": [],
+        "evidence_id": "afe04c70-678a-421a-80e3-725b97a14dd1"
+      },
+      "business_state": {
+        "tickets": [
+          {
+            "id": "750b8b85-04cb-4cb4-a64c-d6223e6b7e89",
+            "project_id": "demo",
+            "release": "1.0",
+            "simulated": true,
+            "title": "Release demo 1.0",
+            "url": "simulated://a3ef04c6-efd2-4ca8-b31f-1188194a59a7/tickets/750b8b85-04cb-4cb4-a64c-d6223e6b7e89"
+          }
+        ],
+        "checklists": [],
+        "messages": []
+      },
+      "events": [
+        {
+          "emitted_at": "2026-09-06T14:05:01.716308+00:00",
+          "id": "219e21cc-fe74-4190-9930-9e2a8c42e3f0",
+          "payload": {
+            "environment_version": "sandbox-v1",
+            "generation": 1,
+            "project_id": "demo",
+            "simulated": true
+          },
+          "run_id": "a3ef04c6-efd2-4ca8-b31f-1188194a59a7",
+          "sequence": 1,
+          "task_id": "c93e0656-76b1-4040-9d84-931c302e441a",
+          "type": "sandbox.initialized"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.744073+00:00",
+          "id": "9023e62c-c11c-48ff-b18b-1c79c6ee1d5b",
+          "payload": {
+            "result": {
+              "interface_version": "epoch-tools-v1",
+              "project_id": "demo",
+              "simulated": true,
+              "tools": [
+                {
+                  "description": "Create a simulated release ticket in the current project. Reuse its idempotency key only when retrying identical content.",
+                  "name": "tickets.create",
+                  "read_only": false,
+                  "required_permission": "tickets.create",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "List simulated tickets in the current run and project.",
+                  "name": "tickets.list",
+                  "read_only": true,
+                  "required_permission": "tickets.list",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "Create a simulated checklist linked to a ticket in the current run. Supply the ticket's id, checklist title, checklist items and a stable idempotency key.",
+                  "name": "checklists.create",
+                  "read_only": false,
+                  "required_permission": "checklists.create",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "List simulated checklists in the current run and project.",
+                  "name": "checklists.list",
+                  "read_only": true,
+                  "required_permission": "checklists.list",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "Send a simulated message to the supplied channel with links to existing objects in the current run. Reuse an idempotency key only for identical retries.",
+                  "name": "messages.send",
+                  "read_only": false,
+                  "required_permission": "messages.send",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "List simulated messages in the current run and project.",
+                  "name": "messages.list",
+                  "read_only": true,
+                  "required_permission": "messages.list",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "Read a simulated project runbook. For current work use purpose=current; a version can be requested explicitly. Inspect the returned document version and current/historical status before using its guidance.",
+                  "name": "runbooks.read",
+                  "read_only": true,
+                  "required_permission": "runbooks.read",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                }
+              ]
+            }
+          },
+          "run_id": "a3ef04c6-efd2-4ca8-b31f-1188194a59a7",
+          "sequence": 2,
+          "task_id": "c93e0656-76b1-4040-9d84-931c302e441a",
+          "type": "tool.discovery"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.751072+00:00",
+          "id": "d5c05b62-5787-49b9-b00b-5521057ba1e7",
+          "payload": {
+            "result": {
+              "description": "Create a simulated checklist linked to a ticket in the current run. Supply the ticket's id, checklist title, checklist items and a stable idempotency key.",
+              "input_schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "idempotency_key": {
+                    "maxLength": 200,
+                    "minLength": 1,
+                    "title": "Idempotency Key",
+                    "type": "string"
+                  },
+                  "items": {
+                    "items": {
+                      "maxLength": 500,
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "maxItems": 50,
+                    "minItems": 1,
+                    "title": "Items",
+                    "type": "array"
+                  },
+                  "ticket_id": {
+                    "maxLength": 300,
+                    "minLength": 1,
+                    "title": "Ticket Id",
+                    "type": "string"
+                  },
+                  "title": {
+                    "maxLength": 300,
+                    "minLength": 1,
+                    "title": "Title",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "ticket_id",
+                  "title",
+                  "items",
+                  "idempotency_key"
+                ],
+                "title": "CreateChecklist",
+                "type": "object"
+              },
+              "name": "checklists.create",
+              "output_schema": {
+                "additionalProperties": true,
+                "properties": {
+                  "id": {
+                    "title": "Id",
+                    "type": "string"
+                  },
+                  "items": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "title": "Items",
+                    "type": "array"
+                  },
+                  "project_id": {
+                    "title": "Project Id",
+                    "type": "string"
+                  },
+                  "simulated": {
+                    "const": true,
+                    "title": "Simulated",
+                    "type": "boolean"
+                  },
+                  "ticket_id": {
+                    "title": "Ticket Id",
+                    "type": "string"
+                  },
+                  "title": {
+                    "title": "Title",
+                    "type": "string"
+                  },
+                  "url": {
+                    "pattern": "^simulated://",
+                    "title": "Url",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "project_id",
+                  "simulated",
+                  "url",
+                  "ticket_id",
+                  "title",
+                  "items"
+                ],
+                "title": "ChecklistResult",
+                "type": "object"
+              },
+              "read_only": false,
+              "required_permission": "checklists.create",
+              "simulated": true,
+              "version": "sandbox-v1"
+            },
+            "tool_name": "checklists.create"
+          },
+          "run_id": "a3ef04c6-efd2-4ca8-b31f-1188194a59a7",
+          "sequence": 3,
+          "task_id": "c93e0656-76b1-4040-9d84-931c302e441a",
+          "type": "tool.described"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.751072+00:00",
+          "id": "357a8231-f70e-4d34-9f9f-2c4c91737710",
+          "payload": {
+            "arguments": {},
+            "call_id": "63bf7f25-d01f-41e4-8182-dc32c5f79f36",
+            "tool_name": "runbooks.read",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "a3ef04c6-efd2-4ca8-b31f-1188194a59a7",
+          "sequence": 4,
+          "task_id": "c93e0656-76b1-4040-9d84-931c302e441a",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.757981+00:00",
+          "id": "ea209d3c-e8d2-460f-b38c-5af60e4dec91",
+          "payload": {
+            "call_id": "63bf7f25-d01f-41e4-8182-dc32c5f79f36",
+            "result": {
+              "content": "Release workflow for project demo. Create the release ticket, attach a checklist, and notify QA with the ticket and checklist links. Send the release notice to #qa-demo. Checklist items: Smoke tests pass; Rollback plan reviewed; Release notes approved.",
+              "document_id": "release-demo",
+              "id": "release-runbook-demo-v2",
+              "is_current": true,
+              "project_id": "demo",
+              "requested_purpose": "current",
+              "scope": "project:demo",
+              "selection_rule_version": "runbook-selector-v1",
+              "simulated": true,
+              "url": "simulated://a3ef04c6-efd2-4ca8-b31f-1188194a59a7/runbooks/release-demo/v2",
+              "version": "v2"
+            },
+            "tool_name": "runbooks.read",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "a3ef04c6-efd2-4ca8-b31f-1188194a59a7",
+          "sequence": 5,
+          "task_id": "c93e0656-76b1-4040-9d84-931c302e441a",
+          "type": "tool.result"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.764897+00:00",
+          "id": "2cae35a4-22f9-4fa7-8425-1da323acb354",
+          "payload": {
+            "call_id": "63bf7f25-d01f-41e4-8182-dc32c5f79f36",
+            "requested": {
+              "purpose": "current",
+              "version": null
+            },
+            "source": {
+              "content": "Release workflow for project demo. Create the release ticket, attach a checklist, and notify QA with the ticket and checklist links. Send the release notice to #qa-demo. Checklist items: Smoke tests pass; Rollback plan reviewed; Release notes approved.",
+              "document_id": "release-demo",
+              "id": "release-runbook-demo-v2",
+              "is_current": true,
+              "project_id": "demo",
+              "requested_purpose": "current",
+              "scope": "project:demo",
+              "selection_rule_version": "runbook-selector-v1",
+              "simulated": true,
+              "url": "simulated://a3ef04c6-efd2-4ca8-b31f-1188194a59a7/runbooks/release-demo/v2",
+              "version": "v2"
+            },
+            "tool_name": "runbooks.read",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "a3ef04c6-efd2-4ca8-b31f-1188194a59a7",
+          "sequence": 6,
+          "task_id": "c93e0656-76b1-4040-9d84-931c302e441a",
+          "type": "context.supplied"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.764897+00:00",
+          "id": "eed662d3-9214-4ad6-a9a5-ccac660f40d7",
+          "payload": {
+            "arguments": {
+              "idempotency_key": "release-ticket",
+              "release": "1.0",
+              "title": "Release demo 1.0"
+            },
+            "call_id": "97f987df-96c8-4bd2-a3f8-bd566ed993b1",
+            "tool_name": "tickets.create",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "a3ef04c6-efd2-4ca8-b31f-1188194a59a7",
+          "sequence": 7,
+          "task_id": "c93e0656-76b1-4040-9d84-931c302e441a",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.771850+00:00",
+          "id": "be1a7481-2238-4e13-bd8f-260f9f2579d3",
+          "payload": {
+            "generation": 1,
+            "object": {
+              "id": "750b8b85-04cb-4cb4-a64c-d6223e6b7e89",
+              "project_id": "demo",
+              "release": "1.0",
+              "simulated": true,
+              "title": "Release demo 1.0",
+              "url": "simulated://a3ef04c6-efd2-4ca8-b31f-1188194a59a7/tickets/750b8b85-04cb-4cb4-a64c-d6223e6b7e89"
+            },
+            "operation": "tickets.create",
+            "simulated": true
+          },
+          "run_id": "a3ef04c6-efd2-4ca8-b31f-1188194a59a7",
+          "sequence": 8,
+          "task_id": "c93e0656-76b1-4040-9d84-931c302e441a",
+          "type": "state.changed"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.778819+00:00",
+          "id": "6db30490-ef49-4449-a5f2-30dc7225aa51",
+          "payload": {
+            "call_id": "97f987df-96c8-4bd2-a3f8-bd566ed993b1",
+            "result": {
+              "id": "750b8b85-04cb-4cb4-a64c-d6223e6b7e89",
+              "project_id": "demo",
+              "release": "1.0",
+              "simulated": true,
+              "title": "Release demo 1.0",
+              "url": "simulated://a3ef04c6-efd2-4ca8-b31f-1188194a59a7/tickets/750b8b85-04cb-4cb4-a64c-d6223e6b7e89"
+            },
+            "tool_name": "tickets.create",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "a3ef04c6-efd2-4ca8-b31f-1188194a59a7",
+          "sequence": 9,
+          "task_id": "c93e0656-76b1-4040-9d84-931c302e441a",
+          "type": "tool.result"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.778819+00:00",
+          "id": "25f3c82b-329b-4923-951c-bceab671ad9c",
+          "payload": {
+            "arguments": {
+              "idempotency_key": "release-checklist",
+              "items": [
+                "Smoke tests pass",
+                "Rollback plan reviewed",
+                "Release notes approved"
+              ],
+              "ticket_id": "750b8b85-04cb-4cb4-a64c-d6223e6b7e89",
+              "title": "Release checklist 1.0"
+            },
+            "call_id": "d6701b6e-704b-47a9-bd5f-2432c4c605b5",
+            "tool_name": "checklists.create",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "a3ef04c6-efd2-4ca8-b31f-1188194a59a7",
+          "sequence": 10,
+          "task_id": "c93e0656-76b1-4040-9d84-931c302e441a",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.785700+00:00",
+          "id": "bcea9161-43c9-4c5a-806d-cc71babe66b7",
+          "payload": {
+            "call_id": "d6701b6e-704b-47a9-bd5f-2432c4c605b5",
+            "error": {
+              "code": "adapter_contract_error",
+              "message": "Checklist service rejected payload fields: items. Expected items to be a nonempty array of strings."
+            },
+            "tool_name": "checklists.create",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "a3ef04c6-efd2-4ca8-b31f-1188194a59a7",
+          "sequence": 11,
+          "task_id": "c93e0656-76b1-4040-9d84-931c302e441a",
+          "type": "tool.error"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.785700+00:00",
+          "id": "afe04c70-678a-421a-80e3-725b97a14dd1",
+          "payload": {
+            "checks": [
+              {
+                "details": {
+                  "matching_object_ids": [
+                    "750b8b85-04cb-4cb4-a64c-d6223e6b7e89"
+                  ]
+                },
+                "evidence_ids": [
+                  "be1a7481-2238-4e13-bd8f-260f9f2579d3"
+                ],
+                "id": "release_ticket",
+                "name": "Requested release ticket exists",
+                "passed": true
+              },
+              {
+                "details": {
+                  "matching_object_ids": []
+                },
+                "evidence_ids": [
+                  "be1a7481-2238-4e13-bd8f-260f9f2579d3"
+                ],
+                "id": "release_checklist",
+                "name": "Correct checklist is linked to that ticket",
+                "passed": false
+              },
+              {
+                "details": {
+                  "matching_object_ids": []
+                },
+                "evidence_ids": [
+                  "be1a7481-2238-4e13-bd8f-260f9f2579d3"
+                ],
+                "id": "qa_notification",
+                "name": "QA receives the release notice with both matching links",
+                "passed": false
+              }
+            ],
+            "criteria_sha256": "8d848f46a01ab4f02f6ddba04d9f51646da93059f3313a108eb8914a91df2d88",
+            "evaluator_version": "release-state-v2",
+            "missing_evidence": [],
+            "passed": false,
+            "simulated": true,
+            "state_sha256": "fd4782e506cb083e7448cb5f208df6bea1d248b33476ebcf063a52f8ec08dffd"
+          },
+          "run_id": "a3ef04c6-efd2-4ca8-b31f-1188194a59a7",
+          "sequence": 12,
+          "task_id": "c93e0656-76b1-4040-9d84-931c302e441a",
+          "type": "verification.completed"
+        }
+      ]
+    },
+    {
+      "scenario": "missing_lookup",
+      "simulated": true,
+      "verification": {
+        "simulated": true,
+        "passed": false,
+        "checks": [
+          {
+            "id": "release_ticket",
+            "name": "Requested release ticket exists",
+            "passed": true,
+            "evidence_ids": [
+              "1eb444de-783c-4293-b823-9277d46a0d8d",
+              "a4cd1d5b-d8c6-4786-b362-72e04a79db12",
+              "257a91cc-5343-4470-8c00-5a872b164d44"
+            ],
+            "details": {
+              "matching_object_ids": [
+                "2da4b131-1bf1-461c-9227-ff0f1c1a2b60"
+              ]
+            }
+          },
+          {
+            "id": "release_checklist",
+            "name": "Correct checklist is linked to that ticket",
+            "passed": true,
+            "evidence_ids": [
+              "1eb444de-783c-4293-b823-9277d46a0d8d",
+              "a4cd1d5b-d8c6-4786-b362-72e04a79db12",
+              "257a91cc-5343-4470-8c00-5a872b164d44"
+            ],
+            "details": {
+              "matching_object_ids": [
+                "27cc024a-3b39-415a-a865-856e7bb76c2e"
+              ]
+            }
+          },
+          {
+            "id": "qa_notification",
+            "name": "QA receives the release notice with both matching links",
+            "passed": true,
+            "evidence_ids": [
+              "1eb444de-783c-4293-b823-9277d46a0d8d",
+              "a4cd1d5b-d8c6-4786-b362-72e04a79db12",
+              "257a91cc-5343-4470-8c00-5a872b164d44"
+            ],
+            "details": {
+              "matching_object_ids": [
+                "c78c2e45-6bc3-4b31-a72d-60894333d64a"
+              ]
+            }
+          },
+          {
+            "id": "qa_owner",
+            "name": "QA notification identifies the directory owner",
+            "passed": false,
+            "evidence_ids": [
+              "1eb444de-783c-4293-b823-9277d46a0d8d",
+              "a4cd1d5b-d8c6-4786-b362-72e04a79db12",
+              "257a91cc-5343-4470-8c00-5a872b164d44"
+            ],
+            "details": {
+              "matching_object_ids": []
+            }
+          }
+        ],
+        "evaluator_version": "release-state-v2",
+        "criteria_sha256": "15db974362b2289010a634b73e266c23d2023e3ef9fc872e22f42c8e06d698ad",
+        "state_sha256": "e5deff2f9e9faef67a642afa47e2e44e854ff6e542338136ca3ef54f6bcf8155",
+        "missing_evidence": [],
+        "evidence_id": "d62bd98e-323f-4242-9af6-7040d3b7eaa7"
+      },
+      "business_state": {
+        "tickets": [
+          {
+            "id": "2da4b131-1bf1-461c-9227-ff0f1c1a2b60",
+            "project_id": "demo",
+            "release": "1.0",
+            "simulated": true,
+            "title": "Release demo 1.0",
+            "url": "simulated://67bb81cc-51f1-4742-a1ff-2cb16da8d3dd/tickets/2da4b131-1bf1-461c-9227-ff0f1c1a2b60"
+          }
+        ],
+        "checklists": [
+          {
+            "id": "27cc024a-3b39-415a-a865-856e7bb76c2e",
+            "items": [
+              "Smoke tests pass",
+              "Rollback plan reviewed",
+              "Release notes approved"
+            ],
+            "project_id": "demo",
+            "simulated": true,
+            "ticket_id": "2da4b131-1bf1-461c-9227-ff0f1c1a2b60",
+            "title": "Release checklist 1.0",
+            "url": "simulated://67bb81cc-51f1-4742-a1ff-2cb16da8d3dd/checklists/27cc024a-3b39-415a-a865-856e7bb76c2e"
+          }
+        ],
+        "messages": [
+          {
+            "channel": "#qa-demo",
+            "id": "c78c2e45-6bc3-4b31-a72d-60894333d64a",
+            "links": [
+              "simulated://67bb81cc-51f1-4742-a1ff-2cb16da8d3dd/tickets/2da4b131-1bf1-461c-9227-ff0f1c1a2b60",
+              "simulated://67bb81cc-51f1-4742-a1ff-2cb16da8d3dd/checklists/27cc024a-3b39-415a-a865-856e7bb76c2e"
+            ],
+            "project_id": "demo",
+            "simulated": true,
+            "text": "Release 1.0 ready for QA.",
+            "url": "simulated://67bb81cc-51f1-4742-a1ff-2cb16da8d3dd/messages/c78c2e45-6bc3-4b31-a72d-60894333d64a"
+          }
+        ]
+      },
+      "events": [
+        {
+          "emitted_at": "2026-09-06T14:05:01.800760+00:00",
+          "id": "c0edbeb4-f18d-4f20-a415-720fe1f1a0a2",
+          "payload": {
+            "environment_version": "sandbox-v1",
+            "generation": 1,
+            "project_id": "demo",
+            "simulated": true
+          },
+          "run_id": "67bb81cc-51f1-4742-a1ff-2cb16da8d3dd",
+          "sequence": 1,
+          "task_id": "a81d8ffa-1cbf-40a0-b2f2-e04f2b6d1097",
+          "type": "sandbox.initialized"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.813562+00:00",
+          "id": "d8c4dfa0-3a69-42ea-af39-dd7b3efa19c4",
+          "payload": {
+            "result": {
+              "interface_version": "epoch-tools-v1",
+              "project_id": "demo",
+              "simulated": true,
+              "tools": [
+                {
+                  "description": "Create a simulated release ticket in the current project. Reuse its idempotency key only when retrying identical content.",
+                  "name": "tickets.create",
+                  "read_only": false,
+                  "required_permission": "tickets.create",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "List simulated tickets in the current run and project.",
+                  "name": "tickets.list",
+                  "read_only": true,
+                  "required_permission": "tickets.list",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "Create a simulated checklist linked to a ticket in the current run. Supply the ticket's id, checklist title, checklist items and a stable idempotency key.",
+                  "name": "checklists.create",
+                  "read_only": false,
+                  "required_permission": "checklists.create",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "List simulated checklists in the current run and project.",
+                  "name": "checklists.list",
+                  "read_only": true,
+                  "required_permission": "checklists.list",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "Send a simulated message to the supplied channel with links to existing objects in the current run. Reuse an idempotency key only for identical retries.",
+                  "name": "messages.send",
+                  "read_only": false,
+                  "required_permission": "messages.send",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "List simulated messages in the current run and project.",
+                  "name": "messages.list",
+                  "read_only": true,
+                  "required_permission": "messages.list",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "Read a simulated project runbook. For current work use purpose=current; a version can be requested explicitly. Inspect the returned document version and current/historical status before using its guidance.",
+                  "name": "runbooks.read",
+                  "read_only": true,
+                  "required_permission": "runbooks.read",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                }
+              ]
+            }
+          },
+          "run_id": "67bb81cc-51f1-4742-a1ff-2cb16da8d3dd",
+          "sequence": 2,
+          "task_id": "a81d8ffa-1cbf-40a0-b2f2-e04f2b6d1097",
+          "type": "tool.discovery"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.821185+00:00",
+          "id": "7fab7311-fd2a-4b93-8824-90e735a309ef",
+          "payload": {
+            "result": {
+              "description": "Create a simulated checklist linked to a ticket in the current run. Supply the ticket's id, checklist title, checklist items and a stable idempotency key.",
+              "input_schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "idempotency_key": {
+                    "maxLength": 200,
+                    "minLength": 1,
+                    "title": "Idempotency Key",
+                    "type": "string"
+                  },
+                  "items": {
+                    "items": {
+                      "maxLength": 500,
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "maxItems": 50,
+                    "minItems": 1,
+                    "title": "Items",
+                    "type": "array"
+                  },
+                  "ticket_id": {
+                    "maxLength": 300,
+                    "minLength": 1,
+                    "title": "Ticket Id",
+                    "type": "string"
+                  },
+                  "title": {
+                    "maxLength": 300,
+                    "minLength": 1,
+                    "title": "Title",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "ticket_id",
+                  "title",
+                  "items",
+                  "idempotency_key"
+                ],
+                "title": "CreateChecklist",
+                "type": "object"
+              },
+              "name": "checklists.create",
+              "output_schema": {
+                "additionalProperties": true,
+                "properties": {
+                  "id": {
+                    "title": "Id",
+                    "type": "string"
+                  },
+                  "items": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "title": "Items",
+                    "type": "array"
+                  },
+                  "project_id": {
+                    "title": "Project Id",
+                    "type": "string"
+                  },
+                  "simulated": {
+                    "const": true,
+                    "title": "Simulated",
+                    "type": "boolean"
+                  },
+                  "ticket_id": {
+                    "title": "Ticket Id",
+                    "type": "string"
+                  },
+                  "title": {
+                    "title": "Title",
+                    "type": "string"
+                  },
+                  "url": {
+                    "pattern": "^simulated://",
+                    "title": "Url",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "project_id",
+                  "simulated",
+                  "url",
+                  "ticket_id",
+                  "title",
+                  "items"
+                ],
+                "title": "ChecklistResult",
+                "type": "object"
+              },
+              "read_only": false,
+              "required_permission": "checklists.create",
+              "simulated": true,
+              "version": "sandbox-v1"
+            },
+            "tool_name": "checklists.create"
+          },
+          "run_id": "67bb81cc-51f1-4742-a1ff-2cb16da8d3dd",
+          "sequence": 3,
+          "task_id": "a81d8ffa-1cbf-40a0-b2f2-e04f2b6d1097",
+          "type": "tool.described"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.827403+00:00",
+          "id": "d1b27208-92dc-4b34-a585-2cd13cd3e360",
+          "payload": {
+            "arguments": {},
+            "call_id": "1f84ccb0-943c-438d-9364-cfc26eaf6676",
+            "tool_name": "runbooks.read",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "67bb81cc-51f1-4742-a1ff-2cb16da8d3dd",
+          "sequence": 4,
+          "task_id": "a81d8ffa-1cbf-40a0-b2f2-e04f2b6d1097",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.835277+00:00",
+          "id": "33b76563-b5c7-4be7-84e3-b51fa73ecd10",
+          "payload": {
+            "call_id": "1f84ccb0-943c-438d-9364-cfc26eaf6676",
+            "result": {
+              "content": "Release workflow for project demo. Create the release ticket, attach a checklist, and notify QA with the ticket and checklist links. Send the release notice to #qa-demo. Checklist items: Smoke tests pass; Rollback plan reviewed; Release notes approved. Identify the current QA owner using the authorized directory record.",
+              "document_id": "release-demo",
+              "id": "release-runbook-demo-v2",
+              "is_current": true,
+              "project_id": "demo",
+              "requested_purpose": "current",
+              "scope": "project:demo",
+              "selection_rule_version": "runbook-selector-v1",
+              "simulated": true,
+              "url": "simulated://67bb81cc-51f1-4742-a1ff-2cb16da8d3dd/runbooks/release-demo/v2",
+              "version": "v2"
+            },
+            "tool_name": "runbooks.read",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "67bb81cc-51f1-4742-a1ff-2cb16da8d3dd",
+          "sequence": 5,
+          "task_id": "a81d8ffa-1cbf-40a0-b2f2-e04f2b6d1097",
+          "type": "tool.result"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.841288+00:00",
+          "id": "34aa0bfd-daec-4be2-bf9f-697ab44128c2",
+          "payload": {
+            "call_id": "1f84ccb0-943c-438d-9364-cfc26eaf6676",
+            "requested": {
+              "purpose": "current",
+              "version": null
+            },
+            "source": {
+              "content": "Release workflow for project demo. Create the release ticket, attach a checklist, and notify QA with the ticket and checklist links. Send the release notice to #qa-demo. Checklist items: Smoke tests pass; Rollback plan reviewed; Release notes approved. Identify the current QA owner using the authorized directory record.",
+              "document_id": "release-demo",
+              "id": "release-runbook-demo-v2",
+              "is_current": true,
+              "project_id": "demo",
+              "requested_purpose": "current",
+              "scope": "project:demo",
+              "selection_rule_version": "runbook-selector-v1",
+              "simulated": true,
+              "url": "simulated://67bb81cc-51f1-4742-a1ff-2cb16da8d3dd/runbooks/release-demo/v2",
+              "version": "v2"
+            },
+            "tool_name": "runbooks.read",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "67bb81cc-51f1-4742-a1ff-2cb16da8d3dd",
+          "sequence": 6,
+          "task_id": "a81d8ffa-1cbf-40a0-b2f2-e04f2b6d1097",
+          "type": "context.supplied"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.841288+00:00",
+          "id": "1d67330b-bb93-438f-9ad8-b4aadf50f3f9",
+          "payload": {
+            "arguments": {
+              "idempotency_key": "release-ticket",
+              "release": "1.0",
+              "title": "Release demo 1.0"
+            },
+            "call_id": "adc283ff-37e9-4871-b2fe-5c7375602237",
+            "tool_name": "tickets.create",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "67bb81cc-51f1-4742-a1ff-2cb16da8d3dd",
+          "sequence": 7,
+          "task_id": "a81d8ffa-1cbf-40a0-b2f2-e04f2b6d1097",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.841288+00:00",
+          "id": "1eb444de-783c-4293-b823-9277d46a0d8d",
+          "payload": {
+            "generation": 1,
+            "object": {
+              "id": "2da4b131-1bf1-461c-9227-ff0f1c1a2b60",
+              "project_id": "demo",
+              "release": "1.0",
+              "simulated": true,
+              "title": "Release demo 1.0",
+              "url": "simulated://67bb81cc-51f1-4742-a1ff-2cb16da8d3dd/tickets/2da4b131-1bf1-461c-9227-ff0f1c1a2b60"
+            },
+            "operation": "tickets.create",
+            "simulated": true
+          },
+          "run_id": "67bb81cc-51f1-4742-a1ff-2cb16da8d3dd",
+          "sequence": 8,
+          "task_id": "a81d8ffa-1cbf-40a0-b2f2-e04f2b6d1097",
+          "type": "state.changed"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.857006+00:00",
+          "id": "1935f4d2-2d84-475b-9114-74ed7490abeb",
+          "payload": {
+            "call_id": "adc283ff-37e9-4871-b2fe-5c7375602237",
+            "result": {
+              "id": "2da4b131-1bf1-461c-9227-ff0f1c1a2b60",
+              "project_id": "demo",
+              "release": "1.0",
+              "simulated": true,
+              "title": "Release demo 1.0",
+              "url": "simulated://67bb81cc-51f1-4742-a1ff-2cb16da8d3dd/tickets/2da4b131-1bf1-461c-9227-ff0f1c1a2b60"
+            },
+            "tool_name": "tickets.create",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "67bb81cc-51f1-4742-a1ff-2cb16da8d3dd",
+          "sequence": 9,
+          "task_id": "a81d8ffa-1cbf-40a0-b2f2-e04f2b6d1097",
+          "type": "tool.result"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.862161+00:00",
+          "id": "5122fa4f-110f-429b-bbfe-812e28e974ca",
+          "payload": {
+            "arguments": {
+              "idempotency_key": "release-checklist",
+              "items": [
+                "Smoke tests pass",
+                "Rollback plan reviewed",
+                "Release notes approved"
+              ],
+              "ticket_id": "2da4b131-1bf1-461c-9227-ff0f1c1a2b60",
+              "title": "Release checklist 1.0"
+            },
+            "call_id": "ae8bfe15-16e3-4f1c-a264-9fa646499063",
+            "tool_name": "checklists.create",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "67bb81cc-51f1-4742-a1ff-2cb16da8d3dd",
+          "sequence": 10,
+          "task_id": "a81d8ffa-1cbf-40a0-b2f2-e04f2b6d1097",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.862161+00:00",
+          "id": "a4cd1d5b-d8c6-4786-b362-72e04a79db12",
+          "payload": {
+            "generation": 1,
+            "object": {
+              "id": "27cc024a-3b39-415a-a865-856e7bb76c2e",
+              "items": [
+                "Smoke tests pass",
+                "Rollback plan reviewed",
+                "Release notes approved"
+              ],
+              "project_id": "demo",
+              "simulated": true,
+              "ticket_id": "2da4b131-1bf1-461c-9227-ff0f1c1a2b60",
+              "title": "Release checklist 1.0",
+              "url": "simulated://67bb81cc-51f1-4742-a1ff-2cb16da8d3dd/checklists/27cc024a-3b39-415a-a865-856e7bb76c2e"
+            },
+            "operation": "checklists.create",
+            "simulated": true
+          },
+          "run_id": "67bb81cc-51f1-4742-a1ff-2cb16da8d3dd",
+          "sequence": 11,
+          "task_id": "a81d8ffa-1cbf-40a0-b2f2-e04f2b6d1097",
+          "type": "state.changed"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.869074+00:00",
+          "id": "a3c95fe8-afdc-46ed-a1cb-d18cbb787902",
+          "payload": {
+            "call_id": "ae8bfe15-16e3-4f1c-a264-9fa646499063",
+            "result": {
+              "id": "27cc024a-3b39-415a-a865-856e7bb76c2e",
+              "items": [
+                "Smoke tests pass",
+                "Rollback plan reviewed",
+                "Release notes approved"
+              ],
+              "project_id": "demo",
+              "simulated": true,
+              "ticket_id": "2da4b131-1bf1-461c-9227-ff0f1c1a2b60",
+              "title": "Release checklist 1.0",
+              "url": "simulated://67bb81cc-51f1-4742-a1ff-2cb16da8d3dd/checklists/27cc024a-3b39-415a-a865-856e7bb76c2e"
+            },
+            "tool_name": "checklists.create",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "67bb81cc-51f1-4742-a1ff-2cb16da8d3dd",
+          "sequence": 12,
+          "task_id": "a81d8ffa-1cbf-40a0-b2f2-e04f2b6d1097",
+          "type": "tool.result"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.869074+00:00",
+          "id": "4d3fe3ca-aca3-458f-bb79-0dfd833c5f01",
+          "payload": {
+            "arguments": {
+              "channel": "#qa-demo",
+              "idempotency_key": "qa-message",
+              "links": [
+                "simulated://67bb81cc-51f1-4742-a1ff-2cb16da8d3dd/tickets/2da4b131-1bf1-461c-9227-ff0f1c1a2b60",
+                "simulated://67bb81cc-51f1-4742-a1ff-2cb16da8d3dd/checklists/27cc024a-3b39-415a-a865-856e7bb76c2e"
+              ],
+              "text": "Release 1.0 ready for QA."
+            },
+            "call_id": "0e7e63ac-4cc4-4541-97fb-688d577601c2",
+            "tool_name": "messages.send",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "67bb81cc-51f1-4742-a1ff-2cb16da8d3dd",
+          "sequence": 13,
+          "task_id": "a81d8ffa-1cbf-40a0-b2f2-e04f2b6d1097",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.869074+00:00",
+          "id": "257a91cc-5343-4470-8c00-5a872b164d44",
+          "payload": {
+            "generation": 1,
+            "object": {
+              "channel": "#qa-demo",
+              "id": "c78c2e45-6bc3-4b31-a72d-60894333d64a",
+              "links": [
+                "simulated://67bb81cc-51f1-4742-a1ff-2cb16da8d3dd/tickets/2da4b131-1bf1-461c-9227-ff0f1c1a2b60",
+                "simulated://67bb81cc-51f1-4742-a1ff-2cb16da8d3dd/checklists/27cc024a-3b39-415a-a865-856e7bb76c2e"
+              ],
+              "project_id": "demo",
+              "simulated": true,
+              "text": "Release 1.0 ready for QA.",
+              "url": "simulated://67bb81cc-51f1-4742-a1ff-2cb16da8d3dd/messages/c78c2e45-6bc3-4b31-a72d-60894333d64a"
+            },
+            "operation": "messages.send",
+            "simulated": true
+          },
+          "run_id": "67bb81cc-51f1-4742-a1ff-2cb16da8d3dd",
+          "sequence": 14,
+          "task_id": "a81d8ffa-1cbf-40a0-b2f2-e04f2b6d1097",
+          "type": "state.changed"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.885182+00:00",
+          "id": "075f7e15-bf21-4bb7-9695-2569ec260f44",
+          "payload": {
+            "call_id": "0e7e63ac-4cc4-4541-97fb-688d577601c2",
+            "result": {
+              "channel": "#qa-demo",
+              "id": "c78c2e45-6bc3-4b31-a72d-60894333d64a",
+              "links": [
+                "simulated://67bb81cc-51f1-4742-a1ff-2cb16da8d3dd/tickets/2da4b131-1bf1-461c-9227-ff0f1c1a2b60",
+                "simulated://67bb81cc-51f1-4742-a1ff-2cb16da8d3dd/checklists/27cc024a-3b39-415a-a865-856e7bb76c2e"
+              ],
+              "project_id": "demo",
+              "simulated": true,
+              "text": "Release 1.0 ready for QA.",
+              "url": "simulated://67bb81cc-51f1-4742-a1ff-2cb16da8d3dd/messages/c78c2e45-6bc3-4b31-a72d-60894333d64a"
+            },
+            "tool_name": "messages.send",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "67bb81cc-51f1-4742-a1ff-2cb16da8d3dd",
+          "sequence": 15,
+          "task_id": "a81d8ffa-1cbf-40a0-b2f2-e04f2b6d1097",
+          "type": "tool.result"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.885182+00:00",
+          "id": "b165dd1f-01fc-4f6a-a2a0-c4e28a671000",
+          "payload": {
+            "arguments": {
+              "role": "QA owner"
+            },
+            "call_id": "5d581833-17c4-4de4-aa1d-1b09f8477a4f",
+            "tool_name": "directory.lookup",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "67bb81cc-51f1-4742-a1ff-2cb16da8d3dd",
+          "sequence": 16,
+          "task_id": "a81d8ffa-1cbf-40a0-b2f2-e04f2b6d1097",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.885182+00:00",
+          "id": "c3381d41-dff0-4828-aabd-3b6760949a10",
+          "payload": {
+            "call_id": "5d581833-17c4-4de4-aa1d-1b09f8477a4f",
+            "error": {
+              "code": "tool_not_found",
+              "message": "The requested tool is not available."
+            },
+            "tool_name": "directory.lookup",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "67bb81cc-51f1-4742-a1ff-2cb16da8d3dd",
+          "sequence": 17,
+          "task_id": "a81d8ffa-1cbf-40a0-b2f2-e04f2b6d1097",
+          "type": "tool.error"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.901151+00:00",
+          "id": "d62bd98e-323f-4242-9af6-7040d3b7eaa7",
+          "payload": {
+            "checks": [
+              {
+                "details": {
+                  "matching_object_ids": [
+                    "2da4b131-1bf1-461c-9227-ff0f1c1a2b60"
+                  ]
+                },
+                "evidence_ids": [
+                  "1eb444de-783c-4293-b823-9277d46a0d8d",
+                  "a4cd1d5b-d8c6-4786-b362-72e04a79db12",
+                  "257a91cc-5343-4470-8c00-5a872b164d44"
+                ],
+                "id": "release_ticket",
+                "name": "Requested release ticket exists",
+                "passed": true
+              },
+              {
+                "details": {
+                  "matching_object_ids": [
+                    "27cc024a-3b39-415a-a865-856e7bb76c2e"
+                  ]
+                },
+                "evidence_ids": [
+                  "1eb444de-783c-4293-b823-9277d46a0d8d",
+                  "a4cd1d5b-d8c6-4786-b362-72e04a79db12",
+                  "257a91cc-5343-4470-8c00-5a872b164d44"
+                ],
+                "id": "release_checklist",
+                "name": "Correct checklist is linked to that ticket",
+                "passed": true
+              },
+              {
+                "details": {
+                  "matching_object_ids": [
+                    "c78c2e45-6bc3-4b31-a72d-60894333d64a"
+                  ]
+                },
+                "evidence_ids": [
+                  "1eb444de-783c-4293-b823-9277d46a0d8d",
+                  "a4cd1d5b-d8c6-4786-b362-72e04a79db12",
+                  "257a91cc-5343-4470-8c00-5a872b164d44"
+                ],
+                "id": "qa_notification",
+                "name": "QA receives the release notice with both matching links",
+                "passed": true
+              },
+              {
+                "details": {
+                  "matching_object_ids": []
+                },
+                "evidence_ids": [
+                  "1eb444de-783c-4293-b823-9277d46a0d8d",
+                  "a4cd1d5b-d8c6-4786-b362-72e04a79db12",
+                  "257a91cc-5343-4470-8c00-5a872b164d44"
+                ],
+                "id": "qa_owner",
+                "name": "QA notification identifies the directory owner",
+                "passed": false
+              }
+            ],
+            "criteria_sha256": "15db974362b2289010a634b73e266c23d2023e3ef9fc872e22f42c8e06d698ad",
+            "evaluator_version": "release-state-v2",
+            "missing_evidence": [],
+            "passed": false,
+            "simulated": true,
+            "state_sha256": "e5deff2f9e9faef67a642afa47e2e44e854ff6e542338136ca3ef54f6bcf8155"
+          },
+          "run_id": "67bb81cc-51f1-4742-a1ff-2cb16da8d3dd",
+          "sequence": 18,
+          "task_id": "a81d8ffa-1cbf-40a0-b2f2-e04f2b6d1097",
+          "type": "verification.completed"
+        }
+      ]
+    },
+    {
+      "scenario": "outdated_context",
+      "simulated": true,
+      "verification": {
+        "simulated": true,
+        "passed": false,
+        "checks": [
+          {
+            "id": "release_ticket",
+            "name": "Requested release ticket exists",
+            "passed": true,
+            "evidence_ids": [
+              "8941d081-6852-4a4a-ad45-4fa03f176e99",
+              "1e24a445-7fc1-4bb3-96bb-236dcd2820f9",
+              "c0953ed8-e597-4ed7-a927-766035d179ad"
+            ],
+            "details": {
+              "matching_object_ids": [
+                "2d1695b5-7907-4f34-a231-9da7760e5856"
+              ]
+            }
+          },
+          {
+            "id": "release_checklist",
+            "name": "Correct checklist is linked to that ticket",
+            "passed": true,
+            "evidence_ids": [
+              "8941d081-6852-4a4a-ad45-4fa03f176e99",
+              "1e24a445-7fc1-4bb3-96bb-236dcd2820f9",
+              "c0953ed8-e597-4ed7-a927-766035d179ad"
+            ],
+            "details": {
+              "matching_object_ids": [
+                "bffd6d5b-54b1-4b6d-90a0-f0e1e4d9b157"
+              ]
+            }
+          },
+          {
+            "id": "qa_notification",
+            "name": "QA receives the release notice with both matching links",
+            "passed": false,
+            "evidence_ids": [
+              "8941d081-6852-4a4a-ad45-4fa03f176e99",
+              "1e24a445-7fc1-4bb3-96bb-236dcd2820f9",
+              "c0953ed8-e597-4ed7-a927-766035d179ad"
+            ],
+            "details": {
+              "matching_object_ids": []
+            }
+          }
+        ],
+        "evaluator_version": "release-state-v2",
+        "criteria_sha256": "8d848f46a01ab4f02f6ddba04d9f51646da93059f3313a108eb8914a91df2d88",
+        "state_sha256": "9b7c35bb9239cd5393feef076759671362f5ff0bd42103238244054e70814e46",
+        "missing_evidence": [],
+        "evidence_id": "53ef1105-eb20-47c5-bd7f-32b89c4c2bb0"
+      },
+      "business_state": {
+        "tickets": [
+          {
+            "id": "2d1695b5-7907-4f34-a231-9da7760e5856",
+            "project_id": "demo",
+            "release": "1.0",
+            "simulated": true,
+            "title": "Release demo 1.0",
+            "url": "simulated://a341c79a-e9a4-4779-a133-6b5e673d55fb/tickets/2d1695b5-7907-4f34-a231-9da7760e5856"
+          }
+        ],
+        "checklists": [
+          {
+            "id": "bffd6d5b-54b1-4b6d-90a0-f0e1e4d9b157",
+            "items": [
+              "Smoke tests pass",
+              "Rollback plan reviewed",
+              "Release notes approved"
+            ],
+            "project_id": "demo",
+            "simulated": true,
+            "ticket_id": "2d1695b5-7907-4f34-a231-9da7760e5856",
+            "title": "Release checklist 1.0",
+            "url": "simulated://a341c79a-e9a4-4779-a133-6b5e673d55fb/checklists/bffd6d5b-54b1-4b6d-90a0-f0e1e4d9b157"
+          }
+        ],
+        "messages": [
+          {
+            "channel": "#qa-demo-legacy",
+            "id": "026aa4b6-beb9-4a33-9287-f93cc03276ba",
+            "links": [
+              "simulated://a341c79a-e9a4-4779-a133-6b5e673d55fb/tickets/2d1695b5-7907-4f34-a231-9da7760e5856",
+              "simulated://a341c79a-e9a4-4779-a133-6b5e673d55fb/checklists/bffd6d5b-54b1-4b6d-90a0-f0e1e4d9b157"
+            ],
+            "project_id": "demo",
+            "simulated": true,
+            "text": "Release 1.0 ready for QA.",
+            "url": "simulated://a341c79a-e9a4-4779-a133-6b5e673d55fb/messages/026aa4b6-beb9-4a33-9287-f93cc03276ba"
+          }
+        ]
+      },
+      "events": [
+        {
+          "emitted_at": "2026-09-06T14:05:01.901151+00:00",
+          "id": "bd015119-30ba-40bc-91a8-80b97040929a",
+          "payload": {
+            "environment_version": "sandbox-v1",
+            "generation": 1,
+            "project_id": "demo",
+            "simulated": true
+          },
+          "run_id": "a341c79a-e9a4-4779-a133-6b5e673d55fb",
+          "sequence": 1,
+          "task_id": "7ff4ded4-16d4-4818-9b6f-afe12f23802c",
+          "type": "sandbox.initialized"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.917687+00:00",
+          "id": "c8a3bdd6-6877-4c5b-96d6-56ad1fd3c8fe",
+          "payload": {
+            "result": {
+              "interface_version": "epoch-tools-v1",
+              "project_id": "demo",
+              "simulated": true,
+              "tools": [
+                {
+                  "description": "Create a simulated release ticket in the current project. Reuse its idempotency key only when retrying identical content.",
+                  "name": "tickets.create",
+                  "read_only": false,
+                  "required_permission": "tickets.create",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "List simulated tickets in the current run and project.",
+                  "name": "tickets.list",
+                  "read_only": true,
+                  "required_permission": "tickets.list",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "Create a simulated checklist linked to a ticket in the current run. Supply the ticket's id, checklist title, checklist items and a stable idempotency key.",
+                  "name": "checklists.create",
+                  "read_only": false,
+                  "required_permission": "checklists.create",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "List simulated checklists in the current run and project.",
+                  "name": "checklists.list",
+                  "read_only": true,
+                  "required_permission": "checklists.list",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "Send a simulated message to the supplied channel with links to existing objects in the current run. Reuse an idempotency key only for identical retries.",
+                  "name": "messages.send",
+                  "read_only": false,
+                  "required_permission": "messages.send",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "List simulated messages in the current run and project.",
+                  "name": "messages.list",
+                  "read_only": true,
+                  "required_permission": "messages.list",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "Read a simulated project runbook. For current work use purpose=current; a version can be requested explicitly. Inspect the returned document version and current/historical status before using its guidance.",
+                  "name": "runbooks.read",
+                  "read_only": true,
+                  "required_permission": "runbooks.read",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                }
+              ]
+            }
+          },
+          "run_id": "a341c79a-e9a4-4779-a133-6b5e673d55fb",
+          "sequence": 2,
+          "task_id": "7ff4ded4-16d4-4818-9b6f-afe12f23802c",
+          "type": "tool.discovery"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.931591+00:00",
+          "id": "34d36f55-f81b-487d-9b4e-8f76e10cfb5e",
+          "payload": {
+            "result": {
+              "description": "Create a simulated checklist linked to a ticket in the current run. Supply the ticket's id, checklist title, checklist items and a stable idempotency key.",
+              "input_schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "idempotency_key": {
+                    "maxLength": 200,
+                    "minLength": 1,
+                    "title": "Idempotency Key",
+                    "type": "string"
+                  },
+                  "items": {
+                    "items": {
+                      "maxLength": 500,
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "maxItems": 50,
+                    "minItems": 1,
+                    "title": "Items",
+                    "type": "array"
+                  },
+                  "ticket_id": {
+                    "maxLength": 300,
+                    "minLength": 1,
+                    "title": "Ticket Id",
+                    "type": "string"
+                  },
+                  "title": {
+                    "maxLength": 300,
+                    "minLength": 1,
+                    "title": "Title",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "ticket_id",
+                  "title",
+                  "items",
+                  "idempotency_key"
+                ],
+                "title": "CreateChecklist",
+                "type": "object"
+              },
+              "name": "checklists.create",
+              "output_schema": {
+                "additionalProperties": true,
+                "properties": {
+                  "id": {
+                    "title": "Id",
+                    "type": "string"
+                  },
+                  "items": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "title": "Items",
+                    "type": "array"
+                  },
+                  "project_id": {
+                    "title": "Project Id",
+                    "type": "string"
+                  },
+                  "simulated": {
+                    "const": true,
+                    "title": "Simulated",
+                    "type": "boolean"
+                  },
+                  "ticket_id": {
+                    "title": "Ticket Id",
+                    "type": "string"
+                  },
+                  "title": {
+                    "title": "Title",
+                    "type": "string"
+                  },
+                  "url": {
+                    "pattern": "^simulated://",
+                    "title": "Url",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "project_id",
+                  "simulated",
+                  "url",
+                  "ticket_id",
+                  "title",
+                  "items"
+                ],
+                "title": "ChecklistResult",
+                "type": "object"
+              },
+              "read_only": false,
+              "required_permission": "checklists.create",
+              "simulated": true,
+              "version": "sandbox-v1"
+            },
+            "tool_name": "checklists.create"
+          },
+          "run_id": "a341c79a-e9a4-4779-a133-6b5e673d55fb",
+          "sequence": 3,
+          "task_id": "7ff4ded4-16d4-4818-9b6f-afe12f23802c",
+          "type": "tool.described"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.931591+00:00",
+          "id": "ca6db742-098c-4a62-9d27-e4e0051b3e8b",
+          "payload": {
+            "arguments": {},
+            "call_id": "4b742169-4f8a-450e-8061-14179fc7b9c5",
+            "tool_name": "runbooks.read",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "a341c79a-e9a4-4779-a133-6b5e673d55fb",
+          "sequence": 4,
+          "task_id": "7ff4ded4-16d4-4818-9b6f-afe12f23802c",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.938534+00:00",
+          "id": "d3baae4e-72ea-4444-9fb2-7085c5756ea9",
+          "payload": {
+            "call_id": "4b742169-4f8a-450e-8061-14179fc7b9c5",
+            "result": {
+              "content": "Release workflow for project demo. Create the release ticket, attach a checklist, and notify QA with the ticket and checklist links. Send the release notice to #qa-demo-legacy. Checklist items: Smoke tests pass; Rollback plan reviewed; Release notes approved.",
+              "document_id": "release-demo",
+              "id": "release-runbook-demo-v1",
+              "is_current": false,
+              "project_id": "demo",
+              "requested_purpose": "current",
+              "scope": "project:demo",
+              "selection_rule_version": "runbook-selector-v1",
+              "simulated": true,
+              "url": "simulated://a341c79a-e9a4-4779-a133-6b5e673d55fb/runbooks/release-demo/v1",
+              "version": "v1"
+            },
+            "tool_name": "runbooks.read",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "a341c79a-e9a4-4779-a133-6b5e673d55fb",
+          "sequence": 5,
+          "task_id": "7ff4ded4-16d4-4818-9b6f-afe12f23802c",
+          "type": "tool.result"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.945435+00:00",
+          "id": "13759f0e-0f7a-40d7-a656-ff20783ea429",
+          "payload": {
+            "call_id": "4b742169-4f8a-450e-8061-14179fc7b9c5",
+            "requested": {
+              "purpose": "current",
+              "version": null
+            },
+            "source": {
+              "content": "Release workflow for project demo. Create the release ticket, attach a checklist, and notify QA with the ticket and checklist links. Send the release notice to #qa-demo-legacy. Checklist items: Smoke tests pass; Rollback plan reviewed; Release notes approved.",
+              "document_id": "release-demo",
+              "id": "release-runbook-demo-v1",
+              "is_current": false,
+              "project_id": "demo",
+              "requested_purpose": "current",
+              "scope": "project:demo",
+              "selection_rule_version": "runbook-selector-v1",
+              "simulated": true,
+              "url": "simulated://a341c79a-e9a4-4779-a133-6b5e673d55fb/runbooks/release-demo/v1",
+              "version": "v1"
+            },
+            "tool_name": "runbooks.read",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "a341c79a-e9a4-4779-a133-6b5e673d55fb",
+          "sequence": 6,
+          "task_id": "7ff4ded4-16d4-4818-9b6f-afe12f23802c",
+          "type": "context.supplied"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.945435+00:00",
+          "id": "74be07a1-9f70-47b7-b5c4-f8cca9a77175",
+          "payload": {
+            "arguments": {
+              "idempotency_key": "release-ticket",
+              "release": "1.0",
+              "title": "Release demo 1.0"
+            },
+            "call_id": "4838596e-2487-45ac-a556-73b1cd35e04e",
+            "tool_name": "tickets.create",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "a341c79a-e9a4-4779-a133-6b5e673d55fb",
+          "sequence": 7,
+          "task_id": "7ff4ded4-16d4-4818-9b6f-afe12f23802c",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.952417+00:00",
+          "id": "8941d081-6852-4a4a-ad45-4fa03f176e99",
+          "payload": {
+            "generation": 1,
+            "object": {
+              "id": "2d1695b5-7907-4f34-a231-9da7760e5856",
+              "project_id": "demo",
+              "release": "1.0",
+              "simulated": true,
+              "title": "Release demo 1.0",
+              "url": "simulated://a341c79a-e9a4-4779-a133-6b5e673d55fb/tickets/2d1695b5-7907-4f34-a231-9da7760e5856"
+            },
+            "operation": "tickets.create",
+            "simulated": true
+          },
+          "run_id": "a341c79a-e9a4-4779-a133-6b5e673d55fb",
+          "sequence": 8,
+          "task_id": "7ff4ded4-16d4-4818-9b6f-afe12f23802c",
+          "type": "state.changed"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.952417+00:00",
+          "id": "153cfafc-3c70-42d0-8e2d-7e104c6d1887",
+          "payload": {
+            "call_id": "4838596e-2487-45ac-a556-73b1cd35e04e",
+            "result": {
+              "id": "2d1695b5-7907-4f34-a231-9da7760e5856",
+              "project_id": "demo",
+              "release": "1.0",
+              "simulated": true,
+              "title": "Release demo 1.0",
+              "url": "simulated://a341c79a-e9a4-4779-a133-6b5e673d55fb/tickets/2d1695b5-7907-4f34-a231-9da7760e5856"
+            },
+            "tool_name": "tickets.create",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "a341c79a-e9a4-4779-a133-6b5e673d55fb",
+          "sequence": 9,
+          "task_id": "7ff4ded4-16d4-4818-9b6f-afe12f23802c",
+          "type": "tool.result"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.960162+00:00",
+          "id": "2b5d0d21-6702-45bb-8a68-693b1694f21e",
+          "payload": {
+            "arguments": {
+              "idempotency_key": "release-checklist",
+              "items": [
+                "Smoke tests pass",
+                "Rollback plan reviewed",
+                "Release notes approved"
+              ],
+              "ticket_id": "2d1695b5-7907-4f34-a231-9da7760e5856",
+              "title": "Release checklist 1.0"
+            },
+            "call_id": "5fc383d6-f16b-4ce6-973d-6c1dc573c682",
+            "tool_name": "checklists.create",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "a341c79a-e9a4-4779-a133-6b5e673d55fb",
+          "sequence": 10,
+          "task_id": "7ff4ded4-16d4-4818-9b6f-afe12f23802c",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.966298+00:00",
+          "id": "1e24a445-7fc1-4bb3-96bb-236dcd2820f9",
+          "payload": {
+            "generation": 1,
+            "object": {
+              "id": "bffd6d5b-54b1-4b6d-90a0-f0e1e4d9b157",
+              "items": [
+                "Smoke tests pass",
+                "Rollback plan reviewed",
+                "Release notes approved"
+              ],
+              "project_id": "demo",
+              "simulated": true,
+              "ticket_id": "2d1695b5-7907-4f34-a231-9da7760e5856",
+              "title": "Release checklist 1.0",
+              "url": "simulated://a341c79a-e9a4-4779-a133-6b5e673d55fb/checklists/bffd6d5b-54b1-4b6d-90a0-f0e1e4d9b157"
+            },
+            "operation": "checklists.create",
+            "simulated": true
+          },
+          "run_id": "a341c79a-e9a4-4779-a133-6b5e673d55fb",
+          "sequence": 11,
+          "task_id": "7ff4ded4-16d4-4818-9b6f-afe12f23802c",
+          "type": "state.changed"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.973181+00:00",
+          "id": "b9e07ef3-a5fb-4440-bb53-7023c0364f99",
+          "payload": {
+            "call_id": "5fc383d6-f16b-4ce6-973d-6c1dc573c682",
+            "result": {
+              "id": "bffd6d5b-54b1-4b6d-90a0-f0e1e4d9b157",
+              "items": [
+                "Smoke tests pass",
+                "Rollback plan reviewed",
+                "Release notes approved"
+              ],
+              "project_id": "demo",
+              "simulated": true,
+              "ticket_id": "2d1695b5-7907-4f34-a231-9da7760e5856",
+              "title": "Release checklist 1.0",
+              "url": "simulated://a341c79a-e9a4-4779-a133-6b5e673d55fb/checklists/bffd6d5b-54b1-4b6d-90a0-f0e1e4d9b157"
+            },
+            "tool_name": "checklists.create",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "a341c79a-e9a4-4779-a133-6b5e673d55fb",
+          "sequence": 12,
+          "task_id": "7ff4ded4-16d4-4818-9b6f-afe12f23802c",
+          "type": "tool.result"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.973181+00:00",
+          "id": "723848c5-24c4-4250-85de-b07a872435aa",
+          "payload": {
+            "arguments": {
+              "channel": "#qa-demo-legacy",
+              "idempotency_key": "qa-message",
+              "links": [
+                "simulated://a341c79a-e9a4-4779-a133-6b5e673d55fb/tickets/2d1695b5-7907-4f34-a231-9da7760e5856",
+                "simulated://a341c79a-e9a4-4779-a133-6b5e673d55fb/checklists/bffd6d5b-54b1-4b6d-90a0-f0e1e4d9b157"
+              ],
+              "text": "Release 1.0 ready for QA."
+            },
+            "call_id": "becfec70-bde3-48ca-aecf-392f2be01fd1",
+            "tool_name": "messages.send",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "a341c79a-e9a4-4779-a133-6b5e673d55fb",
+          "sequence": 13,
+          "task_id": "7ff4ded4-16d4-4818-9b6f-afe12f23802c",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.973181+00:00",
+          "id": "c0953ed8-e597-4ed7-a927-766035d179ad",
+          "payload": {
+            "generation": 1,
+            "object": {
+              "channel": "#qa-demo-legacy",
+              "id": "026aa4b6-beb9-4a33-9287-f93cc03276ba",
+              "links": [
+                "simulated://a341c79a-e9a4-4779-a133-6b5e673d55fb/tickets/2d1695b5-7907-4f34-a231-9da7760e5856",
+                "simulated://a341c79a-e9a4-4779-a133-6b5e673d55fb/checklists/bffd6d5b-54b1-4b6d-90a0-f0e1e4d9b157"
+              ],
+              "project_id": "demo",
+              "simulated": true,
+              "text": "Release 1.0 ready for QA.",
+              "url": "simulated://a341c79a-e9a4-4779-a133-6b5e673d55fb/messages/026aa4b6-beb9-4a33-9287-f93cc03276ba"
+            },
+            "operation": "messages.send",
+            "simulated": true
+          },
+          "run_id": "a341c79a-e9a4-4779-a133-6b5e673d55fb",
+          "sequence": 14,
+          "task_id": "7ff4ded4-16d4-4818-9b6f-afe12f23802c",
+          "type": "state.changed"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.973181+00:00",
+          "id": "8a88d839-d1d4-4610-9853-95afeb9fb8ed",
+          "payload": {
+            "call_id": "becfec70-bde3-48ca-aecf-392f2be01fd1",
+            "result": {
+              "channel": "#qa-demo-legacy",
+              "id": "026aa4b6-beb9-4a33-9287-f93cc03276ba",
+              "links": [
+                "simulated://a341c79a-e9a4-4779-a133-6b5e673d55fb/tickets/2d1695b5-7907-4f34-a231-9da7760e5856",
+                "simulated://a341c79a-e9a4-4779-a133-6b5e673d55fb/checklists/bffd6d5b-54b1-4b6d-90a0-f0e1e4d9b157"
+              ],
+              "project_id": "demo",
+              "simulated": true,
+              "text": "Release 1.0 ready for QA.",
+              "url": "simulated://a341c79a-e9a4-4779-a133-6b5e673d55fb/messages/026aa4b6-beb9-4a33-9287-f93cc03276ba"
+            },
+            "tool_name": "messages.send",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "a341c79a-e9a4-4779-a133-6b5e673d55fb",
+          "sequence": 15,
+          "task_id": "7ff4ded4-16d4-4818-9b6f-afe12f23802c",
+          "type": "tool.result"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:01.988984+00:00",
+          "id": "53ef1105-eb20-47c5-bd7f-32b89c4c2bb0",
+          "payload": {
+            "checks": [
+              {
+                "details": {
+                  "matching_object_ids": [
+                    "2d1695b5-7907-4f34-a231-9da7760e5856"
+                  ]
+                },
+                "evidence_ids": [
+                  "8941d081-6852-4a4a-ad45-4fa03f176e99",
+                  "1e24a445-7fc1-4bb3-96bb-236dcd2820f9",
+                  "c0953ed8-e597-4ed7-a927-766035d179ad"
+                ],
+                "id": "release_ticket",
+                "name": "Requested release ticket exists",
+                "passed": true
+              },
+              {
+                "details": {
+                  "matching_object_ids": [
+                    "bffd6d5b-54b1-4b6d-90a0-f0e1e4d9b157"
+                  ]
+                },
+                "evidence_ids": [
+                  "8941d081-6852-4a4a-ad45-4fa03f176e99",
+                  "1e24a445-7fc1-4bb3-96bb-236dcd2820f9",
+                  "c0953ed8-e597-4ed7-a927-766035d179ad"
+                ],
+                "id": "release_checklist",
+                "name": "Correct checklist is linked to that ticket",
+                "passed": true
+              },
+              {
+                "details": {
+                  "matching_object_ids": []
+                },
+                "evidence_ids": [
+                  "8941d081-6852-4a4a-ad45-4fa03f176e99",
+                  "1e24a445-7fc1-4bb3-96bb-236dcd2820f9",
+                  "c0953ed8-e597-4ed7-a927-766035d179ad"
+                ],
+                "id": "qa_notification",
+                "name": "QA receives the release notice with both matching links",
+                "passed": false
+              }
+            ],
+            "criteria_sha256": "8d848f46a01ab4f02f6ddba04d9f51646da93059f3313a108eb8914a91df2d88",
+            "evaluator_version": "release-state-v2",
+            "missing_evidence": [],
+            "passed": false,
+            "simulated": true,
+            "state_sha256": "9b7c35bb9239cd5393feef076759671362f5ff0bd42103238244054e70814e46"
+          },
+          "run_id": "a341c79a-e9a4-4779-a133-6b5e673d55fb",
+          "sequence": 16,
+          "task_id": "7ff4ded4-16d4-4818-9b6f-afe12f23802c",
+          "type": "verification.completed"
+        }
+      ]
+    },
+    {
+      "scenario": "permission_checks",
+      "simulated": true,
+      "denied": {
+        "ok": false,
+        "error": {
+          "code": "access_denied",
+          "message": "This run is not permitted to use this tool."
+        }
+      },
+      "invalid": {
+        "ok": false,
+        "error": {
+          "code": "invalid_arguments",
+          "message": "project_id: extra_forbidden"
+        }
+      },
+      "protected_evaluator": {
+        "ok": false,
+        "error": {
+          "code": "tool_not_found",
+          "message": "The requested tool is not available."
+        }
+      },
+      "business_state": [],
+      "events": [
+        {
+          "emitted_at": "2026-09-06T14:05:01.988984+00:00",
+          "id": "7cb23891-7acb-491e-8f6d-ece35d68871a",
+          "payload": {
+            "environment_version": "sandbox-v1",
+            "generation": 1,
+            "project_id": "demo",
+            "simulated": true
+          },
+          "run_id": "ac8ffabe-c89c-4af0-a90e-8a553adefba8",
+          "sequence": 1,
+          "task_id": "3c676b82-82f0-4caf-a4e4-ea1e57cbb35c",
+          "type": "sandbox.initialized"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:02.002062+00:00",
+          "id": "01ca1113-98e0-4396-87be-d80eff88fa68",
+          "payload": {
+            "arguments": {
+              "idempotency_key": "denied",
+              "release": "1.0",
+              "title": "Release demo 1.0"
+            },
+            "call_id": "c675de3c-af5f-4fd4-a42f-4bad6d4e47ee",
+            "tool_name": "tickets.create",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "ac8ffabe-c89c-4af0-a90e-8a553adefba8",
+          "sequence": 2,
+          "task_id": "3c676b82-82f0-4caf-a4e4-ea1e57cbb35c",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:02.008557+00:00",
+          "id": "b3aca763-fc5d-4fa3-90d5-e6889aa9d5ff",
+          "payload": {
+            "call_id": "c675de3c-af5f-4fd4-a42f-4bad6d4e47ee",
+            "error": {
+              "code": "access_denied",
+              "message": "This run is not permitted to use this tool."
+            },
+            "tool_name": "tickets.create",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "ac8ffabe-c89c-4af0-a90e-8a553adefba8",
+          "sequence": 3,
+          "task_id": "3c676b82-82f0-4caf-a4e4-ea1e57cbb35c",
+          "type": "tool.error"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:02.008557+00:00",
+          "id": "58c5018f-2979-4d46-8105-17f4cd466b3f",
+          "payload": {
+            "arguments": {
+              "project_id": "other"
+            },
+            "call_id": "0eacfebc-f243-4822-96d0-004e753d385d",
+            "tool_name": "tickets.list",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "ac8ffabe-c89c-4af0-a90e-8a553adefba8",
+          "sequence": 4,
+          "task_id": "3c676b82-82f0-4caf-a4e4-ea1e57cbb35c",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:02.015507+00:00",
+          "id": "bf32e476-d27e-4cd6-9a7d-cd5bb2fe0548",
+          "payload": {
+            "call_id": "0eacfebc-f243-4822-96d0-004e753d385d",
+            "error": {
+              "code": "invalid_arguments",
+              "message": "project_id: extra_forbidden"
+            },
+            "tool_name": "tickets.list",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "ac8ffabe-c89c-4af0-a90e-8a553adefba8",
+          "sequence": 5,
+          "task_id": "3c676b82-82f0-4caf-a4e4-ea1e57cbb35c",
+          "type": "tool.error"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:02.022911+00:00",
+          "id": "a393dda5-3513-4b3b-a5b9-e7e46a6d7c92",
+          "payload": {
+            "arguments": {},
+            "call_id": "1ce08a0a-3306-4dc6-b509-abff2c11cadf",
+            "tool_name": "evaluate",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "ac8ffabe-c89c-4af0-a90e-8a553adefba8",
+          "sequence": 6,
+          "task_id": "3c676b82-82f0-4caf-a4e4-ea1e57cbb35c",
+          "type": "tool.called"
+        },
+        {
+          "emitted_at": "2026-09-06T14:05:02.022911+00:00",
+          "id": "f4835e6f-4d46-4385-8878-2f19c1cf7ef5",
+          "payload": {
+            "call_id": "1ce08a0a-3306-4dc6-b509-abff2c11cadf",
+            "error": {
+              "code": "tool_not_found",
+              "message": "The requested tool is not available."
+            },
+            "tool_name": "evaluate",
+            "tool_version": "sandbox-v1"
+          },
+          "run_id": "ac8ffabe-c89c-4af0-a90e-8a553adefba8",
+          "sequence": 7,
+          "task_id": "3c676b82-82f0-4caf-a4e4-ea1e57cbb35c",
+          "type": "tool.error"
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Repository instructions
 
-Epoch should supervise task delivery through sourced checkpoints and improve an executor's tools and context through verified environment repairs. **Backend Phase 1 implements local task intake, contracts, configuration and persistence; executor/supervisor/repair capabilities remain unimplemented.** The current supervisor flow and Anushrut/Rajdeep ownership in README.md record a later user decision than the preserved direction.
+Epoch should supervise task delivery through sourced checkpoints and improve an executor's tools and context through verified environment repairs. **Task intake, scoped local simulations, trusted checks, MCP and explicit Hermes release execution are implemented; automatic supervision/feedback/repair remain unimplemented.** Consult docs/status.md for actual validation and gaps. The current supervisor flow and Anushrut/Rajdeep ownership in README.md record a later user decision than the preserved direction.
 
 ## Start here
 

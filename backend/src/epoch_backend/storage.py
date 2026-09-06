@@ -135,3 +135,21 @@ class SQLiteStore:
                 limit=limit,
                 offset=offset,
             )
+
+    def set_task_status(self, task_id: UUID, status: TaskStatus) -> Task:
+        """Persist execution state without changing the original intake request."""
+        with closing(self._connect()) as connection, connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT record_json FROM tasks WHERE id = ?", (str(task_id),)
+            ).fetchone()
+            if row is None:
+                raise KeyError(task_id)
+            task = self._decode(row["record_json"])
+            task.status = status
+            task.updated_at = datetime.now(UTC)
+            connection.execute(
+                "UPDATE tasks SET record_json = ? WHERE id = ?",
+                (task.model_dump_json(), str(task_id)),
+            )
+            return task

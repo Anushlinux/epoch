@@ -1,0 +1,580 @@
+{
+  "description": "Implemented Phase 3 run and trace interfaces. No automatic supervision.",
+  "models": {
+    "ExecutionRecord": {
+      "$defs": {
+        "Checkpoint": {
+          "additionalProperties": false,
+          "properties": {
+            "depends_on": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Depends On",
+              "type": "array"
+            },
+            "description": {
+              "minLength": 1,
+              "title": "Description",
+              "type": "string"
+            },
+            "evaluator_version": {
+              "minLength": 1,
+              "title": "Evaluator Version",
+              "type": "string"
+            },
+            "evidence_refs": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "title": "Evidence Refs",
+              "type": "array"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "scope": {
+              "minLength": 1,
+              "title": "Scope",
+              "type": "string"
+            },
+            "source_refs": {
+              "items": {
+                "$ref": "#/$defs/SourceReference"
+              },
+              "minItems": 1,
+              "title": "Source Refs",
+              "type": "array"
+            },
+            "status": {
+              "default": "pending",
+              "enum": [
+                "pending",
+                "verified",
+                "failed",
+                "blocked"
+              ],
+              "title": "Status",
+              "type": "string"
+            },
+            "uncertainty": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Uncertainty"
+            },
+            "verification_rule": {
+              "minLength": 1,
+              "title": "Verification Rule",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "description",
+            "source_refs",
+            "scope",
+            "verification_rule",
+            "evaluator_version"
+          ],
+          "title": "Checkpoint",
+          "type": "object"
+        },
+        "ReleaseRunRequest": {
+          "additionalProperties": false,
+          "properties": {
+            "client_request_id": {
+              "format": "uuid",
+              "title": "Client Request Id",
+              "type": "string"
+            },
+            "max_turns": {
+              "default": 16,
+              "maximum": 30,
+              "minimum": 1,
+              "title": "Max Turns",
+              "type": "integer"
+            },
+            "release": {
+              "maxLength": 80,
+              "minLength": 1,
+              "title": "Release",
+              "type": "string"
+            },
+            "scenario": {
+              "default": "control",
+              "enum": [
+                "control",
+                "broken_checklist",
+                "missing_lookup",
+                "outdated_context"
+              ],
+              "title": "Scenario",
+              "type": "string"
+            },
+            "timeout_seconds": {
+              "default": 180,
+              "maximum": 300,
+              "minimum": 10,
+              "title": "Timeout Seconds",
+              "type": "integer"
+            },
+            "workflow": {
+              "const": "release",
+              "title": "Workflow",
+              "type": "string"
+            }
+          },
+          "required": [
+            "client_request_id",
+            "workflow",
+            "release"
+          ],
+          "title": "ReleaseRunRequest",
+          "type": "object"
+        },
+        "SourceReference": {
+          "additionalProperties": false,
+          "properties": {
+            "attribution": {
+              "enum": [
+                "explicit",
+                "inferred"
+              ],
+              "title": "Attribution",
+              "type": "string"
+            },
+            "excerpt": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Excerpt"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                "user_request",
+                "user_feedback",
+                "document",
+                "tool_contract"
+              ],
+              "title": "Kind",
+              "type": "string"
+            },
+            "locator": {
+              "minLength": 1,
+              "title": "Locator",
+              "type": "string"
+            },
+            "version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Version"
+            }
+          },
+          "required": [
+            "id",
+            "kind",
+            "locator",
+            "attribution"
+          ],
+          "title": "SourceReference",
+          "type": "object"
+        },
+        "TaskBrief": {
+          "additionalProperties": false,
+          "properties": {
+            "checkpoints": {
+              "items": {
+                "$ref": "#/$defs/Checkpoint"
+              },
+              "minItems": 1,
+              "title": "Checkpoints",
+              "type": "array"
+            },
+            "clarification_requests": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Clarification Requests",
+              "type": "array"
+            },
+            "constraints": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Constraints",
+              "type": "array"
+            },
+            "created_at": {
+              "format": "date-time",
+              "title": "Created At",
+              "type": "string"
+            },
+            "id": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            },
+            "instructions": {
+              "minLength": 1,
+              "title": "Instructions",
+              "type": "string"
+            },
+            "intent_revision_id": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Intent Revision Id"
+            },
+            "schema_version": {
+              "const": 1,
+              "default": 1,
+              "title": "Schema Version",
+              "type": "integer"
+            },
+            "task_id": {
+              "format": "uuid",
+              "title": "Task Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "task_id",
+            "instructions",
+            "checkpoints",
+            "created_at"
+          ],
+          "title": "TaskBrief",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "baseline": {
+          "additionalProperties": true,
+          "title": "Baseline",
+          "type": "object"
+        },
+        "brief": {
+          "$ref": "#/$defs/TaskBrief"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "executor_success": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Executor Success"
+        },
+        "final_response": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Final Response"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "missing_evidence": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Missing Evidence",
+          "type": "array"
+        },
+        "request": {
+          "$ref": "#/$defs/ReleaseRunRequest"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "running",
+            "verifying",
+            "completed",
+            "failed",
+            "cancelled",
+            "interrupted"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        },
+        "verification": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Verification"
+        }
+      },
+      "required": [
+        "id",
+        "task_id",
+        "request",
+        "status",
+        "brief",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "ExecutionRecord",
+      "type": "object"
+    },
+    "ReleaseRunRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "client_request_id": {
+          "format": "uuid",
+          "title": "Client Request Id",
+          "type": "string"
+        },
+        "max_turns": {
+          "default": 16,
+          "maximum": 30,
+          "minimum": 1,
+          "title": "Max Turns",
+          "type": "integer"
+        },
+        "release": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Release",
+          "type": "string"
+        },
+        "scenario": {
+          "default": "control",
+          "enum": [
+            "control",
+            "broken_checklist",
+            "missing_lookup",
+            "outdated_context"
+          ],
+          "title": "Scenario",
+          "type": "string"
+        },
+        "timeout_seconds": {
+          "default": 180,
+          "maximum": 300,
+          "minimum": 10,
+          "title": "Timeout Seconds",
+          "type": "integer"
+        },
+        "workflow": {
+          "const": "release",
+          "title": "Workflow",
+          "type": "string"
+        }
+      },
+      "required": [
+        "client_request_id",
+        "workflow",
+        "release"
+      ],
+      "title": "ReleaseRunRequest",
+      "type": "object"
+    },
+    "RunEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "emitted_at": {
+          "format": "date-time",
+          "title": "Emitted At",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "payload": {
+          "additionalProperties": true,
+          "title": "Payload",
+          "type": "object"
+        },
+        "run_id": {
+          "format": "uuid",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "sequence": {
+          "exclusiveMinimum": 0,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "task_id",
+        "run_id",
+        "sequence",
+        "type",
+        "payload",
+        "emitted_at"
+      ],
+      "title": "RunEvent",
+      "type": "object"
+    },
+    "RuntimeInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "active_run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Active Run Id"
+        },
+        "automatic_repair": {
+          "const": false,
+          "default": false,
+          "title": "Automatic Repair",
+          "type": "boolean"
+        },
+        "automatic_supervision": {
+          "const": false,
+          "default": false,
+          "title": "Automatic Supervision",
+          "type": "boolean"
+        },
+        "execution_enabled": {
+          "title": "Execution Enabled",
+          "type": "boolean"
+        },
+        "hermes_available": {
+          "title": "Hermes Available",
+          "type": "boolean"
+        },
+        "installation": {
+          "additionalProperties": true,
+          "title": "Installation",
+          "type": "object"
+        },
+        "phase": {
+          "const": 3,
+          "default": 3,
+          "title": "Phase",
+          "type": "integer"
+        },
+        "simulation_only": {
+          "const": true,
+          "default": true,
+          "title": "Simulation Only",
+          "type": "boolean"
+        },
+        "workflow": {
+          "const": "release",
+          "default": "release",
+          "title": "Workflow",
+          "type": "string"
+        }
+      },
+      "required": [
+        "execution_enabled",
+        "hermes_available"
+      ],
+      "title": "RuntimeInfo",
+      "type": "object"
+    }
+  },
+  "schema_version": 1
+}
