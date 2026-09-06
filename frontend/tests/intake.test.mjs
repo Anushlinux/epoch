@@ -127,12 +127,29 @@ test('missing selected task does not block a healthy reconnect; old detail stays
   api.detail = async () => { throw new IntakeError('Task not found', 404); };
   await w.read(old.id);
   assert.equal(w.state.taskUnavailable, true);
-  await w.connect();
-  assert.equal(w.state.connected, true);
-  assert.deepEqual(w.state.task, old);
-  assert.equal(w.state.taskUnavailable, true);
-  assert.match(w.state.error, /404/);
-  assert.equal(calls.length, 0);
+  const updatedList = { ...model('TaskList'), items: [], total: 0 };
+  api.list = async () => updatedList;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await w.connect();
+    assert.equal(w.state.connected, true, 'repeated reconnect must not trap the workspace');
+    assert.deepEqual(w.state.list, updatedList, 'healthy list response replaces the old records');
+    assert.deepEqual(w.state.task, old);
+    assert.equal(w.state.taskUnavailable, true);
+    assert.match(w.state.error, /404/);
+    assert.equal(calls.length, 0);
+  }
+  api.create = async (payload) => { calls.push(payload); throw new IntakeError('Lost acknowledgement'); };
+  await w.submit('A separate unresolved request', 'demo');
+  const frozenPending = w.state.pending;
+  assert.ok(frozenPending);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await w.connect();
+    assert.equal(w.state.connected, true);
+    assert.equal(w.state.taskUnavailable, true);
+    assert.equal(w.state.pending, frozenPending, 'missing detail cannot replace frozen pending identity');
+    assert.equal(w.state.submission, 'unknown');
+    assert.equal(calls.length, 1, 'reconnect cannot replay unresolved work');
+  }
   api.detail = async () => old;
   await w.read(old.id);
   assert.equal(w.state.taskUnavailable, false);
