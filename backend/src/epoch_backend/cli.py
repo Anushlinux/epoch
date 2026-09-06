@@ -10,6 +10,8 @@ from pydantic import ValidationError
 from pydantic_settings import SettingsError
 
 from epoch_backend.config import Settings
+from epoch_backend.execution import ExecutionError
+from epoch_backend.sandbox import SandboxError
 from epoch_backend.storage import SQLiteStore
 
 
@@ -17,10 +19,13 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="epoch-backend", description=__doc__)
     parser.add_argument("--env-file", type=Path, help="Explicit .env configuration file")
     subparsers = parser.add_subparsers(dest="command", required=True)
-    # Keep command-specific behavior small; no executor or repair command exists yet.
+    # Intake and explicit workflow commands share validated local configuration.
     subparsers.add_parser("check-config", help="Validate settings without creating storage")
     subparsers.add_parser("init-db", help="Initialize durable local task storage")
-    subparsers.add_parser("serve", help="Start the local task intake API")
+    subparsers.add_parser("serve", help="Start the local intake and execution API")
+    from epoch_backend.workflow_cli import add_commands
+
+    add_commands(subparsers)
     args = parser.parse_args(argv)
 
     try:
@@ -41,6 +46,10 @@ def main(argv: list[str] | None = None) -> int:
         print(settings.model_dump_json(indent=2))
         return 0
     try:
+        if args.command in {"hermes-info", "sandbox", "run-release"}:
+            from epoch_backend.workflow_cli import handle_command
+
+            return handle_command(args, settings)
         if args.command == "init-db":
             SQLiteStore(settings.database_path).initialize()
             print(f"Storage ready: {settings.database_path}")
@@ -58,4 +67,10 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, sqlite3.Error) as exc:
         print(f"Storage initialization failed: {exc}", file=sys.stderr)
         return 1
+    except (ExecutionError, SandboxError) as exc:
+        print(f"{exc.code}: {exc.message}", file=sys.stderr)
+        return 1
+    except (ValueError, RuntimeError) as exc:
+        print(f"Command failed: {exc}", file=sys.stderr)
+        return 2
     return 0

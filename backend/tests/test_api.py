@@ -16,7 +16,7 @@ def settings(tmp_path, monkeypatch):
     for key in tuple(os.environ):
         if key.startswith("EPOCH_"):
             monkeypatch.delenv(key)
-    return Settings(data_dir=tmp_path / "data", _env_file=None)
+    return Settings(data_dir=tmp_path / "data", enable_hermes=False, _env_file=None)
 
 
 @pytest.fixture
@@ -47,7 +47,7 @@ def test_health_identifies_foundation_without_claiming_execution(client):
     assert response.status_code == 200
     assert response.json() == {
         "status": "ok",
-        "phase": 1,
+        "phase": 3,
         "storage": "ok",
         "execution_enabled": False,
     }

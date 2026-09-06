@@ -19,7 +19,7 @@ def server(data_dir: Path):
         address.bind(("127.0.0.1", 0))
         port = address.getsockname()[1]
     env = {key: value for key, value in os.environ.items() if not key.startswith("EPOCH_")}
-    env.update(EPOCH_DATA_DIR=str(data_dir), EPOCH_PORT=str(port))
+    env.update(EPOCH_DATA_DIR=str(data_dir), EPOCH_PORT=str(port), EPOCH_ENABLE_HERMES="false")
     process = subprocess.Popen(
         [sys.executable, "-m", "epoch_backend", "serve"],
         env=env,
@@ -48,7 +48,19 @@ def server(data_dir: Path):
                     time.sleep(0.1)
             yield client
     finally:
-        process.terminate()
+        if os.name == "nt" and process.poll() is None:
+            # A Windows virtual-environment launcher can own a separate Python
+            # server child. Stop this launched tree before removing its database.
+            subprocess.run(
+                ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=10,
+                check=False,
+                creationflags=subprocess.CREATE_NO_WINDOW,
+            )
+        elif process.poll() is None:
+            process.terminate()
         try:
             process.wait(timeout=5)
         except subprocess.TimeoutExpired:

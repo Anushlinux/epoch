@@ -1,4 +1,4 @@
-name: Backend Phase 1
+name: Backend checks
 
 on:
   push:

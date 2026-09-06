@@ -1,6 +1,6 @@
 # Intended architecture and data flow
 
-**The supervisor/repair architecture below remains a design.** Phase 1 implements only a Python API/CLI, contracts and SQLite task intake; [technical decisions](../backend/DECISIONS.md) specify the foundation. Local simulated business services come next. Rajdeep builds the backend; Anushrut can build the UI against the [frontend handoff](../backend/docs/FRONTEND_HANDOFF.md). The current [supervisor flow](../README.md#user-flow) records the later user decision; the original direction remains unchanged.
+**The complete supervisor/repair architecture below remains a design.** The backend now implements task intake, local simulated services, trusted release checks, scoped MCP tools and explicit Hermes runs with persisted events/results. Automatic planning, continuation, feedback and repair remain later work. See the [implementation plan](../backend/PHASES_2_3_PLAN.md), [status](status.md) and [frontend handoff](../backend/docs/FRONTEND_HANDOFF.md). The original direction remains unchanged.
 
 ## Core idea
 
@@ -31,7 +31,7 @@ Basic local traces, context boundaries and trusted checks belong in Task 02. Tas
 
 ## Information needs
 
-These information requirements now have [concrete data contracts](../backend/src/epoch_backend/contracts.py). Only task intake is persisted in Phase 1; records describing execution and repair do not imply those components exist.
+These information requirements have [shared data contracts](../backend/src/epoch_backend/contracts.py) and [implemented execution records](../backend/src/epoch_backend/execution_contracts.py). Task intake, explicit runs, sandbox effects and observable events are persisted. Future repair records do not imply generated repair or publication exists.
 
 | Record | Information it must make available |
 | --- | --- |

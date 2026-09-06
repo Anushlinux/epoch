@@ -1,6 +1,6 @@
 # Task 02: Simulated services, trusted checks and early traces
 
-Status: unstarted. Intended future implementation.
+Status: Phase 2 implemented and locally verified. See [setup](../../backend/README.md), [simulation evidence](../../backend/fixtures/sandbox/README.md) and [status](../status.md). The sandbox contains actual stateful simulations and a real serialization defect; no generated repair is included.
 
 ## Goal
 

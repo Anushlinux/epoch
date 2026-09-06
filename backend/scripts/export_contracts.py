@@ -6,6 +6,7 @@ from pathlib import Path
 from uuid import UUID
 
 from epoch_backend import contracts as c
+from epoch_backend import execution_contracts as execution
 
 BACKEND = Path(__file__).resolve().parents[1]
 STAMP = "2026-09-06T10:00:00Z"
@@ -180,6 +181,19 @@ def fixture_examples() -> list[dict]:
 
 def documents() -> dict[Path, dict]:
     return {
+        BACKEND / "contracts" / "execution-schemas.json": {
+            "schema_version": 1,
+            "description": (
+                "Implemented Phase 3 run and trace interfaces. No automatic supervision."
+            ),
+            "models": {
+                name: value.model_json_schema()
+                for name, value in vars(execution).items()
+                if isinstance(value, type)
+                and issubclass(value, c.Contract)
+                and value.__module__ == execution.__name__
+            },
+        },
         BACKEND / "contracts" / "schemas.json": {
             "schema_version": 1,
             "description": "Data contracts only. Future models do not imply runtime support.",
