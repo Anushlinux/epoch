@@ -66,7 +66,7 @@ The 10-hour target is: agree contracts and smoke-test integrations in hour 1; co
 
 ## Working with this repository
 
-Run `npm run dev --prefix frontend` and open `ao preview http://127.0.0.1:5173` to inspect the frontend. Run its state tests with `npm test --prefix frontend`; see the [frontend verification record](frontend/evidence/README.md) for historical Phase 1 HTTP/browser checks. This host serves the existing interface, but its Phase 1-only intake validation currently rejects the Phase 4 backend. The separate fixture page remains illustrative. This Phase 4 backend change preserves every frontend file.
+Run `npm run dev --prefix frontend` and open `http://127.0.0.1:5173/chat`. In **Connection settings**, connect to the backend's local origin. Saving a request leaves it pending; **Start release run** explicitly starts execution when the server reports availability. Run state tests with `npm test --prefix frontend`, actual intake browser checks with `npm run test:integration --prefix frontend`, and execution browser checks with `npm run test:execution --prefix frontend`. The execution test runner uses an explicit test executor with real HTTP/storage/checks; it does not prove live model execution. See the [frontend verification record](frontend/evidence/README.md).
 
 From `backend/`, run `uv sync --frozen`, then `uv run --frozen epoch-backend serve`. The health check is at `http://127.0.0.1:8000/api/health`; API docs are at `/docs`. Follow the [backend README](backend/README.md) for Python/uv prerequisites, local cache setup, configuration, tests and the live-server smoke check. Claude and Copilot point to [AGENTS.md](AGENTS.md) for shared rules.
 

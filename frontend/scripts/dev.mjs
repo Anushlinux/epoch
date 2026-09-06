@@ -83,7 +83,7 @@ if (
   });
   server.listen(port, "127.0.0.1", () =>
     console.log(
-      `Epoch frontend: http://127.0.0.1:${port} — connect to your local Phase 1 API in the app.`,
+      `Epoch frontend: http://127.0.0.1:${port} — connect to your local Phase 3 API in the app.`,
     ),
   );
   for (const signal of ["SIGINT", "SIGTERM"])

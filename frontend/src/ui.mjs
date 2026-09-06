@@ -73,7 +73,7 @@ export function shell({
     <div class="shell"><header class="topbar"><div class="topbar-left"><button class="icon-button" data-action="toggle-nav" aria-label="Toggle navigation" aria-controls="sidebar" aria-expanded="false">${icon("panel")}</button>${page === "debugger" ? routeLink(demo, "chat", task, "Back to chat", "back", 'class="back-link"') : `<span class="header-title">${escape(title)}</span>`}</div><div class="topbar-actions">${demo ? '<span class="demo-label">Demo · authored data</span>' : ""}${status}${actions}</div></header>
     ${demo ? '<div class="demo-strip">All progress, repairs, tests and artifacts are authored examples. No task is executing.</div>' : ""}
     <main id="workspace" tabindex="-1" class="workspace ${page === "debugger" ? "debug-workspace" : "chat-workspace"}"><div id="page-scroll" class="page-scroll">${content}</div>${composer}</main>
-    <footer class="statusbar"><span>${demo ? "Local demo" : "Local workspace"}<span class="footer-dot">·</span>${demo ? "No tools or tests execute" : "Intake only · execution unavailable"}</span><span>epoch <span class="footer-dot">/</span> ${page}</span></footer></div>`;
+    <footer class="statusbar"><span>${demo ? "Local demo" : "Local workspace"}<span class="footer-dot">·</span>${demo ? "No tools or tests execute" : "Explicit release runs · simulated services"}</span><span>epoch <span class="footer-dot">/</span> ${page}</span></footer></div>`;
 }
 
 // Restore native input selection, disclosures, and independent page scroll positions.

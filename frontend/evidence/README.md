@@ -1,5 +1,58 @@
 # Frontend verification evidence
 
+## Phase 3 frontend/backend connection — September 6, 2026
+
+Implemented on `codex/connect-frontend-backend` against the published backend
+handoff. The production backend source, evaluators and fixture entrypoint are
+unchanged. The additional Python file is a test-only browser server.
+
+| Check | Actual result |
+| --- | --- |
+| `npm test --prefix frontend` | 50 unit/state tests passed |
+| `npm run test:browser --prefix frontend` | 34 fixture browser checks passed |
+| `EPOCH_FRONTEND_PORT=5191 npm run test:integration --prefix frontend` | Real Phase 3 HTTP checks plus 14 desktop/mobile intake cases passed |
+| `EPOCH_FRONTEND_PORT=5192 npm run test:execution --prefix frontend` | Real HTTP/SSE/storage/checks with an explicit test executor; 8 desktop/mobile execution cases passed |
+| `backend/.venv/bin/python -m pytest backend/tests -q` | 156 passed; two existing dependency deprecation warnings |
+| `backend/.venv/bin/ruff check backend` | Passed |
+| `backend/.venv/bin/ruff format --check backend` | 40 files passed |
+| `backend/.venv/bin/python backend/scripts/export_contracts.py --check` | Published exports match source |
+
+Execution coverage includes explicit start, pending checkpoints, successful trusted
+verification, the broken-checklist failure with its partial ticket, independent
+executor text, named SSE, contiguous trace recovery, cancellation, run history,
+reload, uncertain-acknowledgement recovery and no automatic execution replay.
+Unit cases additionally cover corrupt storage, origin/task identity, stale reads,
+unknown event types, sequence gaps, busy conflicts and uncertain storage errors.
+
+The backend is real; **Hermes is explicitly replaced in the test process only**.
+`backend/tests/frontend_server.py` calls existing simulated tools, and the unchanged
+trusted evaluator judges their persisted state. These checks do not establish a
+new installed-Hermes/model acceptance result, automatic supervision or repairs.
+The test runner stops its own processes and removes its temporary databases.
+
+- HTTP records: [intake](phase3-intake-http.json), [execution test harness](phase3-execution-http.json).
+- Saved run/state/trace evidence: [desktop](phase3-execution-runs-desktop.json), [mobile](phase3-execution-runs-mobile.json). Each explicitly identifies the test executor.
+- Intake screenshots: [desktop](phase3-intake-desktop.png), [mobile](phase3-intake-mobile.png).
+- Execution screenshots: [desktop](phase3-execution-desktop.png), [mobile](phase3-execution-mobile.png).
+- Trusted-result screenshots: [desktop](phase3-results-desktop.png), [mobile](phase3-results-mobile.png).
+
+Screenshots were visually inspected. This caught stale pending/unavailable copy;
+that copy was corrected and the affected browser suites rerun. Existing fixture
+screens and historical evidence below remain separate from the Phase 3 evidence.
+
+A read-only check found the pre-existing backend on port 8000 still serving Phase
+1. It was left untouched. The current production backend was started on port 8002
+with its normal local data directory and no global configuration changes. Its
+health reports Phase 3; its runtime reports Hermes unavailable because it cannot
+read the local model configuration safely. Actual model execution is therefore
+unavailable on this host until Hermes configuration is resolved. This is separate
+from the completed frontend/API connection. The in-app browser blocked the local
+preview; desktop/mobile Playwright HTTP tests provide browser evidence instead.
+
+Use the existing frontend at `http://127.0.0.1:5173/chat` and enter
+`http://127.0.0.1:8002` in Connection settings for this running backend. Reloads
+require an explicit reconnect. No live model or business-service write was made.
+
 ## Chat and debugger redesign — September 6, 2026
 
 Implemented from refreshed `origin/main` at `4bfb841` on `codex/epoch-chat-debugger`. All initial UI changes were completed before test execution, as requested. The earlier records below describe previous layouts; the named intake screenshots and HTTP artifact now contain the latest verification run.

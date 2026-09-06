@@ -1,0 +1,1663 @@
+{
+  "category": "real-local-api-with-explicit-test-executor",
+  "actual_hermes_invoked": false,
+  "verified_at": "2026-09-06T15:06:06.696Z",
+  "runs": [
+    {
+      "record": {
+        "schema_version": 1,
+        "id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+        "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+        "request": {
+          "client_request_id": "2d3b17c6-c946-48e2-875d-ef3737e04585",
+          "workflow": "release",
+          "release": "2.4",
+          "scenario": "control",
+          "max_turns": 16,
+          "timeout_seconds": 180
+        },
+        "status": "completed",
+        "brief": {
+          "schema_version": 1,
+          "id": "ac33cd02-3a78-488b-94e2-f5d58d638b91",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "intent_revision_id": null,
+          "instructions": "Original user request: Prepare the demo release <script>unsafe()</script>\n\nExplicitly selected workflow: release-v1. Project: demo. Release: 2.4.\nCreate a ticket titled 'Release demo 2.4'. Create a checklist titled 'Release checklist 2.4' attached to that ticket, with these items: [\"Smoke tests pass\", \"Rollback plan reviewed\", \"Release notes approved\"]. Send a message to #qa-demo mentioning release 2.4 with both returned object URLs.\nDiscover tools, inspect their input schemas, then invoke them. All effects are simulated. Use stable idempotency keys per action if retrying. Report actual successes and failures with returned references. If an operation fails, do not invent its result or bypass it. Do not create duplicate objects. Finish with a concise factual result.",
+          "checkpoints": [
+            {
+              "id": "47b74d5b-6e6a-4b97-9d11-b449af8b753c",
+              "description": "Create the release ticket for demo 2.4.",
+              "source_refs": [
+                {
+                  "id": "851c00f5-3590-4213-9d7d-259c449568a7",
+                  "kind": "document",
+                  "locator": "epoch-template:release-v1",
+                  "version": "1",
+                  "attribution": "explicit",
+                  "excerpt": "The API caller explicitly selected workflow=release."
+                }
+              ],
+              "depends_on": [],
+              "scope": "demo",
+              "verification_rule": "Compare persisted sandbox state against release-v1 criteria.",
+              "evaluator_version": "release-state-v2",
+              "status": "verified",
+              "evidence_refs": [
+                "f0973e4a-f9ae-4c89-bb25-ee205c3a37d2"
+              ],
+              "uncertainty": null
+            },
+            {
+              "id": "a99eac6b-3342-48c2-81e8-418dfab6f85d",
+              "description": "Attach a checklist containing all required release items to that ticket.",
+              "source_refs": [
+                {
+                  "id": "851c00f5-3590-4213-9d7d-259c449568a7",
+                  "kind": "document",
+                  "locator": "epoch-template:release-v1",
+                  "version": "1",
+                  "attribution": "explicit",
+                  "excerpt": "The API caller explicitly selected workflow=release."
+                }
+              ],
+              "depends_on": [
+                "47b74d5b-6e6a-4b97-9d11-b449af8b753c"
+              ],
+              "scope": "demo",
+              "verification_rule": "Compare persisted sandbox state against release-v1 criteria.",
+              "evaluator_version": "release-state-v2",
+              "status": "verified",
+              "evidence_refs": [
+                "f0973e4a-f9ae-4c89-bb25-ee205c3a37d2"
+              ],
+              "uncertainty": null
+            },
+            {
+              "id": "2e7b5466-5e7d-4103-86e2-51dcb3e7e892",
+              "description": "Notify #qa-demo with links to both the ticket and checklist.",
+              "source_refs": [
+                {
+                  "id": "851c00f5-3590-4213-9d7d-259c449568a7",
+                  "kind": "document",
+                  "locator": "epoch-template:release-v1",
+                  "version": "1",
+                  "attribution": "explicit",
+                  "excerpt": "The API caller explicitly selected workflow=release."
+                }
+              ],
+              "depends_on": [
+                "a99eac6b-3342-48c2-81e8-418dfab6f85d"
+              ],
+              "scope": "demo",
+              "verification_rule": "Compare persisted sandbox state against release-v1 criteria.",
+              "evaluator_version": "release-state-v2",
+              "status": "verified",
+              "evidence_refs": [
+                "f0973e4a-f9ae-4c89-bb25-ee205c3a37d2"
+              ],
+              "uncertainty": null
+            }
+          ],
+          "constraints": [
+            "Use only granted Epoch sandbox tools.",
+            "No live business-service writes."
+          ],
+          "clarification_requests": [],
+          "created_at": "2026-09-06T15:05:59.252580Z"
+        },
+        "created_at": "2026-09-06T15:05:59.248715Z",
+        "updated_at": "2026-09-06T15:06:02.340405Z",
+        "final_response": "Test double finished.",
+        "executor_success": true,
+        "baseline": {
+          "evaluator_sha256": "9302edaf34f71c60e56fc0bd1dbfd3c381ec5d9a05620542edb1b7aa7f74a352",
+          "permission_grants_sha256": "9db6f34a51ef56d1b59f8bcdd71aed8a9774f8a4af2ff497c3c8cc0d95474caf",
+          "criteria_sha256": "bc5d9fdd31eeb5ac0704e7720655ee10b761fc79432be5338243c2634fed5c45"
+        },
+        "verification": {
+          "simulated": true,
+          "passed": true,
+          "checks": [
+            {
+              "id": "release_ticket",
+              "name": "Requested release ticket exists",
+              "passed": true,
+              "evidence_ids": [
+                "74a00616-f5cc-46b8-99f7-66e5bf485fc3",
+                "86b52c6a-e55d-4d53-b953-6d52fc75839c",
+                "8b07500f-3e1a-4aed-ba43-e62a5a305345"
+              ],
+              "details": {
+                "matching_object_ids": [
+                  "a073c212-1c7d-486e-bc54-4beb329080d6"
+                ]
+              }
+            },
+            {
+              "id": "release_checklist",
+              "name": "Correct checklist is linked to that ticket",
+              "passed": true,
+              "evidence_ids": [
+                "74a00616-f5cc-46b8-99f7-66e5bf485fc3",
+                "86b52c6a-e55d-4d53-b953-6d52fc75839c",
+                "8b07500f-3e1a-4aed-ba43-e62a5a305345"
+              ],
+              "details": {
+                "matching_object_ids": [
+                  "0a81626f-f3be-42e9-afeb-6a6a8501bd6b"
+                ]
+              }
+            },
+            {
+              "id": "qa_notification",
+              "name": "QA receives the release notice with both matching links",
+              "passed": true,
+              "evidence_ids": [
+                "74a00616-f5cc-46b8-99f7-66e5bf485fc3",
+                "86b52c6a-e55d-4d53-b953-6d52fc75839c",
+                "8b07500f-3e1a-4aed-ba43-e62a5a305345"
+              ],
+              "details": {
+                "matching_object_ids": [
+                  "73a8051a-3c41-4c7f-ab74-55c914e8b7c3"
+                ]
+              }
+            }
+          ],
+          "evaluator_version": "release-state-v2",
+          "criteria_sha256": "bc5d9fdd31eeb5ac0704e7720655ee10b761fc79432be5338243c2634fed5c45",
+          "state_sha256": "65ec56e925a3f4ce5fb44214a7088c9b58b2adc90324811c3c81f236f44122af",
+          "missing_evidence": [],
+          "evidence_id": "f0973e4a-f9ae-4c89-bb25-ee205c3a37d2"
+        },
+        "missing_evidence": [
+          "Test double: no actual Hermes invocation."
+        ],
+        "error": null
+      },
+      "state": {
+        "simulated": true,
+        "project_id": "demo",
+        "generation": 1,
+        "tickets": [
+          {
+            "id": "a073c212-1c7d-486e-bc54-4beb329080d6",
+            "project_id": "demo",
+            "release": "2.4",
+            "simulated": true,
+            "title": "Release demo 2.4",
+            "url": "simulated://8c13927a-7aa7-460a-b8c3-1ab17b38e06e/tickets/a073c212-1c7d-486e-bc54-4beb329080d6"
+          }
+        ],
+        "checklists": [
+          {
+            "id": "0a81626f-f3be-42e9-afeb-6a6a8501bd6b",
+            "items": [
+              "Smoke tests pass",
+              "Rollback plan reviewed",
+              "Release notes approved"
+            ],
+            "project_id": "demo",
+            "simulated": true,
+            "ticket_id": "a073c212-1c7d-486e-bc54-4beb329080d6",
+            "title": "Release checklist 2.4",
+            "url": "simulated://8c13927a-7aa7-460a-b8c3-1ab17b38e06e/checklists/0a81626f-f3be-42e9-afeb-6a6a8501bd6b"
+          }
+        ],
+        "messages": [
+          {
+            "channel": "#qa-demo",
+            "id": "73a8051a-3c41-4c7f-ab74-55c914e8b7c3",
+            "links": [
+              "simulated://8c13927a-7aa7-460a-b8c3-1ab17b38e06e/tickets/a073c212-1c7d-486e-bc54-4beb329080d6",
+              "simulated://8c13927a-7aa7-460a-b8c3-1ab17b38e06e/checklists/0a81626f-f3be-42e9-afeb-6a6a8501bd6b"
+            ],
+            "project_id": "demo",
+            "simulated": true,
+            "text": "Release 2.4 ready for QA",
+            "url": "simulated://8c13927a-7aa7-460a-b8c3-1ab17b38e06e/messages/73a8051a-3c41-4c7f-ab74-55c914e8b7c3"
+          }
+        ],
+        "directory": [
+          {
+            "channel": "#qa-demo",
+            "id": "directory-demo-qa",
+            "name": "Avery Shah",
+            "project_id": "demo",
+            "role": "QA owner",
+            "simulated": true,
+            "url": "simulated://8c13927a-7aa7-460a-b8c3-1ab17b38e06e/directory/demo-qa"
+          }
+        ],
+        "runbooks": [
+          {
+            "content": "Release workflow for project demo. Create the release ticket, attach a checklist, and notify QA with the ticket and checklist links. Send the release notice to #qa-demo-legacy. Checklist items: Smoke tests pass; Rollback plan reviewed; Release notes approved.",
+            "document_id": "release-demo",
+            "id": "release-runbook-demo-v1",
+            "is_current": false,
+            "project_id": "demo",
+            "scope": "project:demo",
+            "simulated": true,
+            "url": "simulated://8c13927a-7aa7-460a-b8c3-1ab17b38e06e/runbooks/release-demo/v1",
+            "version": "v1"
+          },
+          {
+            "content": "Release workflow for project demo. Create the release ticket, attach a checklist, and notify QA with the ticket and checklist links. Send the release notice to #qa-demo. Checklist items: Smoke tests pass; Rollback plan reviewed; Release notes approved.",
+            "document_id": "release-demo",
+            "id": "release-runbook-demo-v2",
+            "is_current": true,
+            "project_id": "demo",
+            "scope": "project:demo",
+            "simulated": true,
+            "url": "simulated://8c13927a-7aa7-460a-b8c3-1ab17b38e06e/runbooks/release-demo/v2",
+            "version": "v2"
+          }
+        ]
+      },
+      "trace": [
+        {
+          "id": "4ddb61be-b5f9-4f80-baf2-bc26215f3121",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+          "sequence": 1,
+          "type": "sandbox.initialized",
+          "payload": {
+            "environment_version": "sandbox-v1",
+            "generation": 1,
+            "project_id": "demo",
+            "simulated": true
+          },
+          "emitted_at": "2026-09-06T15:05:59.243638Z"
+        },
+        {
+          "id": "ecf74c5d-4a4d-4d64-b94e-b68233be13b1",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+          "sequence": 2,
+          "type": "brief.created",
+          "payload": {
+            "checkpoints": [
+              {
+                "depends_on": [],
+                "description": "Create the release ticket for demo 2.4.",
+                "evaluator_version": "release-state-v2",
+                "evidence_refs": [],
+                "id": "47b74d5b-6e6a-4b97-9d11-b449af8b753c",
+                "scope": "demo",
+                "source_refs": [
+                  {
+                    "attribution": "explicit",
+                    "excerpt": "The API caller explicitly selected workflow=release.",
+                    "id": "851c00f5-3590-4213-9d7d-259c449568a7",
+                    "kind": "document",
+                    "locator": "epoch-template:release-v1",
+                    "version": "1"
+                  }
+                ],
+                "status": "pending",
+                "uncertainty": null,
+                "verification_rule": "Compare persisted sandbox state against release-v1 criteria."
+              },
+              {
+                "depends_on": [
+                  "47b74d5b-6e6a-4b97-9d11-b449af8b753c"
+                ],
+                "description": "Attach a checklist containing all required release items to that ticket.",
+                "evaluator_version": "release-state-v2",
+                "evidence_refs": [],
+                "id": "a99eac6b-3342-48c2-81e8-418dfab6f85d",
+                "scope": "demo",
+                "source_refs": [
+                  {
+                    "attribution": "explicit",
+                    "excerpt": "The API caller explicitly selected workflow=release.",
+                    "id": "851c00f5-3590-4213-9d7d-259c449568a7",
+                    "kind": "document",
+                    "locator": "epoch-template:release-v1",
+                    "version": "1"
+                  }
+                ],
+                "status": "pending",
+                "uncertainty": null,
+                "verification_rule": "Compare persisted sandbox state against release-v1 criteria."
+              },
+              {
+                "depends_on": [
+                  "a99eac6b-3342-48c2-81e8-418dfab6f85d"
+                ],
+                "description": "Notify #qa-demo with links to both the ticket and checklist.",
+                "evaluator_version": "release-state-v2",
+                "evidence_refs": [],
+                "id": "2e7b5466-5e7d-4103-86e2-51dcb3e7e892",
+                "scope": "demo",
+                "source_refs": [
+                  {
+                    "attribution": "explicit",
+                    "excerpt": "The API caller explicitly selected workflow=release.",
+                    "id": "851c00f5-3590-4213-9d7d-259c449568a7",
+                    "kind": "document",
+                    "locator": "epoch-template:release-v1",
+                    "version": "1"
+                  }
+                ],
+                "status": "pending",
+                "uncertainty": null,
+                "verification_rule": "Compare persisted sandbox state against release-v1 criteria."
+              }
+            ],
+            "clarification_requests": [],
+            "constraints": [
+              "Use only granted Epoch sandbox tools.",
+              "No live business-service writes."
+            ],
+            "created_at": "2026-09-06T15:05:59.252580Z",
+            "id": "ac33cd02-3a78-488b-94e2-f5d58d638b91",
+            "instructions": "Original user request: Prepare the demo release <script>unsafe()</script>\n\nExplicitly selected workflow: release-v1. Project: demo. Release: 2.4.\nCreate a ticket titled 'Release demo 2.4'. Create a checklist titled 'Release checklist 2.4' attached to that ticket, with these items: [\"Smoke tests pass\", \"Rollback plan reviewed\", \"Release notes approved\"]. Send a message to #qa-demo mentioning release 2.4 with both returned object URLs.\nDiscover tools, inspect their input schemas, then invoke them. All effects are simulated. Use stable idempotency keys per action if retrying. Report actual successes and failures with returned references. If an operation fails, do not invent its result or bypass it. Do not create duplicate objects. Finish with a concise factual result.",
+            "intent_revision_id": null,
+            "schema_version": 1,
+            "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c"
+          },
+          "emitted_at": "2026-09-06T15:05:59.258444Z"
+        },
+        {
+          "id": "9861bec8-9667-401a-b224-b0434605cb73",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+          "sequence": 3,
+          "type": "run.started",
+          "payload": {
+            "simulation_only": true,
+            "status": "running"
+          },
+          "emitted_at": "2026-09-06T15:05:59.260382Z"
+        },
+        {
+          "id": "ce9770bb-58b7-47e6-8663-1b3bd717adcb",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+          "sequence": 4,
+          "type": "executor.message",
+          "payload": {
+            "content": "Browser test executor started."
+          },
+          "emitted_at": "2026-09-06T15:05:59.262569Z"
+        },
+        {
+          "id": "af669eed-7426-4833-963f-6d3f649cbfd4",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+          "sequence": 5,
+          "type": "tool.discovery",
+          "payload": {
+            "result": {
+              "interface_version": "epoch-tools-v1",
+              "project_id": "demo",
+              "simulated": true,
+              "tools": [
+                {
+                  "description": "Create a simulated release ticket in the current project. Reuse its idempotency key only when retrying identical content.",
+                  "name": "tickets.create",
+                  "read_only": false,
+                  "required_permission": "tickets.create",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "List simulated tickets in the current run and project.",
+                  "name": "tickets.list",
+                  "read_only": true,
+                  "required_permission": "tickets.list",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "Create a simulated checklist linked to a ticket in the current run. Supply the ticket's id, checklist title, checklist items and a stable idempotency key.",
+                  "name": "checklists.create",
+                  "read_only": false,
+                  "required_permission": "checklists.create",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "List simulated checklists in the current run and project.",
+                  "name": "checklists.list",
+                  "read_only": true,
+                  "required_permission": "checklists.list",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "Send a simulated message to the supplied channel with links to existing objects in the current run. Reuse an idempotency key only for identical retries.",
+                  "name": "messages.send",
+                  "read_only": false,
+                  "required_permission": "messages.send",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "List simulated messages in the current run and project.",
+                  "name": "messages.list",
+                  "read_only": true,
+                  "required_permission": "messages.list",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "Read a simulated project runbook. For current work use purpose=current; a version can be requested explicitly. Inspect the returned document version and current/historical status before using its guidance.",
+                  "name": "runbooks.read",
+                  "read_only": true,
+                  "required_permission": "runbooks.read",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                }
+              ]
+            }
+          },
+          "emitted_at": "2026-09-06T15:06:02.292131Z"
+        },
+        {
+          "id": "79ccaeac-772b-403c-ba24-48c9f9261a5c",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+          "sequence": 6,
+          "type": "tool.called",
+          "payload": {
+            "arguments": {
+              "idempotency_key": "ticket",
+              "release": "2.4",
+              "title": "Release demo 2.4"
+            },
+            "call_id": "7b55a83f-8b29-43ca-b971-e69de69e6fec",
+            "tool_name": "tickets.create",
+            "tool_version": "sandbox-v1"
+          },
+          "emitted_at": "2026-09-06T15:06:02.293938Z"
+        },
+        {
+          "id": "74a00616-f5cc-46b8-99f7-66e5bf485fc3",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+          "sequence": 7,
+          "type": "state.changed",
+          "payload": {
+            "generation": 1,
+            "object": {
+              "id": "a073c212-1c7d-486e-bc54-4beb329080d6",
+              "project_id": "demo",
+              "release": "2.4",
+              "simulated": true,
+              "title": "Release demo 2.4",
+              "url": "simulated://8c13927a-7aa7-460a-b8c3-1ab17b38e06e/tickets/a073c212-1c7d-486e-bc54-4beb329080d6"
+            },
+            "operation": "tickets.create",
+            "simulated": true
+          },
+          "emitted_at": "2026-09-06T15:06:02.296637Z"
+        },
+        {
+          "id": "d8d7c334-b660-4adc-82fe-679ed2ada20f",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+          "sequence": 8,
+          "type": "tool.result",
+          "payload": {
+            "call_id": "7b55a83f-8b29-43ca-b971-e69de69e6fec",
+            "result": {
+              "id": "a073c212-1c7d-486e-bc54-4beb329080d6",
+              "project_id": "demo",
+              "release": "2.4",
+              "simulated": true,
+              "title": "Release demo 2.4",
+              "url": "simulated://8c13927a-7aa7-460a-b8c3-1ab17b38e06e/tickets/a073c212-1c7d-486e-bc54-4beb329080d6"
+            },
+            "tool_name": "tickets.create",
+            "tool_version": "sandbox-v1"
+          },
+          "emitted_at": "2026-09-06T15:06:02.298608Z"
+        },
+        {
+          "id": "96061bc4-ccbd-4413-abca-fcafbb30dce7",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+          "sequence": 9,
+          "type": "tool.called",
+          "payload": {
+            "arguments": {
+              "idempotency_key": "checklist",
+              "items": [
+                "Smoke tests pass",
+                "Rollback plan reviewed",
+                "Release notes approved"
+              ],
+              "ticket_id": "a073c212-1c7d-486e-bc54-4beb329080d6",
+              "title": "Release checklist 2.4"
+            },
+            "call_id": "2ae3d348-8c13-4815-a32b-562da9042aaf",
+            "tool_name": "checklists.create",
+            "tool_version": "sandbox-v1"
+          },
+          "emitted_at": "2026-09-06T15:06:02.299891Z"
+        },
+        {
+          "id": "86b52c6a-e55d-4d53-b953-6d52fc75839c",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+          "sequence": 10,
+          "type": "state.changed",
+          "payload": {
+            "generation": 1,
+            "object": {
+              "id": "0a81626f-f3be-42e9-afeb-6a6a8501bd6b",
+              "items": [
+                "Smoke tests pass",
+                "Rollback plan reviewed",
+                "Release notes approved"
+              ],
+              "project_id": "demo",
+              "simulated": true,
+              "ticket_id": "a073c212-1c7d-486e-bc54-4beb329080d6",
+              "title": "Release checklist 2.4",
+              "url": "simulated://8c13927a-7aa7-460a-b8c3-1ab17b38e06e/checklists/0a81626f-f3be-42e9-afeb-6a6a8501bd6b"
+            },
+            "operation": "checklists.create",
+            "simulated": true
+          },
+          "emitted_at": "2026-09-06T15:06:02.301906Z"
+        },
+        {
+          "id": "a6ad9368-2de1-4cd5-9efc-4791b99e3d40",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+          "sequence": 11,
+          "type": "tool.result",
+          "payload": {
+            "call_id": "2ae3d348-8c13-4815-a32b-562da9042aaf",
+            "result": {
+              "id": "0a81626f-f3be-42e9-afeb-6a6a8501bd6b",
+              "items": [
+                "Smoke tests pass",
+                "Rollback plan reviewed",
+                "Release notes approved"
+              ],
+              "project_id": "demo",
+              "simulated": true,
+              "ticket_id": "a073c212-1c7d-486e-bc54-4beb329080d6",
+              "title": "Release checklist 2.4",
+              "url": "simulated://8c13927a-7aa7-460a-b8c3-1ab17b38e06e/checklists/0a81626f-f3be-42e9-afeb-6a6a8501bd6b"
+            },
+            "tool_name": "checklists.create",
+            "tool_version": "sandbox-v1"
+          },
+          "emitted_at": "2026-09-06T15:06:02.303465Z"
+        },
+        {
+          "id": "f37c3a2e-fa1f-427c-9801-c8469cd67c6d",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+          "sequence": 12,
+          "type": "tool.called",
+          "payload": {
+            "arguments": {
+              "channel": "#qa-demo",
+              "idempotency_key": "message",
+              "links": [
+                "simulated://8c13927a-7aa7-460a-b8c3-1ab17b38e06e/tickets/a073c212-1c7d-486e-bc54-4beb329080d6",
+                "simulated://8c13927a-7aa7-460a-b8c3-1ab17b38e06e/checklists/0a81626f-f3be-42e9-afeb-6a6a8501bd6b"
+              ],
+              "text": "Release 2.4 ready for QA"
+            },
+            "call_id": "83494809-355e-4aab-8ea1-efe53bad4424",
+            "tool_name": "messages.send",
+            "tool_version": "sandbox-v1"
+          },
+          "emitted_at": "2026-09-06T15:06:02.304507Z"
+        },
+        {
+          "id": "8b07500f-3e1a-4aed-ba43-e62a5a305345",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+          "sequence": 13,
+          "type": "state.changed",
+          "payload": {
+            "generation": 1,
+            "object": {
+              "channel": "#qa-demo",
+              "id": "73a8051a-3c41-4c7f-ab74-55c914e8b7c3",
+              "links": [
+                "simulated://8c13927a-7aa7-460a-b8c3-1ab17b38e06e/tickets/a073c212-1c7d-486e-bc54-4beb329080d6",
+                "simulated://8c13927a-7aa7-460a-b8c3-1ab17b38e06e/checklists/0a81626f-f3be-42e9-afeb-6a6a8501bd6b"
+              ],
+              "project_id": "demo",
+              "simulated": true,
+              "text": "Release 2.4 ready for QA",
+              "url": "simulated://8c13927a-7aa7-460a-b8c3-1ab17b38e06e/messages/73a8051a-3c41-4c7f-ab74-55c914e8b7c3"
+            },
+            "operation": "messages.send",
+            "simulated": true
+          },
+          "emitted_at": "2026-09-06T15:06:02.307530Z"
+        },
+        {
+          "id": "cf972194-a96f-452c-a19d-e2c4d84f5686",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+          "sequence": 14,
+          "type": "tool.result",
+          "payload": {
+            "call_id": "83494809-355e-4aab-8ea1-efe53bad4424",
+            "result": {
+              "channel": "#qa-demo",
+              "id": "73a8051a-3c41-4c7f-ab74-55c914e8b7c3",
+              "links": [
+                "simulated://8c13927a-7aa7-460a-b8c3-1ab17b38e06e/tickets/a073c212-1c7d-486e-bc54-4beb329080d6",
+                "simulated://8c13927a-7aa7-460a-b8c3-1ab17b38e06e/checklists/0a81626f-f3be-42e9-afeb-6a6a8501bd6b"
+              ],
+              "project_id": "demo",
+              "simulated": true,
+              "text": "Release 2.4 ready for QA",
+              "url": "simulated://8c13927a-7aa7-460a-b8c3-1ab17b38e06e/messages/73a8051a-3c41-4c7f-ab74-55c914e8b7c3"
+            },
+            "tool_name": "messages.send",
+            "tool_version": "sandbox-v1"
+          },
+          "emitted_at": "2026-09-06T15:06:02.310077Z"
+        },
+        {
+          "id": "7bee80e9-f64d-4561-b27b-fd4f10b52d7f",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+          "sequence": 15,
+          "type": "executor.message",
+          "payload": {
+            "content": "Test double finished."
+          },
+          "emitted_at": "2026-09-06T15:06:02.311404Z"
+        },
+        {
+          "id": "3718da68-bf30-4217-87bd-132b5213d31e",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+          "sequence": 16,
+          "type": "run.verifying",
+          "payload": {},
+          "emitted_at": "2026-09-06T15:06:02.324389Z"
+        },
+        {
+          "id": "f0973e4a-f9ae-4c89-bb25-ee205c3a37d2",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+          "sequence": 17,
+          "type": "verification.completed",
+          "payload": {
+            "checks": [
+              {
+                "details": {
+                  "matching_object_ids": [
+                    "a073c212-1c7d-486e-bc54-4beb329080d6"
+                  ]
+                },
+                "evidence_ids": [
+                  "74a00616-f5cc-46b8-99f7-66e5bf485fc3",
+                  "86b52c6a-e55d-4d53-b953-6d52fc75839c",
+                  "8b07500f-3e1a-4aed-ba43-e62a5a305345"
+                ],
+                "id": "release_ticket",
+                "name": "Requested release ticket exists",
+                "passed": true
+              },
+              {
+                "details": {
+                  "matching_object_ids": [
+                    "0a81626f-f3be-42e9-afeb-6a6a8501bd6b"
+                  ]
+                },
+                "evidence_ids": [
+                  "74a00616-f5cc-46b8-99f7-66e5bf485fc3",
+                  "86b52c6a-e55d-4d53-b953-6d52fc75839c",
+                  "8b07500f-3e1a-4aed-ba43-e62a5a305345"
+                ],
+                "id": "release_checklist",
+                "name": "Correct checklist is linked to that ticket",
+                "passed": true
+              },
+              {
+                "details": {
+                  "matching_object_ids": [
+                    "73a8051a-3c41-4c7f-ab74-55c914e8b7c3"
+                  ]
+                },
+                "evidence_ids": [
+                  "74a00616-f5cc-46b8-99f7-66e5bf485fc3",
+                  "86b52c6a-e55d-4d53-b953-6d52fc75839c",
+                  "8b07500f-3e1a-4aed-ba43-e62a5a305345"
+                ],
+                "id": "qa_notification",
+                "name": "QA receives the release notice with both matching links",
+                "passed": true
+              }
+            ],
+            "criteria_sha256": "bc5d9fdd31eeb5ac0704e7720655ee10b761fc79432be5338243c2634fed5c45",
+            "evaluator_version": "release-state-v2",
+            "missing_evidence": [],
+            "passed": true,
+            "simulated": true,
+            "state_sha256": "65ec56e925a3f4ce5fb44214a7088c9b58b2adc90324811c3c81f236f44122af"
+          },
+          "emitted_at": "2026-09-06T15:06:02.328228Z"
+        },
+        {
+          "id": "7592e994-df49-4609-922e-20e09347e3a5",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+          "sequence": 18,
+          "type": "checkpoint.updated",
+          "payload": {
+            "depends_on": [],
+            "description": "Create the release ticket for demo 2.4.",
+            "evaluator_version": "release-state-v2",
+            "evidence_refs": [
+              "f0973e4a-f9ae-4c89-bb25-ee205c3a37d2"
+            ],
+            "id": "47b74d5b-6e6a-4b97-9d11-b449af8b753c",
+            "scope": "demo",
+            "source_refs": [
+              {
+                "attribution": "explicit",
+                "excerpt": "The API caller explicitly selected workflow=release.",
+                "id": "851c00f5-3590-4213-9d7d-259c449568a7",
+                "kind": "document",
+                "locator": "epoch-template:release-v1",
+                "version": "1"
+              }
+            ],
+            "status": "verified",
+            "uncertainty": null,
+            "verification_rule": "Compare persisted sandbox state against release-v1 criteria."
+          },
+          "emitted_at": "2026-09-06T15:06:02.332223Z"
+        },
+        {
+          "id": "9f810b78-4584-41be-b66f-63ecd0688568",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+          "sequence": 19,
+          "type": "checkpoint.updated",
+          "payload": {
+            "depends_on": [
+              "47b74d5b-6e6a-4b97-9d11-b449af8b753c"
+            ],
+            "description": "Attach a checklist containing all required release items to that ticket.",
+            "evaluator_version": "release-state-v2",
+            "evidence_refs": [
+              "f0973e4a-f9ae-4c89-bb25-ee205c3a37d2"
+            ],
+            "id": "a99eac6b-3342-48c2-81e8-418dfab6f85d",
+            "scope": "demo",
+            "source_refs": [
+              {
+                "attribution": "explicit",
+                "excerpt": "The API caller explicitly selected workflow=release.",
+                "id": "851c00f5-3590-4213-9d7d-259c449568a7",
+                "kind": "document",
+                "locator": "epoch-template:release-v1",
+                "version": "1"
+              }
+            ],
+            "status": "verified",
+            "uncertainty": null,
+            "verification_rule": "Compare persisted sandbox state against release-v1 criteria."
+          },
+          "emitted_at": "2026-09-06T15:06:02.335016Z"
+        },
+        {
+          "id": "23172592-27dd-453c-aea7-76c3d6b613c1",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+          "sequence": 20,
+          "type": "checkpoint.updated",
+          "payload": {
+            "depends_on": [
+              "a99eac6b-3342-48c2-81e8-418dfab6f85d"
+            ],
+            "description": "Notify #qa-demo with links to both the ticket and checklist.",
+            "evaluator_version": "release-state-v2",
+            "evidence_refs": [
+              "f0973e4a-f9ae-4c89-bb25-ee205c3a37d2"
+            ],
+            "id": "2e7b5466-5e7d-4103-86e2-51dcb3e7e892",
+            "scope": "demo",
+            "source_refs": [
+              {
+                "attribution": "explicit",
+                "excerpt": "The API caller explicitly selected workflow=release.",
+                "id": "851c00f5-3590-4213-9d7d-259c449568a7",
+                "kind": "document",
+                "locator": "epoch-template:release-v1",
+                "version": "1"
+              }
+            ],
+            "status": "verified",
+            "uncertainty": null,
+            "verification_rule": "Compare persisted sandbox state against release-v1 criteria."
+          },
+          "emitted_at": "2026-09-06T15:06:02.336592Z"
+        },
+        {
+          "id": "b1b2a352-0380-453e-af71-7475860fd440",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "8c13927a-7aa7-460a-b8c3-1ab17b38e06e",
+          "sequence": 21,
+          "type": "run.finished",
+          "payload": {
+            "error": null,
+            "executor_success": true,
+            "status": "completed",
+            "verification": {
+              "checks": [
+                {
+                  "details": {
+                    "matching_object_ids": [
+                      "a073c212-1c7d-486e-bc54-4beb329080d6"
+                    ]
+                  },
+                  "evidence_ids": [
+                    "74a00616-f5cc-46b8-99f7-66e5bf485fc3",
+                    "86b52c6a-e55d-4d53-b953-6d52fc75839c",
+                    "8b07500f-3e1a-4aed-ba43-e62a5a305345"
+                  ],
+                  "id": "release_ticket",
+                  "name": "Requested release ticket exists",
+                  "passed": true
+                },
+                {
+                  "details": {
+                    "matching_object_ids": [
+                      "0a81626f-f3be-42e9-afeb-6a6a8501bd6b"
+                    ]
+                  },
+                  "evidence_ids": [
+                    "74a00616-f5cc-46b8-99f7-66e5bf485fc3",
+                    "86b52c6a-e55d-4d53-b953-6d52fc75839c",
+                    "8b07500f-3e1a-4aed-ba43-e62a5a305345"
+                  ],
+                  "id": "release_checklist",
+                  "name": "Correct checklist is linked to that ticket",
+                  "passed": true
+                },
+                {
+                  "details": {
+                    "matching_object_ids": [
+                      "73a8051a-3c41-4c7f-ab74-55c914e8b7c3"
+                    ]
+                  },
+                  "evidence_ids": [
+                    "74a00616-f5cc-46b8-99f7-66e5bf485fc3",
+                    "86b52c6a-e55d-4d53-b953-6d52fc75839c",
+                    "8b07500f-3e1a-4aed-ba43-e62a5a305345"
+                  ],
+                  "id": "qa_notification",
+                  "name": "QA receives the release notice with both matching links",
+                  "passed": true
+                }
+              ],
+              "criteria_sha256": "bc5d9fdd31eeb5ac0704e7720655ee10b761fc79432be5338243c2634fed5c45",
+              "evaluator_version": "release-state-v2",
+              "evidence_id": "f0973e4a-f9ae-4c89-bb25-ee205c3a37d2",
+              "missing_evidence": [],
+              "passed": true,
+              "simulated": true,
+              "state_sha256": "65ec56e925a3f4ce5fb44214a7088c9b58b2adc90324811c3c81f236f44122af"
+            }
+          },
+          "emitted_at": "2026-09-06T15:06:02.339631Z"
+        }
+      ]
+    },
+    {
+      "record": {
+        "schema_version": 1,
+        "id": "3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20",
+        "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+        "request": {
+          "client_request_id": "637aa45d-c5f8-453b-9cd6-a965af32dd92",
+          "workflow": "release",
+          "release": "2.5",
+          "scenario": "broken_checklist",
+          "max_turns": 16,
+          "timeout_seconds": 180
+        },
+        "status": "failed",
+        "brief": {
+          "schema_version": 1,
+          "id": "670bd7b6-8268-4f55-8daf-c41c668946cd",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "intent_revision_id": null,
+          "instructions": "Original user request: Prepare the demo release <script>unsafe()</script>\n\nExplicitly selected workflow: release-v1. Project: demo. Release: 2.5.\nCreate a ticket titled 'Release demo 2.5'. Create a checklist titled 'Release checklist 2.5' attached to that ticket, with these items: [\"Smoke tests pass\", \"Rollback plan reviewed\", \"Release notes approved\"]. Send a message to #qa-demo mentioning release 2.5 with both returned object URLs.\nDiscover tools, inspect their input schemas, then invoke them. All effects are simulated. Use stable idempotency keys per action if retrying. Report actual successes and failures with returned references. If an operation fails, do not invent its result or bypass it. Do not create duplicate objects. Finish with a concise factual result.",
+          "checkpoints": [
+            {
+              "id": "4864205c-4540-463b-bb1b-92a4bf7c8df6",
+              "description": "Create the release ticket for demo 2.5.",
+              "source_refs": [
+                {
+                  "id": "fa2773e2-40b7-48ff-b47b-935ca43a1d98",
+                  "kind": "document",
+                  "locator": "epoch-template:release-v1",
+                  "version": "1",
+                  "attribution": "explicit",
+                  "excerpt": "The API caller explicitly selected workflow=release."
+                }
+              ],
+              "depends_on": [],
+              "scope": "demo",
+              "verification_rule": "Compare persisted sandbox state against release-v1 criteria.",
+              "evaluator_version": "release-state-v2",
+              "status": "verified",
+              "evidence_refs": [
+                "b84134fd-47ab-4533-b744-a9bef7692e5d"
+              ],
+              "uncertainty": null
+            },
+            {
+              "id": "daec4cb0-deae-447d-98bc-8b46e17baf67",
+              "description": "Attach a checklist containing all required release items to that ticket.",
+              "source_refs": [
+                {
+                  "id": "fa2773e2-40b7-48ff-b47b-935ca43a1d98",
+                  "kind": "document",
+                  "locator": "epoch-template:release-v1",
+                  "version": "1",
+                  "attribution": "explicit",
+                  "excerpt": "The API caller explicitly selected workflow=release."
+                }
+              ],
+              "depends_on": [
+                "4864205c-4540-463b-bb1b-92a4bf7c8df6"
+              ],
+              "scope": "demo",
+              "verification_rule": "Compare persisted sandbox state against release-v1 criteria.",
+              "evaluator_version": "release-state-v2",
+              "status": "failed",
+              "evidence_refs": [
+                "b84134fd-47ab-4533-b744-a9bef7692e5d"
+              ],
+              "uncertainty": null
+            },
+            {
+              "id": "9a9d6bb9-fe4c-4497-a9f0-9e20b1b97fb6",
+              "description": "Notify #qa-demo with links to both the ticket and checklist.",
+              "source_refs": [
+                {
+                  "id": "fa2773e2-40b7-48ff-b47b-935ca43a1d98",
+                  "kind": "document",
+                  "locator": "epoch-template:release-v1",
+                  "version": "1",
+                  "attribution": "explicit",
+                  "excerpt": "The API caller explicitly selected workflow=release."
+                }
+              ],
+              "depends_on": [
+                "daec4cb0-deae-447d-98bc-8b46e17baf67"
+              ],
+              "scope": "demo",
+              "verification_rule": "Compare persisted sandbox state against release-v1 criteria.",
+              "evaluator_version": "release-state-v2",
+              "status": "failed",
+              "evidence_refs": [
+                "b84134fd-47ab-4533-b744-a9bef7692e5d"
+              ],
+              "uncertainty": null
+            }
+          ],
+          "constraints": [
+            "Use only granted Epoch sandbox tools.",
+            "No live business-service writes."
+          ],
+          "clarification_requests": [],
+          "created_at": "2026-09-06T15:06:03.310388Z"
+        },
+        "created_at": "2026-09-06T15:06:03.307182Z",
+        "updated_at": "2026-09-06T15:06:06.396697Z",
+        "final_response": "Test double finished.",
+        "executor_success": true,
+        "baseline": {
+          "evaluator_sha256": "9302edaf34f71c60e56fc0bd1dbfd3c381ec5d9a05620542edb1b7aa7f74a352",
+          "permission_grants_sha256": "9db6f34a51ef56d1b59f8bcdd71aed8a9774f8a4af2ff497c3c8cc0d95474caf",
+          "criteria_sha256": "e329e4fd98be1d440f098cc1ac5524e68cbd4053e28bf072f10dc7b3cc47f544"
+        },
+        "verification": {
+          "simulated": true,
+          "passed": false,
+          "checks": [
+            {
+              "id": "release_ticket",
+              "name": "Requested release ticket exists",
+              "passed": true,
+              "evidence_ids": [
+                "aed18779-887f-4d6c-9991-3170030c44f3"
+              ],
+              "details": {
+                "matching_object_ids": [
+                  "a89aeacc-1e3e-4414-b96a-1f1192b5bd28"
+                ]
+              }
+            },
+            {
+              "id": "release_checklist",
+              "name": "Correct checklist is linked to that ticket",
+              "passed": false,
+              "evidence_ids": [
+                "aed18779-887f-4d6c-9991-3170030c44f3"
+              ],
+              "details": {
+                "matching_object_ids": []
+              }
+            },
+            {
+              "id": "qa_notification",
+              "name": "QA receives the release notice with both matching links",
+              "passed": false,
+              "evidence_ids": [
+                "aed18779-887f-4d6c-9991-3170030c44f3"
+              ],
+              "details": {
+                "matching_object_ids": []
+              }
+            }
+          ],
+          "evaluator_version": "release-state-v2",
+          "criteria_sha256": "e329e4fd98be1d440f098cc1ac5524e68cbd4053e28bf072f10dc7b3cc47f544",
+          "state_sha256": "f0efb66ff6e848ef59c09f1f4e131ab97b47305421a7abc47c7216489d9406fc",
+          "missing_evidence": [],
+          "evidence_id": "b84134fd-47ab-4533-b744-a9bef7692e5d"
+        },
+        "missing_evidence": [
+          "Test double: no actual Hermes invocation."
+        ],
+        "error": null
+      },
+      "state": {
+        "simulated": true,
+        "project_id": "demo",
+        "generation": 1,
+        "tickets": [
+          {
+            "id": "a89aeacc-1e3e-4414-b96a-1f1192b5bd28",
+            "project_id": "demo",
+            "release": "2.5",
+            "simulated": true,
+            "title": "Release demo 2.5",
+            "url": "simulated://3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20/tickets/a89aeacc-1e3e-4414-b96a-1f1192b5bd28"
+          }
+        ],
+        "checklists": [],
+        "messages": [],
+        "directory": [
+          {
+            "channel": "#qa-demo",
+            "id": "directory-demo-qa",
+            "name": "Avery Shah",
+            "project_id": "demo",
+            "role": "QA owner",
+            "simulated": true,
+            "url": "simulated://3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20/directory/demo-qa"
+          }
+        ],
+        "runbooks": [
+          {
+            "content": "Release workflow for project demo. Create the release ticket, attach a checklist, and notify QA with the ticket and checklist links. Send the release notice to #qa-demo-legacy. Checklist items: Smoke tests pass; Rollback plan reviewed; Release notes approved.",
+            "document_id": "release-demo",
+            "id": "release-runbook-demo-v1",
+            "is_current": false,
+            "project_id": "demo",
+            "scope": "project:demo",
+            "simulated": true,
+            "url": "simulated://3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20/runbooks/release-demo/v1",
+            "version": "v1"
+          },
+          {
+            "content": "Release workflow for project demo. Create the release ticket, attach a checklist, and notify QA with the ticket and checklist links. Send the release notice to #qa-demo. Checklist items: Smoke tests pass; Rollback plan reviewed; Release notes approved.",
+            "document_id": "release-demo",
+            "id": "release-runbook-demo-v2",
+            "is_current": true,
+            "project_id": "demo",
+            "scope": "project:demo",
+            "simulated": true,
+            "url": "simulated://3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20/runbooks/release-demo/v2",
+            "version": "v2"
+          }
+        ]
+      },
+      "trace": [
+        {
+          "id": "36759418-566a-4090-80d1-f125a4077501",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20",
+          "sequence": 1,
+          "type": "sandbox.initialized",
+          "payload": {
+            "environment_version": "sandbox-v1",
+            "generation": 1,
+            "project_id": "demo",
+            "simulated": true
+          },
+          "emitted_at": "2026-09-06T15:06:03.304641Z"
+        },
+        {
+          "id": "8d117fe3-3d20-42d0-be50-3cd724ae4cd2",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20",
+          "sequence": 2,
+          "type": "brief.created",
+          "payload": {
+            "checkpoints": [
+              {
+                "depends_on": [],
+                "description": "Create the release ticket for demo 2.5.",
+                "evaluator_version": "release-state-v2",
+                "evidence_refs": [],
+                "id": "4864205c-4540-463b-bb1b-92a4bf7c8df6",
+                "scope": "demo",
+                "source_refs": [
+                  {
+                    "attribution": "explicit",
+                    "excerpt": "The API caller explicitly selected workflow=release.",
+                    "id": "fa2773e2-40b7-48ff-b47b-935ca43a1d98",
+                    "kind": "document",
+                    "locator": "epoch-template:release-v1",
+                    "version": "1"
+                  }
+                ],
+                "status": "pending",
+                "uncertainty": null,
+                "verification_rule": "Compare persisted sandbox state against release-v1 criteria."
+              },
+              {
+                "depends_on": [
+                  "4864205c-4540-463b-bb1b-92a4bf7c8df6"
+                ],
+                "description": "Attach a checklist containing all required release items to that ticket.",
+                "evaluator_version": "release-state-v2",
+                "evidence_refs": [],
+                "id": "daec4cb0-deae-447d-98bc-8b46e17baf67",
+                "scope": "demo",
+                "source_refs": [
+                  {
+                    "attribution": "explicit",
+                    "excerpt": "The API caller explicitly selected workflow=release.",
+                    "id": "fa2773e2-40b7-48ff-b47b-935ca43a1d98",
+                    "kind": "document",
+                    "locator": "epoch-template:release-v1",
+                    "version": "1"
+                  }
+                ],
+                "status": "pending",
+                "uncertainty": null,
+                "verification_rule": "Compare persisted sandbox state against release-v1 criteria."
+              },
+              {
+                "depends_on": [
+                  "daec4cb0-deae-447d-98bc-8b46e17baf67"
+                ],
+                "description": "Notify #qa-demo with links to both the ticket and checklist.",
+                "evaluator_version": "release-state-v2",
+                "evidence_refs": [],
+                "id": "9a9d6bb9-fe4c-4497-a9f0-9e20b1b97fb6",
+                "scope": "demo",
+                "source_refs": [
+                  {
+                    "attribution": "explicit",
+                    "excerpt": "The API caller explicitly selected workflow=release.",
+                    "id": "fa2773e2-40b7-48ff-b47b-935ca43a1d98",
+                    "kind": "document",
+                    "locator": "epoch-template:release-v1",
+                    "version": "1"
+                  }
+                ],
+                "status": "pending",
+                "uncertainty": null,
+                "verification_rule": "Compare persisted sandbox state against release-v1 criteria."
+              }
+            ],
+            "clarification_requests": [],
+            "constraints": [
+              "Use only granted Epoch sandbox tools.",
+              "No live business-service writes."
+            ],
+            "created_at": "2026-09-06T15:06:03.310388Z",
+            "id": "670bd7b6-8268-4f55-8daf-c41c668946cd",
+            "instructions": "Original user request: Prepare the demo release <script>unsafe()</script>\n\nExplicitly selected workflow: release-v1. Project: demo. Release: 2.5.\nCreate a ticket titled 'Release demo 2.5'. Create a checklist titled 'Release checklist 2.5' attached to that ticket, with these items: [\"Smoke tests pass\", \"Rollback plan reviewed\", \"Release notes approved\"]. Send a message to #qa-demo mentioning release 2.5 with both returned object URLs.\nDiscover tools, inspect their input schemas, then invoke them. All effects are simulated. Use stable idempotency keys per action if retrying. Report actual successes and failures with returned references. If an operation fails, do not invent its result or bypass it. Do not create duplicate objects. Finish with a concise factual result.",
+            "intent_revision_id": null,
+            "schema_version": 1,
+            "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c"
+          },
+          "emitted_at": "2026-09-06T15:06:03.314901Z"
+        },
+        {
+          "id": "6229ee9f-749e-442c-8794-caf6a9c1a6d8",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20",
+          "sequence": 3,
+          "type": "run.started",
+          "payload": {
+            "simulation_only": true,
+            "status": "running"
+          },
+          "emitted_at": "2026-09-06T15:06:03.316743Z"
+        },
+        {
+          "id": "0e8df7f5-d394-4b59-a0a9-cf45f0cfac3a",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20",
+          "sequence": 4,
+          "type": "executor.message",
+          "payload": {
+            "content": "Browser test executor started."
+          },
+          "emitted_at": "2026-09-06T15:06:03.319413Z"
+        },
+        {
+          "id": "33b735ae-d76c-4637-985e-89d3cee1c36c",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20",
+          "sequence": 5,
+          "type": "tool.discovery",
+          "payload": {
+            "result": {
+              "interface_version": "epoch-tools-v1",
+              "project_id": "demo",
+              "simulated": true,
+              "tools": [
+                {
+                  "description": "Create a simulated release ticket in the current project. Reuse its idempotency key only when retrying identical content.",
+                  "name": "tickets.create",
+                  "read_only": false,
+                  "required_permission": "tickets.create",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "List simulated tickets in the current run and project.",
+                  "name": "tickets.list",
+                  "read_only": true,
+                  "required_permission": "tickets.list",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "Create a simulated checklist linked to a ticket in the current run. Supply the ticket's id, checklist title, checklist items and a stable idempotency key.",
+                  "name": "checklists.create",
+                  "read_only": false,
+                  "required_permission": "checklists.create",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "List simulated checklists in the current run and project.",
+                  "name": "checklists.list",
+                  "read_only": true,
+                  "required_permission": "checklists.list",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "Send a simulated message to the supplied channel with links to existing objects in the current run. Reuse an idempotency key only for identical retries.",
+                  "name": "messages.send",
+                  "read_only": false,
+                  "required_permission": "messages.send",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "List simulated messages in the current run and project.",
+                  "name": "messages.list",
+                  "read_only": true,
+                  "required_permission": "messages.list",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                },
+                {
+                  "description": "Read a simulated project runbook. For current work use purpose=current; a version can be requested explicitly. Inspect the returned document version and current/historical status before using its guidance.",
+                  "name": "runbooks.read",
+                  "read_only": true,
+                  "required_permission": "runbooks.read",
+                  "simulated": true,
+                  "version": "sandbox-v1"
+                }
+              ]
+            }
+          },
+          "emitted_at": "2026-09-06T15:06:06.354213Z"
+        },
+        {
+          "id": "a113bcec-d712-4f2e-9962-5bfe636082a4",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20",
+          "sequence": 6,
+          "type": "tool.called",
+          "payload": {
+            "arguments": {
+              "idempotency_key": "ticket",
+              "release": "2.5",
+              "title": "Release demo 2.5"
+            },
+            "call_id": "190c912b-53ab-423c-a737-55f1c3a47cb7",
+            "tool_name": "tickets.create",
+            "tool_version": "sandbox-v1"
+          },
+          "emitted_at": "2026-09-06T15:06:06.356520Z"
+        },
+        {
+          "id": "aed18779-887f-4d6c-9991-3170030c44f3",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20",
+          "sequence": 7,
+          "type": "state.changed",
+          "payload": {
+            "generation": 1,
+            "object": {
+              "id": "a89aeacc-1e3e-4414-b96a-1f1192b5bd28",
+              "project_id": "demo",
+              "release": "2.5",
+              "simulated": true,
+              "title": "Release demo 2.5",
+              "url": "simulated://3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20/tickets/a89aeacc-1e3e-4414-b96a-1f1192b5bd28"
+            },
+            "operation": "tickets.create",
+            "simulated": true
+          },
+          "emitted_at": "2026-09-06T15:06:06.361428Z"
+        },
+        {
+          "id": "4451b998-2a1d-4a70-a098-2a81ab10d75e",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20",
+          "sequence": 8,
+          "type": "tool.result",
+          "payload": {
+            "call_id": "190c912b-53ab-423c-a737-55f1c3a47cb7",
+            "result": {
+              "id": "a89aeacc-1e3e-4414-b96a-1f1192b5bd28",
+              "project_id": "demo",
+              "release": "2.5",
+              "simulated": true,
+              "title": "Release demo 2.5",
+              "url": "simulated://3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20/tickets/a89aeacc-1e3e-4414-b96a-1f1192b5bd28"
+            },
+            "tool_name": "tickets.create",
+            "tool_version": "sandbox-v1"
+          },
+          "emitted_at": "2026-09-06T15:06:06.364899Z"
+        },
+        {
+          "id": "f67c27ba-1b43-4058-b93b-248958f9f073",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20",
+          "sequence": 9,
+          "type": "tool.called",
+          "payload": {
+            "arguments": {
+              "idempotency_key": "checklist",
+              "items": [
+                "Smoke tests pass",
+                "Rollback plan reviewed",
+                "Release notes approved"
+              ],
+              "ticket_id": "a89aeacc-1e3e-4414-b96a-1f1192b5bd28",
+              "title": "Release checklist 2.5"
+            },
+            "call_id": "698df4bd-fbd6-42f3-9980-61dca72ea121",
+            "tool_name": "checklists.create",
+            "tool_version": "sandbox-v1"
+          },
+          "emitted_at": "2026-09-06T15:06:06.369075Z"
+        },
+        {
+          "id": "41124253-1770-4c1f-86c1-8b49c66f49b6",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20",
+          "sequence": 10,
+          "type": "tool.error",
+          "payload": {
+            "call_id": "698df4bd-fbd6-42f3-9980-61dca72ea121",
+            "error": {
+              "code": "adapter_contract_error",
+              "message": "Checklist service rejected payload fields: items. Expected items to be a nonempty array of strings."
+            },
+            "tool_name": "checklists.create",
+            "tool_version": "sandbox-v1"
+          },
+          "emitted_at": "2026-09-06T15:06:06.373577Z"
+        },
+        {
+          "id": "faa22298-611d-4c91-949b-37562cef620e",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20",
+          "sequence": 11,
+          "type": "executor.message",
+          "payload": {
+            "content": "Test double finished."
+          },
+          "emitted_at": "2026-09-06T15:06:06.375094Z"
+        },
+        {
+          "id": "9cc5e72c-c938-43ba-9376-8d04dbaba52c",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20",
+          "sequence": 12,
+          "type": "run.verifying",
+          "payload": {},
+          "emitted_at": "2026-09-06T15:06:06.383233Z"
+        },
+        {
+          "id": "b84134fd-47ab-4533-b744-a9bef7692e5d",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20",
+          "sequence": 13,
+          "type": "verification.completed",
+          "payload": {
+            "checks": [
+              {
+                "details": {
+                  "matching_object_ids": [
+                    "a89aeacc-1e3e-4414-b96a-1f1192b5bd28"
+                  ]
+                },
+                "evidence_ids": [
+                  "aed18779-887f-4d6c-9991-3170030c44f3"
+                ],
+                "id": "release_ticket",
+                "name": "Requested release ticket exists",
+                "passed": true
+              },
+              {
+                "details": {
+                  "matching_object_ids": []
+                },
+                "evidence_ids": [
+                  "aed18779-887f-4d6c-9991-3170030c44f3"
+                ],
+                "id": "release_checklist",
+                "name": "Correct checklist is linked to that ticket",
+                "passed": false
+              },
+              {
+                "details": {
+                  "matching_object_ids": []
+                },
+                "evidence_ids": [
+                  "aed18779-887f-4d6c-9991-3170030c44f3"
+                ],
+                "id": "qa_notification",
+                "name": "QA receives the release notice with both matching links",
+                "passed": false
+              }
+            ],
+            "criteria_sha256": "e329e4fd98be1d440f098cc1ac5524e68cbd4053e28bf072f10dc7b3cc47f544",
+            "evaluator_version": "release-state-v2",
+            "missing_evidence": [],
+            "passed": false,
+            "simulated": true,
+            "state_sha256": "f0efb66ff6e848ef59c09f1f4e131ab97b47305421a7abc47c7216489d9406fc"
+          },
+          "emitted_at": "2026-09-06T15:06:06.385340Z"
+        },
+        {
+          "id": "1b36679f-7a94-4dd1-abea-b3916d26f998",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20",
+          "sequence": 14,
+          "type": "checkpoint.updated",
+          "payload": {
+            "depends_on": [],
+            "description": "Create the release ticket for demo 2.5.",
+            "evaluator_version": "release-state-v2",
+            "evidence_refs": [
+              "b84134fd-47ab-4533-b744-a9bef7692e5d"
+            ],
+            "id": "4864205c-4540-463b-bb1b-92a4bf7c8df6",
+            "scope": "demo",
+            "source_refs": [
+              {
+                "attribution": "explicit",
+                "excerpt": "The API caller explicitly selected workflow=release.",
+                "id": "fa2773e2-40b7-48ff-b47b-935ca43a1d98",
+                "kind": "document",
+                "locator": "epoch-template:release-v1",
+                "version": "1"
+              }
+            ],
+            "status": "verified",
+            "uncertainty": null,
+            "verification_rule": "Compare persisted sandbox state against release-v1 criteria."
+          },
+          "emitted_at": "2026-09-06T15:06:06.387530Z"
+        },
+        {
+          "id": "c45dd65e-f69f-4668-a049-4b3ed61fa918",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20",
+          "sequence": 15,
+          "type": "checkpoint.updated",
+          "payload": {
+            "depends_on": [
+              "4864205c-4540-463b-bb1b-92a4bf7c8df6"
+            ],
+            "description": "Attach a checklist containing all required release items to that ticket.",
+            "evaluator_version": "release-state-v2",
+            "evidence_refs": [
+              "b84134fd-47ab-4533-b744-a9bef7692e5d"
+            ],
+            "id": "daec4cb0-deae-447d-98bc-8b46e17baf67",
+            "scope": "demo",
+            "source_refs": [
+              {
+                "attribution": "explicit",
+                "excerpt": "The API caller explicitly selected workflow=release.",
+                "id": "fa2773e2-40b7-48ff-b47b-935ca43a1d98",
+                "kind": "document",
+                "locator": "epoch-template:release-v1",
+                "version": "1"
+              }
+            ],
+            "status": "failed",
+            "uncertainty": null,
+            "verification_rule": "Compare persisted sandbox state against release-v1 criteria."
+          },
+          "emitted_at": "2026-09-06T15:06:06.389827Z"
+        },
+        {
+          "id": "c05e8576-efe4-4581-8574-59f477080b20",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20",
+          "sequence": 16,
+          "type": "checkpoint.updated",
+          "payload": {
+            "depends_on": [
+              "daec4cb0-deae-447d-98bc-8b46e17baf67"
+            ],
+            "description": "Notify #qa-demo with links to both the ticket and checklist.",
+            "evaluator_version": "release-state-v2",
+            "evidence_refs": [
+              "b84134fd-47ab-4533-b744-a9bef7692e5d"
+            ],
+            "id": "9a9d6bb9-fe4c-4497-a9f0-9e20b1b97fb6",
+            "scope": "demo",
+            "source_refs": [
+              {
+                "attribution": "explicit",
+                "excerpt": "The API caller explicitly selected workflow=release.",
+                "id": "fa2773e2-40b7-48ff-b47b-935ca43a1d98",
+                "kind": "document",
+                "locator": "epoch-template:release-v1",
+                "version": "1"
+              }
+            ],
+            "status": "failed",
+            "uncertainty": null,
+            "verification_rule": "Compare persisted sandbox state against release-v1 criteria."
+          },
+          "emitted_at": "2026-09-06T15:06:06.391663Z"
+        },
+        {
+          "id": "75487768-395e-4ba7-ba01-d9679f4f9d7e",
+          "task_id": "b86dd772-e62c-4e15-ade2-c6891b1dc83c",
+          "run_id": "3ffc5f3b-6d2e-46c8-bfb9-54f1a82d7e20",
+          "sequence": 17,
+          "type": "run.finished",
+          "payload": {
+            "error": null,
+            "executor_success": true,
+            "status": "failed",
+            "verification": {
+              "checks": [
+                {
+                  "details": {
+                    "matching_object_ids": [
+                      "a89aeacc-1e3e-4414-b96a-1f1192b5bd28"
+                    ]
+                  },
+                  "evidence_ids": [
+                    "aed18779-887f-4d6c-9991-3170030c44f3"
+                  ],
+                  "id": "release_ticket",
+                  "name": "Requested release ticket exists",
+                  "passed": true
+                },
+                {
+                  "details": {
+                    "matching_object_ids": []
+                  },
+                  "evidence_ids": [
+                    "aed18779-887f-4d6c-9991-3170030c44f3"
+                  ],
+                  "id": "release_checklist",
+                  "name": "Correct checklist is linked to that ticket",
+                  "passed": false
+                },
+                {
+                  "details": {
+                    "matching_object_ids": []
+                  },
+                  "evidence_ids": [
+                    "aed18779-887f-4d6c-9991-3170030c44f3"
+                  ],
+                  "id": "qa_notification",
+                  "name": "QA receives the release notice with both matching links",
+                  "passed": false
+                }
+              ],
+              "criteria_sha256": "e329e4fd98be1d440f098cc1ac5524e68cbd4053e28bf072f10dc7b3cc47f544",
+              "evaluator_version": "release-state-v2",
+              "evidence_id": "b84134fd-47ab-4533-b744-a9bef7692e5d",
+              "missing_evidence": [],
+              "passed": false,
+              "simulated": true,
+              "state_sha256": "f0efb66ff6e848ef59c09f1f4e131ab97b47305421a7abc47c7216489d9406fc"
+            }
+          },
+          "emitted_at": "2026-09-06T15:06:06.395653Z"
+        }
+      ]
+    }
+  ]
+}

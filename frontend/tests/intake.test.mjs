@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { IntakeAPI, IntakeError, IntakeWorkspace, apiOrigin, taskRecord, requestPayload, PENDING_KEY } from '../src/intake-api.mjs';
+import { IntakeAPI, IntakeError, IntakeWorkspace, apiOrigin, taskRecord, requestPayload, PENDING_KEY, TASK_STATUSES } from '../src/intake-api.mjs';
 const published = JSON.parse(readFileSync(new URL('../../backend/fixtures/development.json', import.meta.url)));
 const model = (name) => structuredClone(published.examples.find((x) => x.model === name).value);
 const memory = () => { const values = new Map(); return { getItem: (key) => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), removeItem: (key) => values.delete(key) }; };
@@ -14,9 +14,10 @@ function setup(options = {}) {
   const workspace = new IntakeWorkspace({ storage, apiFactory: () => api });
   return { workspace, api, storage, calls };
 }
-test('published pending fixture maps exactly; future states/evidence never enter the intake view', () => {
+test('published task fixture and all task statuses map; invalid contracts fail closed', () => {
   assert.deepEqual(taskRecord(model('Task')), model('Task'));
-  for (const change of [{ status: 'completed' }, { schema_version: 2 }, { fixture_only: true }, { created_at: 'yesterday' }, { request: { ...model('TaskCreate'), revision: 1 } }])
+  for (const status of TASK_STATUSES) assert.equal(taskRecord({ ...model('Task'), status }).status, status);
+  for (const change of [{ status: 'made_up' }, { schema_version: 2 }, { fixture_only: true }, { created_at: 'yesterday' }, { request: { ...model('TaskCreate'), revision: 1 } }])
     assert.throws(() => taskRecord({ ...model('Task'), ...change }), /contract/);
   assert.throws(() => taskRecord(model('Run')), /contract/);
 });
@@ -41,7 +42,7 @@ test('API uses documented paths, exact submitted payload and no credentials; rej
 test('HTTP error envelope preserves status/message; unsupported health and malformed bodies fail closed', async () => {
   const api = new IntakeAPI('http://localhost:8000', async () => new Response(JSON.stringify(model('ErrorEnvelope')), { status: 404 }));
   await assert.rejects(api.detail(model('Task').id), (e) => e.status === 404 && e.message === 'Task not found');
-  api.fetcher = async () => new Response(JSON.stringify({ ...model('HealthResponse'), execution_enabled: true }));
+  api.fetcher = async () => new Response(JSON.stringify({ ...model('HealthResponse'), phase: 1 }));
   await assert.rejects(api.health(), /Unsupported/);
   api.fetcher = async () => new Response('not json');
   await assert.rejects(api.health(), /unreadable/);
