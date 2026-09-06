@@ -22,6 +22,7 @@ class StoredReleaseRunRequest(Contract):
     timeout_seconds: int = Field(default=600, ge=10, le=600)
     supervised: bool = False
     demo_omit_notification: bool = False
+    repair_enabled: bool = False
 
 
 class ReleaseRunRequest(StoredReleaseRunRequest):
@@ -32,6 +33,10 @@ class ReleaseRunRequest(StoredReleaseRunRequest):
     def require_supervised_demo(self):
         if self.demo_omit_notification and not self.supervised:
             raise ValueError("The omission demonstration requires supervised execution")
+        if self.repair_enabled and (not self.supervised or self.demo_omit_notification):
+            raise ValueError(
+                "Repair requires supervision and cannot use the omission demonstration"
+            )
         return self
 
 
@@ -61,17 +66,19 @@ class ExecutionRecord(Contract):
     missing_evidence: list[str] = Field(default_factory=list)
     error: dict[str, Any] | None = None
     supervision: SupervisionState | None = None
+    environment_version: str = "builtin"
 
 
 class RuntimeInfo(Contract):
-    phase: Literal[4] = 4
+    phase: Literal[5] = 5
     execution_enabled: bool
     hermes_available: bool
     active_run_id: UUID | None = None
     workflow: Literal["release"] = "release"
     simulation_only: Literal[True] = True
     automatic_supervision: Literal[True] = True
-    automatic_repair: Literal[False] = False
+    automatic_repair: Literal[True] = True
+    repair_opt_in: Literal[True] = True
     installation: dict[str, Any] = Field(default_factory=dict)
     debugger: dict[str, Any] = Field(default_factory=dict)
     supervision_enabled: bool = False

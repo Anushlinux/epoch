@@ -1,10 +1,10 @@
 # Epoch backend
 
-The backend provides durable task intake, simulated release services, scoped MCP tools, trusted outcome checks and bounded execution through an existing Hermes installation. Phase 4 adds optional OpenAI `gpt-5.6-luna` supervision: sourced release checkpoints, targeted Hermes continuations, clarification and explicit feedback revisions. Intake stays `pending` until a release run is started. Generated environment repair remains Phase 5 and is unimplemented.
+The backend provides durable task intake, simulated release services, scoped MCP tools, trusted outcome checks and bounded execution through an existing Hermes installation. Phase 4 adds optional OpenAI `gpt-5.6-luna` supervision: sourced release checkpoints, targeted Hermes continuations, clarification and explicit feedback revisions. Intake stays `pending` until a release run is started. Phase 5 adds opt-in generated checklist repair with isolated verification, durable versions and rollback; see [repair setup](docs/REPAIR_SETUP.md).
 
 Rajdeep owns this backend. Anushrut's UI handoff is in [FRONTEND_HANDOFF.md](docs/FRONTEND_HANDOFF.md). See [technical decisions](DECISIONS.md), [phase boundaries](PHASES.md), and the repository [status](../docs/status.md).
 
-Actual installed-Hermes control and failure runs, matching executor baselines, and preserved development attempts are in the historical [Phase 3 evidence](fixtures/hermes/README.md). **Phase 4 live omission recovery and feedback acceptance passed** using Luna and the installed Hermes; see the [supervision evidence](fixtures/supervision/README.md) and [validation record](../docs/status.md#phase-4-validation-record). This backend change leaves frontend files untouched; Anushrut must update the existing UI's Phase 1 compatibility guards before it can consume the current server.
+Actual installed-Hermes control and failure runs, matching executor baselines, and preserved development attempts are in the historical [Phase 3 evidence](fixtures/hermes/README.md). **Phase 4 live omission recovery and feedback acceptance passed** using Luna and the installed Hermes; see the [supervision evidence](fixtures/supervision/README.md) and [validation record](../docs/status.md#phase-4-validation-record). This backend change leaves frontend files untouched; Anushrut must update the existing UI's Phase 3 compatibility guards before it can consume the current server.
 
 ## Setup
 
@@ -24,7 +24,7 @@ The server listens at `http://127.0.0.1:8000`. Open `/docs` for the API explorer
 
 Defaults require no configuration file. To customize them, copy `.env.example` to `.env`, edit it, then use `uv run --frozen epoch-backend --env-file .env serve`. Environment variables override that file. Relative `EPOCH_DATA_DIR` paths resolve against the backend package root; the default database is `backend/data/epoch.sqlite3`. Generated data, `.env`, local caches and virtual environments are ignored by Git. Configuration validation does not create the data directory.
 
-**Phase 4 needs no new environment settings on the verified existing Hermes/OpenAI setup.** The app `.env` file accepts only the six settings in [.env.example](.env.example). If you choose the separate API-key debugger route, set `OPENAI_API_KEY` in the terminal/process environment, not in that file; see [debugger setup](docs/DEBUGGER_SETUP.md). Optional `EPOCH_HERMES_HOME` and `EPOCH_HERMES_CHECKOUT` overrides also belong in the process environment and are needed only when automatic discovery cannot find your installation. The Luna model and maximum 20 turns/600 seconds need no environment variables. Future configuration changes must update the example/setup docs and be listed as required or optional in the handoff.
+**Phase 5 adds optional `EPOCH_REPAIR_IMAGE`; existing files need no edits. Linux Docker and a locally pulled pinned image are required for repair.** See [repair setup and migration](docs/REPAIR_SETUP.md). Phase 4 needs no new environment settings on the verified existing Hermes/OpenAI setup. The app `.env` file accepts the seven settings in [.env.example](.env.example). If you choose the separate API-key debugger route, set `OPENAI_API_KEY` in the terminal/process environment, not in that file; see [debugger setup](docs/DEBUGGER_SETUP.md). Optional `EPOCH_HERMES_HOME` and `EPOCH_HERMES_CHECKOUT` overrides also belong in the process environment and are needed only when automatic discovery cannot find your installation. The Luna model and maximum 20 turns/600 seconds need no environment variables. Future configuration changes must update the example/setup docs and be listed as required or optional in the handoff.
 
 This is an unauthenticated local development service. The CLI accepts loopback bind addresses only; CORS permits the frontend's localhost and 127.0.0.1 ports 5173. Set `EPOCH_CORS_ORIGINS` to an explicit JSON list of local origins if your UI uses a different port. Unexpected browser origins cannot submit tasks or start runs. Deployment, authentication and multiple workers remain outside scope.
 
@@ -76,7 +76,7 @@ To run through the API, submit a task first, then `POST /api/tasks/{task_id}/run
 
 Read `/api/runs/{run_id}` for status, brief/checkpoints, actual executor response, baseline and trusted verification. `/state` returns simulated objects; `/trace?after=SEQUENCE` returns persisted activity; `/events` streams the same activity over SSE and accepts `Last-Event-ID` or `after` for replay. `POST /api/runs/{run_id}/cancel` requests cancellation; inspect the final record because prior effects remain. Server restart marks unfinished runs interrupted and never replays them automatically. Finalization storage failures disable further execution until the state is inspected and the server restarted.
 
-Task success requires both executor completion and passing independent state checks. Tool success, assistant text, or a fixture cannot override missing outcomes. Each run starts a new MCP server; mid-run catalog hot reload and publication remain unimplemented. See the [frontend handoff](docs/FRONTEND_HANDOFF.md) for exact wire contracts.
+Task success requires both executor completion and passing independent state checks. Tool success, assistant text, or a fixture cannot override missing outcomes. Each run starts a new MCP server; catalog hot reload remains unimplemented. Phase 5 can activate a verified serializer between passes without changing the discovery interface. See the [frontend handoff](docs/FRONTEND_HANDOFF.md) for exact wire contracts.
 
 ## Phase 4: supervise and revise a release
 
@@ -98,7 +98,7 @@ This starts real OpenAI and Hermes inference. The demonstration deliberately ask
 
 The **20 turns / 600 seconds are shared across the debugger and Hermes**, including planning and continuations. A turn is a model request, not an entire workflow or tool call. Limits are enforced by the backend before model requests; cancellation or a limit retains partial work. Progress checks run at meaningful events, and continuation decisions occur between executor passes. `needs_input` asks for a material clarification; `blocked` can identify an environment defect that Phase 4 cannot repair.
 
-Supported customization is deliberately narrow: sourced additional checklist items and exact phrases required in the QA message. Core ticket/checklist/notification requirements and earlier requirements remain mandatory. Requests to remove requirements, change titles/channel/project/release, or apply unsupported subjective criteria stop for clarification rather than silently weakening the checks. Checklist/message updates preserve the existing object IDs and prior content. Existing tool/context defects remain unresolved for the later repair phases.
+Supported customization is deliberately narrow: sourced additional checklist items and exact phrases required in the QA message. Core ticket/checklist/notification requirements and earlier requirements remain mandatory. Requests to remove requirements, change titles/channel/project/release, or apply unsupported subjective criteria stop for clarification rather than silently weakening the checks. Checklist/message updates preserve the existing object IDs and prior content. Opt-in Phase 5 repairs the checklist serializer; missing tools and context defects remain later phases.
 
 After a terminal supervised run, submit explicit feedback against its latest revision:
 
@@ -148,3 +148,25 @@ uv run --frozen python scripts/smoke_test.py
 ```
 
 Contract fixtures are labelled development data and never served as real execution. The API publishes live OpenAPI at `/openapi.json`; running the export script without `--check` regenerates the shared schemas, [execution schemas](contracts/execution-schemas.json), [supervision schemas](contracts/supervision-schemas.json), and examples. The smoke script starts the real CLI server on a temporary loopback port, verifies intake and restart persistence, then stops it and removes its temporary database. CI runs these checks and verifies exports have no drift on Python 3.12. Remote CI execution is distinct from local verification.
+
+## Phase 5: verify and persist a generated repair
+
+```powershell
+uv run --frozen epoch-backend repair-info
+uv run --frozen epoch-backend run-release --release 2.4 --scenario broken_checklist --repair
+uv run --frozen epoch-backend environment --project demo
+```
+
+Complete Docker setup first in [REPAIR_SETUP.md](docs/REPAIR_SETUP.md). `--repair`
+enables sourced Luna diagnosis and generated serializer code; actual Docker tests,
+isolated original-task replay, a fresh variation and healthy regressions must pass
+before publication. Hermes then resumes the original task. New runs discover the
+persisted project version, while existing runs retain their pinned version.
+
+The user authorized separate verification limits: each verification gets 20 requests
+and 600 seconds; the primary work keeps 20 requests/600 active seconds; the complete
+repair operation is capped at 60 requests/1,800 wall seconds and two candidates.
+Request limits are an inference-usage budget, not a guaranteed monetary cap.
+`GET /api/environments/{project_id}` exposes attempts, diffs, evidence and history;
+rollback is an explicit idle-only operation. See setup for the full acceptance
+harness and [implementation status](../docs/status.md) for demonstrated evidence.

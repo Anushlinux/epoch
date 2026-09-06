@@ -1,18 +1,18 @@
 # Frontend contract for Anushrut
 
-Rajdeep owns the backend; Anushrut owns the UI. Phase 4 adds optional OpenAI `gpt-5.6-luna` supervision to the existing release workflow: sourced checkpoints, progress checks, targeted Hermes continuations, clarification and user-feedback revisions. Task submission alone still leaves a task `pending`; a separate run request starts execution. Generated environment repair remains unimplemented.
+Rajdeep owns the backend; Anushrut owns the UI. Phase 4 adds optional OpenAI `gpt-5.6-luna` supervision to the existing release workflow: sourced checkpoints, progress checks, targeted Hermes continuations, clarification and user-feedback revisions. Task submission alone still leaves a task `pending`; a separate run request starts execution. Phase 5 adds opt-in generated checklist repair, verification, project versions and rollback.
 
 This document describes the implemented HTTP contract. Actual installed-Hermes/model acceptance results and evidence gaps are recorded separately in [implementation status](../../docs/status.md). Installation detection alone does not prove a model call will succeed.
 
 The default API origin is `http://127.0.0.1:8000`. Allowed browser origins default to `http://localhost:5173` and `http://127.0.0.1:5173`; configure `EPOCH_CORS_ORIGINS` as a JSON list for another local frontend origin. This is a single-user local server without authentication or multi-user isolation. All business effects and `simulated://` references are simulated. The UI talks to HTTP; Hermes accesses the tools through the backend's MCP connection.
 
-**Existing frontend compatibility:** the committed [intake API client](../../frontend/src/intake-api.mjs) requires health `phase: 1`, execution disabled and only `pending` tasks. It rejects the current Phase 4 backend. The [fixture workspace](../../frontend/src/app.mjs) still uses authored examples. This backend change edits no frontend files; Anushrut must update those guards and connect the routes below before claiming live product-UI support.
+**Existing frontend compatibility:** the committed [intake client](../../frontend/src/intake-api.mjs) requires health `phase: 3`; the [execution client](../../frontend/src/execution-api.mjs) also requires Phase 3 with automatic supervision/repair false. These guards reject the Phase 5 backend. Anushrut owns updating those guards and adding supervision/repair states. This backend change edits no frontend files. Historical browser evidence used real HTTP/storage with an explicit test executor; it does not prove current model-backed UI support.
 
 ## Available routes
 
 | Request | Success response | Expected error responses |
 | --- | --- | --- |
-| `GET /api/health` | 200: `{"status":"ok","phase":4,"storage":"ok","execution_enabled":true}`; the final flag may be false | 503 when task storage is unavailable |
+| `GET /api/health` | 200: `{"status":"ok","phase":5,"storage":"ok","execution_enabled":true}`; the final flag may be false | 503 when task storage is unavailable |
 | `GET /api/runtime` | 200: `RuntimeInfo`, including availability, enablement and `active_run_id` | Internal errors when applicable |
 | `POST /api/tasks` | 201 new intake; 200 identical retry; returns `Task` | 409 changed content with the same request ID; 422 invalid input |
 | `GET /api/tasks?limit=20&offset=0` | 200: `TaskList`, newest first | 422 invalid pagination |
@@ -110,7 +110,7 @@ The current runtime record is **`ExecutionRecord`**, defined in [execution_contr
 | Field | UI meaning |
 | --- | --- |
 | `id`, `task_id`, `request` | Execution identity and exact structured request |
-| `status` | `planning`, `running`, `verifying`, `completed`, `needs_input`, `blocked`, `failed`, `cancelled` or `interrupted` |
+| `status` | `planning`, `running`, `verifying`, `repairing`, `completed`, `needs_input`, `blocked`, `failed`, `cancelled` or `interrupted` |
 | `brief` | Current `TaskBrief` with sourced checkpoints and dependencies; the preliminary template exists before supervised planning finishes |
 | `final_response` | Latest delivery or supervisor explanation, or null if unavailable; individual executor responses remain in operation history |
 | `executor_success` | Whether the executor completed its conversation; null until known |
@@ -174,3 +174,41 @@ Feedback and clarification reuse the **same run ID** and continue its event sequ
 From `backend/`, regenerate with `uv run --frozen python scripts/export_contracts.py`; check drift by adding `--check`. The exporter also maintains the clearly labelled [development.json](../fixtures/development.json) fixtures. Their `fixture_only: true` examples are independent screen states, not a live timeline or executed evidence. Fixture URIs/digests do not identify real artifacts.
 
 The original `Run` and `ProgressEvent` models are not these runtime wire formats. Repair/publication models and their development fixtures still describe future behavior; generated environment repair starts in Phase 5. Keep fixture screens labeled and use actual run/checkpoint/operation evidence for the implemented planning, continuation and feedback interfaces.
+
+## Phase 5 repair contract
+
+Set both `supervised: true` and `repair_enabled: true` on the release run request.
+Repair is opt-in and cannot be combined with the omission demonstration. Existing
+run requests remain valid. `RuntimeInfo.phase` is 5; `automatic_repair` and
+`repair_opt_in` are true. Availability is separately inspected through
+`GET /api/repair/runtime`; it is not a model-connectivity test.
+
+| Route | Response |
+| --- | --- |
+| `GET /api/repair/runtime` | Container/image availability, immutable image ID and runner metadata |
+| `GET /api/environments/{project_id}` | `active_version`, immutable `versions`, `repairs`, and publication/rollback `history` |
+| `POST /api/environments/{project_id}/rollback` | Idempotent rollback receipt; 409 for active execution, stale expected version or changed retry input; 422 for invalid UUIDs |
+
+Rollback input is `{"client_request_id":"UUID","expected_version":"UUID"}`.
+See [repair schemas](../contracts/repair-schemas.json) and [setup](REPAIR_SETUP.md).
+There are no public candidate-stage or publish endpoints.
+
+Run status adds `repairing`. `ExecutionRecord.environment_version` identifies the
+pinned executable, initially `builtin`. Each supervision operation contains
+`repairs` (diagnosis, attempts, source/diff, proofs and decision) and `repair_budget`
+(overall request count/ceiling). Each attempt's `active_verification` shows the
+current isolated stage and its own request count. Preserve the distinction between
+verified environment publication and checked completion of the user's task.
+
+SSE/trace events include `repair.triggered`, `repair.budget_authorized`,
+`repair.candidate_staged`, `repair.candidate_rejected`, `repair.blocked` and
+`environment.published`; tool records include `environment_version`. As with other
+events, render source/diff/error strings as untrusted text. Refresh run/version
+records after events; do not infer pass decisions from model text. Original/fresh
+verification evidence lives in the repair record, separately from original effects.
+
+Each isolated verification has 20 requests/600 seconds; primary work shares 20/600
+active seconds; overall repair is 60 requests/1,800 wall seconds and two candidates.
+Rollback changes new-run discovery only; existing runs remain pinned. Failed and
+interrupted candidates remain visible and inactive. No frontend integration or
+browser acceptance for these new controls is claimed by this backend handoff.

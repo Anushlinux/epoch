@@ -794,6 +794,27 @@
           "title": "Questions",
           "type": "array"
         },
+        "repair_budget": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Repair Budget"
+        },
+        "repairs": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Repairs",
+          "type": "array"
+        },
         "request": {
           "additionalProperties": true,
           "title": "Request",
@@ -828,6 +849,7 @@
             "planning",
             "running",
             "verifying",
+            "repairing",
             "completed",
             "needs_input",
             "blocked",
@@ -1382,6 +1404,27 @@
               "title": "Questions",
               "type": "array"
             },
+            "repair_budget": {
+              "anyOf": [
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Repair Budget"
+            },
+            "repairs": {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "title": "Repairs",
+              "type": "array"
+            },
             "request": {
               "additionalProperties": true,
               "title": "Request",
@@ -1416,6 +1459,7 @@
                 "planning",
                 "running",
                 "verifying",
+                "repairing",
                 "completed",
                 "needs_input",
                 "blocked",

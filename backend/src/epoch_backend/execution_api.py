@@ -7,6 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, Header, HTTPException, Query, Request, Response
 from fastapi.responses import StreamingResponse
 
+from epoch_backend.candidate_runner import inspect_runner
 from epoch_backend.contracts import ErrorEnvelope
 from epoch_backend.execution import TERMINAL, ExecutionService
 from epoch_backend.execution_contracts import (
@@ -15,6 +16,7 @@ from epoch_backend.execution_contracts import (
     RunEvent,
     RuntimeInfo,
 )
+from epoch_backend.repair_contracts import RollbackRequest
 from epoch_backend.supervision_contracts import FeedbackRequest, SupervisionOperation
 
 
@@ -27,6 +29,20 @@ def execution_router(service: ExecutionService) -> APIRouter:
     @router.get("/runtime", response_model=RuntimeInfo)
     def runtime_info():
         return service.runtime_info()
+
+    @router.get("/repair/runtime")
+    def repair_runtime():
+        return inspect_runner(service.settings.repair_image)
+
+    @router.get("/environments/{project_id}")
+    def environments(project_id: str):
+        return service.environments.inspect(project_id)
+
+    @router.post("/environments/{project_id}/rollback")
+    def rollback(project_id: str, payload: RollbackRequest):
+        return service.rollback(
+            project_id, str(payload.expected_version), payload.client_request_id
+        )
 
     @router.post(
         "/tasks/{task_id}/runs",

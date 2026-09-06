@@ -849,8 +849,8 @@
           "type": "boolean"
         },
         "phase": {
-          "const": 4,
-          "default": 4,
+          "const": 5,
+          "default": 5,
           "title": "Phase",
           "type": "integer"
         },

@@ -1,6 +1,6 @@
 # Intended architecture and data flow
 
-**The complete supervisor/repair architecture below remains a design.** The backend now implements task intake, local simulated services, trusted release checks, scoped MCP tools and explicit Hermes runs with persisted events/results. Automatic planning, continuation, feedback and repair remain later work. See the [implementation plan](../backend/PHASES_2_3_PLAN.md), [status](status.md) and [frontend handoff](../backend/docs/FRONTEND_HANDOFF.md). The original direction remains unchanged.
+**The broader architecture below remains the design; Phases 1–5 now implement its release/checklist path.** The backend includes sourced Luna planning, fixed Hermes execution, scoped MCP simulations, trusted checks, additive feedback and opt-in generated serializer repair. Phase 5 stages Python in restricted Linux Docker, verifies component/original/fresh/regression behavior, and persists project versions with rollback. Actual acceptance and remaining gaps are in [status](status.md); setup and limits are in [repair setup](../backend/docs/REPAIR_SETUP.md). Missing-tool/context repairs and vendor trace integrations remain later work. The original direction stays unchanged.
 
 ## Core idea
 
@@ -113,3 +113,27 @@ Keep the triggering request and run, failed condition and provenance, trace refe
 Collect repair attempts, human interventions after setup, latency, and available token/tool-call usage. Separate repair overhead from later execution cost. Mark missing measurements as unavailable. No percentage improvement is justified without a measured baseline and comparable repaired runs.
 
 These are required information categories, not a selected database schema. The [task sequence](tasks/README.md) turns them into concrete contracts and then working behavior.
+
+## Implemented Phase 5 boundaries
+
+The failure detector reads captured checklist `adapter_contract_error` events; it
+passes correlated arguments, source and schema to Luna. It does not map scenario
+names to patches. Luna's only output surface is the serializer module. A host-owned
+controller stages the source and invokes the restricted Docker runner; generated
+code receives JSON and returns a candidate wire payload. Host service validation,
+identity, permissions, SQLite mutations, trusted checks and publication remain
+outside that container.
+
+Original-task verification clones partial state, including idempotency receipts.
+Fresh verification changes the release identifier and adds a multilingual item.
+Both use actual Hermes with equivalent protected executor baselines. Only the
+exact source digest that passes every required check can be published. A
+compare-and-swap active pointer prevents stale publication. Original execution
+activates between passes; new runs pin the current project version at admission.
+Rollback affects new runs and retains all artifacts and business effects.
+
+Primary work shares 20 requests/600 active seconds; each isolated verification gets
+20/600; the whole operation is bounded by 60 requests/1,800 wall seconds and two
+candidates. Available token counts supplement request accounting, without a
+subscription dollar-cap guarantee. See [Phase 5 plan](../backend/PHASE_5_PLAN.md)
+and [setup](../backend/docs/REPAIR_SETUP.md) for the concrete implementation.

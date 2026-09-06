@@ -1,15 +1,15 @@
 # Current implementation status
 
-As of September 6, 2026, **backend Phases 1–4 are implemented and verified**. The release supervisor uses OpenAI `gpt-5.6-luna` for sourced plans and corrective instructions. Existing Hermes performs the business work through local MCP simulations. Generated environment repair remains unimplemented.
+As of September 6, 2026, **backend Phases 1–5 are implemented and verified**. The release supervisor uses OpenAI `gpt-5.6-luna` for sourced plans and corrective instructions. Existing Hermes performs the business work through local MCP simulations. Opt-in Phase 5 repairs the checklist serializer through actual Luna generation, Docker isolation, trusted verification and durable project versions.
 
 ## Implemented facts
 
 - The [backend API/CLI](../backend/README.md) persists tasks and explicit release runs in SQLite. Intake alone stays pending. Existing direct runs remain available; `supervised: true` enables Luna planning, checkpoint checks and bounded continuations.
 - Supported feedback adds checklist items or exact QA-message phrases. The host validates quoted provenance, retains all earlier requirements and invokes a fixed trusted evaluator. Unsupported/removal/subjective changes require clarification. This is a narrow release workflow, not general-purpose task verification.
 - Hermes retains one actual conversation across automatic continuations. A separately submitted feedback/clarification operation starts a new conversation over the same saved sandbox. Updates preserve object IDs and links, and previous operation snapshots/results remain available.
-- Every explicit operation shares at most **20 authorized model requests and 600 seconds** across the debugger and Hermes. The parent admits each executor request before network dispatch, including summaries/retries. Continuations cannot reset the budget. A new user operation has a new budget. Cancellation, deadline and baseline failures prevent completion.
+- Every ordinary explicit operation shares at most **20 authorized model requests and 600 seconds** across the debugger and Hermes. Opt-in repair gives each isolated verification its own 20/600 limit, with a 60-request/1,800-second overall ceiling and at most two candidates; primary work retains 20 requests/600 active seconds. The parent admits each executor request before network dispatch, including summaries/retries. Continuations cannot reset the budget. A new user operation has a new budget. Cancellation, deadline and baseline failures prevent completion.
 - The debugger uses structured output without tools. Trusted checks inspect saved outcomes after meaningful tool completions and pass boundaries. Plans, public activity, checks, interventions, user revisions and errors are retained; private reasoning is not exported.
-- The MCP facade exposes scoped simulations, including in-place checklist/message updates. Additive trusted criteria are administered by host code and excluded from MCP discovery. The evaluator is `release-state-v3`; historical Phase 3 artifacts keep their original criteria and outcomes. Broken adapters and missing tools still block work; no generated patch is created.
+- The MCP facade exposes scoped simulations, including in-place checklist/message updates. Additive trusted criteria are administered by host code and excluded from MCP discovery. The evaluator is `release-state-v3`; historical Phase 3 artifacts keep their original criteria and outcomes. The opt-in Phase 5 controller can repair the checklist serializer; missing tools and context defects remain unsupported.
 - HTTP provides run/status/state/trace/SSE, feedback, clarifications and revision history. Request IDs and expected revision IDs prevent duplicate/stale submissions. Restart marks incomplete operations interrupted and keeps partial effects; there is no automatic replay.
 - Locked dependencies, schemas, test doubles and real local MCP/server checks are included. Actual model evidence is recorded separately. The [frontend handoff](../backend/docs/FRONTEND_HANDOFF.md) and [supervision schemas](../backend/contracts/supervision-schemas.json) define Anushrut's integration surface.
 
@@ -23,7 +23,7 @@ The user's Phase 4 assignment selected OpenAI `gpt-5.6-luna`, a maximum of 20 ag
 
 ## Requirements awaiting implementation
 
-Phase 5 still owns model-generated adapter diagnosis/changes, protected candidate isolation, component/replay/fresh-case/regression verification, publication, rollback and later-session repair use. Missing-tool generation, context repair, Neatlogs/Workshop and the consuming UI remain later work. The sandbox is not secure isolation for generated code, and there is no persistent-learning claim from these task corrections.
+Missing-tool generation, context repair, Neatlogs/Workshop and the supervision/repair UI remain later work. Phase 5 uses restricted Linux Docker for generated Python; ordinary simulated services alone are not a secure execution boundary. The saved adapter and later-session benefit below establish narrow persistent environment repair, not general-purpose learning.
 
 ## Verified scope and remaining assumptions
 
@@ -40,16 +40,16 @@ The server has no authentication, multi-user isolation or distributed workers. N
 | Intake API/CLI, config, durable tasks and contracts | Implemented and tested | Phase 1 complete |
 | Stateful simulations, permissions, discovery, invocation and trusted outcomes | Implemented; official SDK MCP round trips tested | Phase 2 complete |
 | Seeded checklist, lookup and context failure scenarios | Implemented in local sandbox | Repairs in Phases 5–7 |
-| Actual installed Hermes, explicit release briefs and correlated evidence | Implemented; control and defect executions recorded below | Phase 3 acceptance only; Task 03 also requires Phase 4 |
+| Actual installed Hermes, explicit release briefs and correlated evidence | Implemented; control and defect executions recorded below | Phases 3–4 complete |
 | Run status/state/trace, SSE, cancellation and restart handling | Implemented and tested; consuming UI connected | New model-backed browser acceptance remains unexecuted |
-| Frontend intake, explicit release execution and future-workflow fixtures | Phase 3 HTTP/browser integration verified with real storage/checks and an explicit test executor | Automatic supervision/repair UI awaits backend phases |
-| Automatic checkpoint planning, continuations and feedback revisions | Unimplemented | Phase 4 |
-| Debugger, isolated generated repair, publication and rollback | Unimplemented | Phase 5 |
+| Frontend intake, explicit release execution and future-workflow fixtures | Phase 3 HTTP/browser integration verified with real storage/checks and an explicit test executor | Anushrut must integrate current supervision/repair contracts |
+| Automatic checkpoint planning, continuations and feedback revisions | Implemented; actual-model evidence retained | Phase 4 complete |
+| Debugger, isolated generated checklist repair, publication and rollback | Implemented; actual Docker/Luna/Hermes acceptance below | Phase 5 complete |
 | Generated missing tools and scoped context repairs | Unimplemented | Phases 6–7 |
 | Neatlogs/Workshop and complete supervised repair demo | Unimplemented; existing Phase 3 UI connected | Phase 8 |
 | Live business-service connections and production operation | Deferred | Separate future scope |
 
-No autonomous repair, persistent-learning improvement, agent benchmark, or UI sign-off is claimed. A successful executor conversation is recorded separately from trusted task success.
+The narrow checklist repair has saved executable and later-session evidence. No agent benchmark, broader learning result or current UI sign-off is claimed. A successful executor conversation is recorded separately from trusted task success.
 
 ## Documentation validation
 
@@ -197,3 +197,159 @@ The original direction retains SHA-256
 `791826322bab72f3198c862cad796e2c5298c1ed5801fb8db8bd70a6101e3df5`, including its
 original Markdown hard breaks. Authored changes pass `git diff --check`.
 AO preview is unavailable on this host; no preview dependency was added.
+
+### Phase 4 validation record
+
+Implemented on local branch `codex/backend-phase-4` from pulled main `948ea47f1230ab16f960db3435dd0260f21cee37`, in an isolated worktree. The original checkout has an unfinished merge and frontend changes, so it was preserved. Three parallel agents owned the OpenAI transport, Hermes session/request gate, and state/criteria revisions; the primary agent integrated supervision/persistence and coordinated independent review. The [plan](../backend/PHASE_4_PLAN.md) preceded implementation. The user requested a report before push; the initial report was delivered while the handoff was unpublished. Publication was authorized in the subsequent request.
+
+#### Actual Luna and Hermes acceptance
+
+The [portable evidence guide](../backend/fixtures/supervision/README.md) links full run/state/event JSON, failed attempts, initial transport probes and HTTP readback. Actual accepted run `f54cb5bf-a9b2-4204-9afe-e3fcaf8a2b34` has 246 correlated events:
+
+| Explicit operation | Result | Shared model requests | Observed duration |
+| --- | --- | --- | --- |
+| Initial revision `df647213-5eda-4ee7-a87a-6971785e1460` | First pass deliberately omitted QA notification; Luna generated one targeted instruction and the same Hermes conversation completed the missing checkpoint; three checks passed | 15 (2 debugger, 13 executor) | 114.05 seconds |
+| Feedback revision `87de6ef4-b740-4365-9c96-5a8637311333` | Added `Security review complete` checklist item and `QA sign-off required` phrase through scoped updates; all four checks passed | 7 (1 debugger, 6 executor) | 71.83 seconds |
+
+Both operations retained exactly one ticket, one linked checklist and one QA message with unchanged IDs. The full earlier operation record remained unchanged after feedback. An identical feedback retry created no operation/event. All executor invariant hashes were present, the two automatic passes matched, all unchanged flags were true, private history remained inside the Hermes child, and accepted operations had no missing evidence. The debugger used exact requested/returned `gpt-5.6-luna`; Hermes retained `gpt-6-astra` and its configured route/options. Personal credentials/settings and installed Hermes source were unchanged.
+
+The deliberate omission changes only the first executor instruction. Original intent and the full brief/checks remain in evidence; the correction is an actual model-generated continuation, not a canned patch. The feedback criteria are additive and retain previous sources and outcomes. This satisfies Phase 4 and completes Task 03; it does not establish persistent environment learning.
+
+Failed actual run `989eda7a-ec10-4db3-9c44-2f7a38607101` is retained: after 9 shared requests/73.68 seconds the existing provider stream watchdog stopped on a 12-second idle gap. Saved state has one ticket/checklist and no notification; the run remains blocked. No transport override or model fallback was added. The next fresh run produced the accepted result above. Earlier debugger probes preserve the public-message parsing failure and its normal developer correction; they are not runtime repairs.
+
+#### Checks run
+
+Python 3.12.10 and uv 0.8.15 on Windows; the isolated checkout received a new virtual environment through the existing local cache. The lock still resolves 40 packages, with JSON Schema validation now explicit. Tests use declared model doubles; separate actual inference above is the acceptance proof.
+
+| Command from `backend/` | Outcome |
+| --- | --- |
+| `uv lock --offline` then `uv sync --frozen --offline` | Locked environment installed from the local warmed cache |
+| `.venv/Scripts/python.exe -m pytest -q --tb=short` | **264 passed**, two upstream Starlette HTTPX/AnyIO deprecation warnings |
+| `.venv/Scripts/python.exe -m ruff check .` | Passed |
+| `.venv/Scripts/python.exe -m ruff format --check .` | 53 files already formatted |
+| `.venv/Scripts/python.exe scripts/export_contracts.py --check` | Shared/execution/supervision schemas and development fixtures match source |
+| `.venv/Scripts/python.exe scripts/smoke_test.py` | Actual CLI HTTP health/intake/idempotency and restart persistence passed; inference disabled |
+| `.venv/Scripts/python.exe scripts/run_phase4_acceptance.py --data-dir data/phase4-acceptance` | Initial provider failure retained; second invocation passed actual omission recovery, feedback, unchanged IDs/history and retry assertions |
+| `.venv/Scripts/python.exe scripts/export_run_evidence.py --data-dir data/phase4-acceptance --output fixtures/supervision/phase4_runs.json` | Exported both actual runs without changing outcomes |
+
+A separate readback used the smoke harness's actual local HTTP server against the saved acceptance database with inference disabled. It verified two revision records, task/result/state agreement, 245 SSE frames after cursor 1 including both final events, HTTP 200 for identical feedback with no new events, and an unchanged full run after server restart. Results are in [http_readback.json](../backend/fixtures/supervision/http_readback.json).
+
+Coverage includes sourced-plan rejection before effects, retained provenance, clarification context, targeted continuation, additive updates/permissions/idempotency, legacy stored runs, stale/conflicting revisions, cumulative request admission, cancellation/deadline and invariant failures, startup/finalization errors, durable interruption, API/CLI contracts and actual MCP subprocess calls. Review corrections synchronized operation/checkpoint history, retained old sources, passed initial clarification questions forward, blocked incomplete/drifting baselines, enforced integer/subsecond limits, and avoided credential-dependent test behavior.
+
+Local escalation was required for Windows temporary-directory/process ACLs and authorized actual inference. No remote CI, API-key-route live test, abrupt-crash model containment, frontend/browser integration, generated repair or live business-service check is claimed. Those limits are not substituted with test-double results.
+
+All frontend files remain identical to the base frontend tree `3257075284b67e7048b4b565a59f9b6ed07e71ef`. Direction Git/worktree hashes remain the values recorded under Phase 1, including original Markdown hard breaks. Final documentation checks passed across 34 Markdown files: 243 local links, 12 heading fragments, five footnotes, seven ordered task structures and both canonical agent entrypoints. Authored changes pass `git diff --check`. AO preview is unavailable on this host. See the [Phase 4 report](../backend/PHASE_4_REPORT.md) for the handoff and review location.
+
+### Phase 4 main integration and environment handoff
+
+After the user authorized pushing Phase 4, fetched main at `f16b1ef` and merged its new frontend work into the isolated Phase 4 checkout. The complete frontend tree remains exactly `1d6759bdf603aea8b5d7fffaa853b48c5f4bf14e`, matching fetched main; no frontend edits were authored. The original checkout's unfinished merge remains untouched.
+
+On this merged checkout, 264 backend tests passed with the same two upstream warnings; Ruff lint and formatting passed, exported schemas matched, and the actual no-model CLI HTTP/restart smoke passed. The supplied `.env.example` passed explicit `check-config`. No new inference was needed; the recorded Phase 4 actual-model evidence remains unchanged.
+
+No new environment variable is required for the verified existing Hermes/OpenAI credential route. The example file now clarifies its six app settings, optional process-only API-key/Hermes overrides, and fixed model/limit defaults. The backend README and debugger guide explain the distinction. AGENTS.md now requires future environment changes to update examples/setup and explicitly identify required/optional settings and migration steps in the user handoff.
+
+## Phase 5 validation record
+
+Phase 5 (Task 04) implements the first complete generated environment-repair loop.
+The source branch starts at main `bf1c93f` and preserves the frontend tree and the
+original unfinished checkout. Runtime-generated Python stays inside restricted
+Linux Docker; no live business service or new model route is introduced.
+
+The user explicitly chose a separate 20-request/600-second budget for each isolated
+verification run, with an overall repair limit. The implemented overall ceiling is
+60 requests/1,800 wall seconds and two generated candidates. Primary execution,
+diagnosis and resumed execution share 20 requests/600 active seconds. Only recorded
+verification pauses that clock. Available tokens are recorded; no guaranteed dollar
+cap is claimed on the subscription route.
+
+### Actual repair and later-session evidence
+
+[Saved actual runs](../backend/fixtures/repairs/phase5_runs.json) retain the original
+failure, actual Luna diagnosis/source/diff, exact artifact hashes, all five checks,
+original/fresh Hermes baselines, publication, later discovery and rollback. The
+[repair evidence guide](../backend/fixtures/repairs/README.md) summarizes the records.
+
+The first successful original run `b87e91a5-d00a-4285-a201-457d80933b7e` completed
+in 315.20 seconds using 17 primary requests (2 Luna / 15 Hermes), plus 9 isolated
+original-replay requests and 11 fresh-release requests: **37 overall**. The primary
+clock excluded 154.97 seconds of isolated verification. Luna generated candidate
+`05e25e52-72d0-4a26-8c0f-ce418d137144`, source SHA-256
+`404f25894d673611a8bc60f96ba9134a8b39ceb88813b7497b21bb4162806e3d`.
+The generated code preserves the list instead of JSON-encoding it. Component,
+container isolation, healthy regression, original replay and fresh release all
+passed before publication. The original task retained its ticket ID and ended with
+exactly one ticket, checklist and QA message.
+
+A subsequent supervised follow-up `36da312c-53f8-4628-b706-0eee6be2f0dd` stopped
+at `needs_input`: Luna proposed an additional requirement without an exact user
+quote. That rejected plan and all evidence remain intact. It created no business
+effects and did not invalidate the published artifact. The host did not weaken
+provenance checks to make the demonstration pass.
+
+An explicitly started plain Hermes run after service restart,
+`ccd11672-fceb-4f18-8ea3-9ccdd3fb4b97`, completed release 3.7 in 62.38 seconds.
+It loaded the persisted version through ordinary discovery, received no debugger
+or repair-history injection, matched all protected executor baseline hashes and
+created exactly one ticket/checklist/message. Explicit rollback restored `builtin`;
+retrying the same rollback request returned the same receipt.
+
+The machine used Docker Linux engine 28.3.2 and the digest-pinned Python 3.12 slim
+image documented in [repair setup](../backend/docs/REPAIR_SETUP.md). Actual-model
+runs used existing Hermes commit `7166071fcaadb36df26f6d753dda97da6b5d699e`,
+`gpt-6-astra`, and separate OpenAI `gpt-5.6-luna` debugger calls on the existing
+credential route. Local simulated effects are the only business-service proof.
+
+### Automated checks and limits
+
+The ordinary suite uses declared model/runner doubles for orchestration edge cases.
+Separate actual Docker tests cover nonroot/readonly/network/no-credential boundaries,
+host-file isolation, CPU/sleep/output/JSON limits and a genuinely executed faulty
+candidate that remains rejected after restart. No generated Python executes on the
+host. Tests also cover exact-artifact publication gates, stale publication/rollback,
+project scoping, tampered artifacts, interrupted candidates, cancellation and budgets.
+
+The final command counts are recorded in the evidence guide. Ruff, schema export
+and the actual no-model CLI HTTP/intake/restart smoke are checked separately.
+The same two upstream Starlette HTTPX/AnyIO deprecation warnings remain. Remote CI,
+production deployment and current model-backed browser acceptance are unexecuted.
+AO preview is unavailable; no preview dependency was added. Original direction
+bytes and their preserved Markdown hard breaks remain unchanged.
+
+**Setup change:** Linux Docker and the locally pulled pinned image are required for
+repair and published-adapter execution. `EPOCH_REPAIR_IMAGE` is a new optional app
+setting; its default needs no `.env` edit. Startup adds `environments.sqlite3`
+without resetting existing records. No new API key is required on the verified
+existing setup. Existing runs stay pinned through feedback and rollback; rollback
+affects new runs. Missing-tool/context repair and the separately owned UI remain
+later scope.
+
+### Final Phase 5 rerun and retained limitation
+
+After deadline/activation hardening, actual run
+`46f3019b-4cdb-4aa2-9109-14163cc4a161` completed the repair/original task in
+320.64 seconds: 18 primary + 8 original replay + 11 fresh verification = 37
+requests. All five gates passed; the newly generated artifact had the same source
+digest as the first experiment. The later session
+`88df1724-ea3b-484b-a27b-20158c16b75a` successfully used that saved adapter to
+create a ticket/checklist but failed before notifying QA because the Codex stream
+had no SSE events for 12 seconds. Its failed outcome and partial state remain
+unchanged. Complete post-restart task acceptance is demonstrated by the earlier
+experiment; the final rerun is not labelled a fully passing harness.
+
+Automatic approval review rejected a further model-backed follow-up for possible
+external task/source/context transfer; it was not bypassed. Subsequent checks used
+inference-disabled local ASGI readback over the actual saved data. They verified
+completion/SSE, rollback retry identity, restart persistence and restoration of the
+original defect; see [readback evidence](../backend/fixtures/repairs/http_readback.json).
+All five actual runs, including both unsuccessful follow-ups, are exported.
+
+Documentation checks passed 242 local links across 29 Markdown files, seven task
+structures, canonical entrypoints, unchanged direction hashes and unchanged frontend
+identity against main `bf1c93f`. The missing historical Phase 4 validation section
+was restored from `cd3467b` without overwriting the newer Phase 3 frontend record.
+
+Final local validation: **296 tests passed**, including all 9 actual Docker cases,
+with the two existing upstream warnings. Ruff lint/format (67 files), schema
+export and the actual inference-disabled CLI HTTP/intake/restart smoke passed.
+The [Phase 5 report](../backend/PHASE_5_REPORT.md) records setup, commands,
+capabilities and the unpublished branch handoff.

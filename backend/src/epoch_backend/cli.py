@@ -9,6 +9,7 @@ import uvicorn
 from pydantic import ValidationError
 from pydantic_settings import SettingsError
 
+from epoch_backend.candidate_runner import CandidateError
 from epoch_backend.config import Settings
 from epoch_backend.execution import ExecutionError
 from epoch_backend.sandbox import SandboxError
@@ -49,6 +50,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.command in {
             "hermes-info",
             "debugger-info",
+            "repair-info",
+            "environment",
+            "rollback-environment",
             "sandbox",
             "run-release",
             "feedback",
@@ -74,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, sqlite3.Error) as exc:
         print(f"Storage initialization failed: {exc}", file=sys.stderr)
         return 1
-    except (ExecutionError, SandboxError) as exc:
+    except (ExecutionError, SandboxError, CandidateError) as exc:
         print(f"{exc.code}: {exc.message}", file=sys.stderr)
         return 1
     except RequestConflict:

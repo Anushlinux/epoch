@@ -7,6 +7,7 @@ from uuid import UUID
 
 from epoch_backend import contracts as c
 from epoch_backend import execution_contracts as execution
+from epoch_backend import repair_contracts as repair
 from epoch_backend import supervision_contracts as supervision
 
 BACKEND = Path(__file__).resolve().parents[1]
@@ -182,11 +183,21 @@ def fixture_examples() -> list[dict]:
 
 def documents() -> dict[Path, dict]:
     return {
+        BACKEND / "contracts" / "repair-schemas.json": {
+            "schema_version": 1,
+            "description": "Phase 5 candidate proposals, rollback requests and host repair limits.",
+            "models": {
+                name: value.model_json_schema()
+                for name, value in vars(repair).items()
+                if isinstance(value, type)
+                and issubclass(value, c.Contract)
+                and value.__module__ == repair.__name__
+            },
+        },
         BACKEND / "contracts" / "execution-schemas.json": {
             "schema_version": 1,
             "description": (
-                "Implemented Phase 4 run, trace and opt-in OpenAI supervision interfaces. "
-                "Environment repair is not implemented."
+                "Phase 5 run, trace, supervision and opt-in checklist repair interfaces."
             ),
             "models": {
                 name: value.model_json_schema()

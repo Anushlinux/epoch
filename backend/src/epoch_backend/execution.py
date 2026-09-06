@@ -11,8 +11,10 @@ from pathlib import Path
 from uuid import UUID, uuid4
 
 from epoch_backend import debugger_bridge, hermes_bridge
+from epoch_backend.candidate_runner import CandidateError
 from epoch_backend.config import Settings
 from epoch_backend.contracts import Checkpoint, SourceReference, Task, TaskBrief, TaskStatus
+from epoch_backend.environment_store import EnvironmentStore
 from epoch_backend.execution_contracts import ExecutionRecord, ReleaseRunRequest, RuntimeInfo
 from epoch_backend.execution_store import ExecutionStore
 from epoch_backend.sandbox import Sandbox, SandboxError
@@ -140,6 +142,7 @@ class ExecutionService:
     def __init__(self, settings: Settings, tasks: SQLiteStore):
         self.settings, self.tasks = settings, tasks
         self.store = ExecutionStore(settings.data_dir / "executions.sqlite3")
+        self.environments = EnvironmentStore(settings.data_dir / "environments.sqlite3")
         self.lease = ServerLease(settings.data_dir / "execution.lock")
         self._lock = threading.RLock()
         self._thread: threading.Thread | None = None
@@ -151,6 +154,8 @@ class ExecutionService:
         self.lease.acquire()
         try:
             self.store.initialize()
+            self.environments.initialize()
+            self.environments.recover_interrupted()
             for record in self.store.list():
                 if record.status not in TERMINAL:
                     record.status = "interrupted"
@@ -163,6 +168,13 @@ class ExecutionService:
                         operation.status = "interrupted"
                         operation.finished_at = datetime.now(UTC)
                         operation.error = dict(record.error)
+                        repairs = {
+                            r["id"]: r
+                            for r in self.environments.inspect(
+                                self.tasks.get_task(record.task_id).request.project_id
+                            )["repairs"]
+                        }
+                        operation.repairs = [repairs.get(r["id"], r) for r in operation.repairs]
                         operation.missing_evidence.append(
                             "Server stopped before the operation completed; no automatic replay."
                         )
@@ -254,6 +266,11 @@ class ExecutionService:
                 project_id=task.request.project_id,
                 release=request.release,
             )
+            try:
+                manifest = self.environments.manifest(task.request.project_id)
+                sandbox.select_environment(manifest)
+            except CandidateError as exc:
+                raise ExecutionError(exc.code, exc.message, 503) from exc
             now = datetime.now(UTC)
             record = ExecutionRecord(
                 id=run_id,
@@ -263,6 +280,7 @@ class ExecutionService:
                 brief=release_brief(task, run_id, sandbox.metadata()),
                 created_at=now,
                 updated_at=now,
+                environment_version=manifest["version_id"],
             )
             if request.supervised:
                 operation = SupervisionOperation(
@@ -447,6 +465,17 @@ class ExecutionService:
                 self.sandbox(record).record_event("run.cancellation_requested", {})
             return record
 
+    def rollback(self, project: str, expected: str, request_id: UUID):
+        with self._lock:
+            if self.active_run_id is not None or self._unresolved_state:
+                raise ExecutionError(
+                    "executor_busy", "Rollback requires an idle, resolved executor."
+                )
+            try:
+                return self.environments.rollback(project, expected, request_id)
+            except CandidateError as exc:
+                raise ExecutionError(exc.code, exc.message) from exc
+
     def _execute(self, record: ExecutionRecord):
         sandbox = self.sandbox(record)
         try:
@@ -457,7 +486,14 @@ class ExecutionService:
                     self.store.save(record)
                     self.tasks.set_task_status(record.task_id, task_status(record.status))
 
-                run_supervised(record, sandbox, self._cancel, persist)
+                run_supervised(
+                    record,
+                    sandbox,
+                    self._cancel,
+                    persist,
+                    environments=self.environments,
+                    repair_image=self.settings.repair_image,
+                )
                 return
 
             def on_event(event: dict):
@@ -531,6 +567,11 @@ class ExecutionService:
             }
             record.missing_evidence.append("Executor did not produce a complete result.")
         finally:
+            if record.error and record.error.get("code") in {
+                "cleanup_unresolved",
+                "activation_unresolved",
+            }:
+                self._unresolved_state = True
 
             def sync_operation():
                 if record.supervision:

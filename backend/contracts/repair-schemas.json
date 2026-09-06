@@ -1,0 +1,129 @@
+{
+  "description": "Phase 5 candidate proposals, rollback requests and host repair limits.",
+  "models": {
+    "RepairLimits": {
+      "additionalProperties": false,
+      "properties": {
+        "guaranteed_usd_cap": {
+          "default": null,
+          "title": "Guaranteed Usd Cap",
+          "type": "null"
+        },
+        "inference_cost_unit": {
+          "const": "authorized_model_request",
+          "default": "authorized_model_request",
+          "title": "Inference Cost Unit",
+          "type": "string"
+        },
+        "max_attempts": {
+          "const": 2,
+          "default": 2,
+          "title": "Max Attempts",
+          "type": "integer"
+        },
+        "max_model_requests": {
+          "const": 60,
+          "default": 60,
+          "title": "Max Model Requests",
+          "type": "integer"
+        },
+        "max_wall_seconds": {
+          "const": 1800,
+          "default": 1800,
+          "title": "Max Wall Seconds",
+          "type": "integer"
+        },
+        "verification_max_seconds": {
+          "const": 600,
+          "default": 600,
+          "title": "Verification Max Seconds",
+          "type": "integer"
+        },
+        "verification_max_turns": {
+          "const": 20,
+          "default": 20,
+          "title": "Verification Max Turns",
+          "type": "integer"
+        }
+      },
+      "title": "RepairLimits",
+      "type": "object"
+    },
+    "RepairProposal": {
+      "additionalProperties": false,
+      "properties": {
+        "diagnosis": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Diagnosis",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "maxItems": 10,
+          "minItems": 1,
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "outcome": {
+          "enum": [
+            "repair",
+            "unsupported"
+          ],
+          "title": "Outcome",
+          "type": "string"
+        },
+        "source": {
+          "maxLength": 20000,
+          "title": "Source",
+          "type": "string"
+        },
+        "target": {
+          "const": "checklist_serializer.py",
+          "title": "Target",
+          "type": "string"
+        },
+        "uncertainty": {
+          "maxLength": 2000,
+          "title": "Uncertainty",
+          "type": "string"
+        }
+      },
+      "required": [
+        "outcome",
+        "diagnosis",
+        "evidence_ids",
+        "target",
+        "source",
+        "uncertainty"
+      ],
+      "title": "RepairProposal",
+      "type": "object"
+    },
+    "RollbackRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "client_request_id": {
+          "format": "uuid",
+          "title": "Client Request Id",
+          "type": "string"
+        },
+        "expected_version": {
+          "format": "uuid",
+          "title": "Expected Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "client_request_id",
+        "expected_version"
+      ],
+      "title": "RollbackRequest",
+      "type": "object"
+    }
+  },
+  "schema_version": 1
+}

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import queue
 import shutil
@@ -203,6 +204,22 @@ class Session:
         )
         self.closed = False
         self.segment = 0
+        self.verification_pause = 0.0
+        self.pending_pause = 0.0
+
+    def account_verification_pause(self, seconds: float):
+        """Host-only idle verification time; never reset request counts."""
+        if (
+            not self.request.get("allow_verification_pause")
+            or type(seconds) not in (int, float)
+            or not math.isfinite(seconds)
+            or seconds < 0
+            or self.verification_pause + seconds > 1800
+        ):
+            raise ValueError("Verification pause exceeds its authorized limit")
+        self.verification_pause += seconds
+        self.pending_pause += seconds
+        self.deadline += seconds
 
     def __enter__(self) -> Session:
         return self
@@ -334,8 +351,10 @@ class Session:
                     "max_turns": turns,
                     "timeout_seconds": seconds,
                     "segment": self.segment,
+                    "verification_pause_seconds": self.pending_pause,
                 }
             )
+            self.pending_pause = 0.0
             while True:
                 if self.cancel_event.is_set():
                     self.close()
@@ -811,6 +830,7 @@ def _worker(request: dict) -> int:
         event("executor.baseline", **baseline)
         history = None
         segment_number = 0
+        verification_pause = 0.0
         while True:
             if request.get("session_mode"):
                 line = sys.stdin.readline()
@@ -828,6 +848,18 @@ def _worker(request: dict) -> int:
                     "timeout_seconds": request["timeout_seconds"],
                 }
             segment_number += 1
+            pause = command.get("verification_pause_seconds", 0)
+            if (
+                type(pause) not in (int, float)
+                or not math.isfinite(pause)
+                or pause < 0
+                or pause > 1800
+                or verification_pause + pause > 1800
+                or (pause and not request.get("allow_verification_pause"))
+            ):
+                raise ValueError("Invalid verification pause")
+            verification_pause += pause
+            session_deadline += pause
             segment_allowance = command.get("max_turns")
             seconds = command.get("timeout_seconds")
             if type(segment_allowance) is not int or not 1 <= segment_allowance <= 20:

@@ -20,6 +20,13 @@ SCENARIOS = ["control", "broken_checklist", "missing_lookup", "outdated_context"
 def add_commands(subparsers):
     subparsers.add_parser("hermes-info", help="Inspect the existing Hermes installation safely")
     subparsers.add_parser("debugger-info", help="Inspect the configured OpenAI debugger route")
+    subparsers.add_parser("repair-info", help="Inspect the local Linux container repair runner")
+    for name in ("environment", "rollback-environment"):
+        command = subparsers.add_parser(name)
+        command.add_argument("--project", default="demo")
+        if name == "rollback-environment":
+            command.add_argument("--expected-version", type=UUID, required=True)
+            command.add_argument("--request-id", type=UUID, required=True)
     sandbox = subparsers.add_parser("sandbox", help="Operate explicitly labelled local simulations")
     actions = sandbox.add_subparsers(dest="action", required=True)
     initialize = actions.add_parser("init")
@@ -46,6 +53,9 @@ def add_commands(subparsers):
     run.add_argument("--max-turns", type=int, default=20)
     run.add_argument("--supervised", action="store_true", help="Enable the OpenAI debugger")
     run.add_argument(
+        "--repair", action="store_true", help="Enable supervised generated checklist repair"
+    )
+    run.add_argument(
         "--demo-omit-notification",
         action="store_true",
         help="Demonstrate supervised recovery of an initially omitted QA notification",
@@ -61,6 +71,12 @@ def add_commands(subparsers):
 
 
 def handle_command(args, settings: Settings) -> int:
+    if args.command == "repair-info":
+        from epoch_backend.candidate_runner import inspect_runner
+
+        result = inspect_runner(settings.repair_image)
+        print(json.dumps(result, indent=2))
+        return 0 if result["available"] else 1
     if args.command in {"hermes-info", "debugger-info"}:
         result = (
             debugger_bridge.detect_debugger()
@@ -119,6 +135,14 @@ def handle_command(args, settings: Settings) -> int:
     service.initialize()
     record = None
     try:
+        if args.command in {"environment", "rollback-environment"}:
+            result = (
+                service.environments.inspect(args.project)
+                if args.command == "environment"
+                else service.rollback(args.project, str(args.expected_version), args.request_id)
+            )
+            print(json.dumps(result, indent=2))
+            return 0
         if args.command in {"feedback", "clarify"}:
             feedback = FeedbackRequest(
                 client_request_id=args.request_id or uuid4(),
@@ -138,7 +162,8 @@ def handle_command(args, settings: Settings) -> int:
                 scenario=args.scenario,
                 max_turns=args.max_turns,
                 timeout_seconds=args.timeout,
-                supervised=args.supervised,
+                supervised=args.supervised or args.repair,
+                repair_enabled=args.repair,
                 demo_omit_notification=args.demo_omit_notification,
             )
             task, _ = tasks.create_task(

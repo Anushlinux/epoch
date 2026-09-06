@@ -50,10 +50,38 @@ def test_health_identifies_foundation_without_claiming_execution(client):
     assert response.status_code == 200
     assert response.json() == {
         "status": "ok",
-        "phase": 4,
+        "phase": 5,
         "storage": "ok",
         "execution_enabled": False,
     }
+
+
+def test_repair_runtime_and_environment_history(client, monkeypatch):
+    monkeypatch.setattr(
+        "epoch_backend.execution_api.inspect_runner",
+        lambda _: {"available": False, "error": "Docker is stopped"},
+    )
+    assert client.get("/api/repair/runtime").json()["available"] is False
+    response = client.get("/api/environments/demo")
+    assert response.status_code == 200
+    assert response.json() == {
+        "project": "demo",
+        "active_version": "builtin",
+        "versions": [],
+        "repairs": [],
+        "history": [],
+    }
+    request = {"expected_version": str(uuid4()), "client_request_id": str(uuid4())}
+    assert_error(client.post("/api/environments/demo/rollback", json=request), 409)
+    request["expected_version"] = "not-a-uuid"
+    assert_error(client.post("/api/environments/demo/rollback", json=request), 422)
+
+
+def test_rollback_rejected_during_active_execution(client):
+    client.app.state.execution.active_run_id = uuid4()
+    request = {"expected_version": str(uuid4()), "client_request_id": str(uuid4())}
+    assert_error(client.post("/api/environments/demo/rollback", json=request), 409)
+    client.app.state.execution.active_run_id = None
 
 
 def test_corrupt_storage_reports_unavailable_without_exposing_contents_or_paths(client, settings):

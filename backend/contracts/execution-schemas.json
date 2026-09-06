@@ -1,5 +1,5 @@
 {
-  "description": "Implemented Phase 4 run, trace and opt-in OpenAI supervision interfaces. Environment repair is not implemented.",
+  "description": "Phase 5 run, trace, supervision and opt-in checklist repair interfaces.",
   "models": {
     "ExecutionRecord": {
       "$defs": {
@@ -324,6 +324,11 @@
               "title": "Release",
               "type": "string"
             },
+            "repair_enabled": {
+              "default": false,
+              "title": "Repair Enabled",
+              "type": "boolean"
+            },
             "scenario": {
               "default": "control",
               "enum": [
@@ -541,6 +546,27 @@
               "title": "Questions",
               "type": "array"
             },
+            "repair_budget": {
+              "anyOf": [
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Repair Budget"
+            },
+            "repairs": {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "title": "Repairs",
+              "type": "array"
+            },
             "request": {
               "additionalProperties": true,
               "title": "Request",
@@ -575,6 +601,7 @@
                 "planning",
                 "running",
                 "verifying",
+                "repairing",
                 "completed",
                 "needs_input",
                 "blocked",
@@ -917,6 +944,11 @@
           "title": "Created At",
           "type": "string"
         },
+        "environment_version": {
+          "default": "builtin",
+          "title": "Environment Version",
+          "type": "string"
+        },
         "error": {
           "anyOf": [
             {
@@ -980,6 +1012,7 @@
             "planning",
             "running",
             "verifying",
+            "repairing",
             "completed",
             "needs_input",
             "blocked",
@@ -1062,6 +1095,11 @@
           "minLength": 1,
           "title": "Release",
           "type": "string"
+        },
+        "repair_enabled": {
+          "default": false,
+          "title": "Repair Enabled",
+          "type": "boolean"
         },
         "scenario": {
           "default": "control",
@@ -1167,8 +1205,8 @@
           "title": "Active Run Id"
         },
         "automatic_repair": {
-          "const": false,
-          "default": false,
+          "const": true,
+          "default": true,
           "title": "Automatic Repair",
           "type": "boolean"
         },
@@ -1209,10 +1247,16 @@
           "type": "integer"
         },
         "phase": {
-          "const": 4,
-          "default": 4,
+          "const": 5,
+          "default": 5,
           "title": "Phase",
           "type": "integer"
+        },
+        "repair_opt_in": {
+          "const": true,
+          "default": true,
+          "title": "Repair Opt In",
+          "type": "boolean"
         },
         "simulation_only": {
           "const": true,
@@ -1265,6 +1309,11 @@
           "minLength": 1,
           "title": "Release",
           "type": "string"
+        },
+        "repair_enabled": {
+          "default": false,
+          "title": "Repair Enabled",
+          "type": "boolean"
         },
         "scenario": {
           "default": "control",

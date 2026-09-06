@@ -62,7 +62,7 @@ class TaskList(Contract):
 
 class HealthResponse(Contract):
     status: Literal["ok"] = "ok"
-    phase: Literal[4] = 4
+    phase: Literal[5] = 5
     storage: Literal["ok"] = "ok"
     execution_enabled: bool = False
 

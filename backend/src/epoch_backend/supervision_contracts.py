@@ -13,6 +13,7 @@ OperationStatus = Literal[
     "planning",
     "running",
     "verifying",
+    "repairing",
     "completed",
     "needs_input",
     "blocked",
@@ -94,6 +95,8 @@ class SupervisionOperation(Contract):
     executor_passes: list[dict[str, Any]] = Field(default_factory=list)
     interventions: list[SupervisorIntervention] = Field(default_factory=list)
     missing_evidence: list[str] = Field(default_factory=list)
+    repairs: list[dict[str, Any]] = Field(default_factory=list)
+    repair_budget: dict[str, Any] | None = None
 
 
 class SupervisionState(Contract):

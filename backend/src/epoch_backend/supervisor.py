@@ -13,6 +13,7 @@ from uuid import UUID, uuid4
 from pydantic import ValidationError
 
 from epoch_backend import debugger_bridge, hermes_bridge
+from epoch_backend.candidate_runner import CandidateError
 from epoch_backend.contracts import (
     Checkpoint,
     IntentRevision,
@@ -259,6 +260,9 @@ def run_supervised(
     sandbox: Sandbox,
     cancelled: threading.Event,
     persist: Callable,
+    *,
+    environments=None,
+    repair_image=None,
 ):
     assert record.supervision is not None
     operation = record.supervision.operations[-1]
@@ -279,7 +283,22 @@ def run_supervised(
             "budget.turn_authorized", {"actor": actor, "used": used, "maximum": operation.max_turns}
         )
 
-    budget = OperationBudget(operation.max_turns, operation.timeout_seconds, cancelled, on_turn)
+    if record.request.repair_enabled:
+        from epoch_backend.repair_budget import RepairBudget
+
+        def overall_progress(value):
+            operation.repair_budget = value
+            persist()
+            emit("repair.budget_authorized", value)
+
+        budget = RepairBudget(
+            operation.max_turns, operation.timeout_seconds, cancelled, on_turn, overall_progress
+        )
+        operation.deadline_at = operation.started_at + timedelta(
+            seconds=3 * operation.timeout_seconds
+        )
+    else:
+        budget = OperationBudget(operation.max_turns, operation.timeout_seconds, cancelled, on_turn)
     last_state_hash = None
     baseline_first = None
     prior_events = sandbox.events()
@@ -434,6 +453,7 @@ def run_supervised(
             ],
             "timeout_seconds": budget.remaining_seconds(),
             "max_turns": max(1, budget.remaining_turns()),
+            "allow_verification_pause": record.request.repair_enabled,
         }
         with hermes_bridge.Session(
             request,
@@ -509,6 +529,55 @@ def run_supervised(
                     for event in sandbox.events(after=operation_event_start)
                     if event["type"] in {"tool.error", "mcp.invalid_call"}
                 ][-8:]
+                if record.request.repair_enabled and not operation.repairs:
+                    from epoch_backend.repair_controller import repair_environment, supported_error
+
+                    trigger = supported_error(sandbox.events(after=operation_event_start))
+                    if trigger is not None:
+                        record.status = operation.status = "repairing"
+                        persist()
+                        if environments is None:
+                            raise CandidateError(
+                                "repair_unavailable", "Environment store is unavailable."
+                            )
+                        previous_pause = budget.paused_seconds
+                        version = repair_environment(
+                            record,
+                            sandbox,
+                            environments,
+                            budget,
+                            call_debugger,
+                            emit,
+                            persist,
+                            repair_image,
+                            cancelled,
+                            trigger,
+                        )
+                        session.account_verification_pause(budget.paused_seconds - previous_pause)
+                        metadata = sandbox.metadata()
+                        instruction = (
+                            "The controller verified and activated a new checklist adapter. "
+                            "Retry the failed operation using the existing objects and original "
+                            "idempotency keys where arguments are unchanged. Complete the original "
+                            "requirements without duplicate effects.\n" + record.brief.instructions
+                        )
+                        intervention = SupervisorIntervention(
+                            id=uuid4(),
+                            task_id=record.task_id,
+                            run_id=record.id,
+                            checkpoint_refs=[
+                                c.id for c in record.brief.checkpoints if c.status != "verified"
+                            ],
+                            instruction=instruction,
+                            reason=f"Verified repair {version['id']} activated between passes.",
+                            evidence_refs=[UUID(record.verification["evidence_id"])],
+                            created_at=datetime.now(UTC),
+                        )
+                        operation.interventions.append(intervention)
+                        emit("supervisor.intervention", intervention.model_dump(mode="json"))
+                        record.status = operation.status = "running"
+                        persist()
+                        continue
                 decision = call_debugger(
                     "review",
                     REVIEW_INSTRUCTIONS,
@@ -573,7 +642,7 @@ def run_supervised(
         record.status = "cancelled" if cancelled.is_set() or exc.code == "cancelled" else "blocked"
         record.error = {"code": exc.code, "message": exc.message}
         record.final_response = record.final_response or exc.message
-    except SandboxError as exc:
+    except (SandboxError, CandidateError) as exc:
         record.status = "blocked"
         record.error = {"code": exc.code, "message": exc.message}
     except Exception as exc:

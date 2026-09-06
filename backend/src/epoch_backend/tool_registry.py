@@ -250,6 +250,10 @@ class ToolRegistry:
     def discover_tools(self) -> dict[str, Any]:
         metadata = self.sandbox.metadata()
         tools = [self._summary(tool) for tool in _TOOLS if self._visible(tool)]
+        version = metadata.get("adapter_manifest", {}).get("version_id", "builtin")
+        for tool in tools:
+            if tool["name"].startswith("checklists.") and not tool["read_only"]:
+                tool["implementation_version"] = version
         result = {
             "interface_version": TOOL_INTERFACE_VERSION,
             "project_id": metadata["project_id"],
@@ -274,12 +278,19 @@ class ToolRegistry:
             "input_schema": tool.arguments.model_json_schema(),
             "output_schema": _OUTPUTS[name].json_schema(),
         }
+        if name in {"checklists.create", "checklists.update"}:
+            result["implementation_version"] = (
+                self.sandbox.metadata().get("adapter_manifest", {}).get("version_id", "builtin")
+            )
         self.sandbox.record_event("tool.described", {"tool_name": name, "result": result})
         return {"ok": True, "result": result}
 
     def invoke_tool(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         call_id = str(uuid4())
         correlation = {"call_id": call_id, "tool_name": name, "tool_version": TOOL_VERSION}
+        correlation["environment_version"] = (
+            self.sandbox.metadata().get("adapter_manifest", {}).get("version_id", "builtin")
+        )
         self.sandbox.record_event(
             "tool.called", {**correlation, "arguments": _safe_arguments(arguments)}
         )

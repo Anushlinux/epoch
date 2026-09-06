@@ -1,6 +1,6 @@
 # Task 04: First complete tool-repair loop
 
-Status: unstarted. Intended future implementation.
+Status: complete in Phase 5. Actual generated repair, original/fresh verification, later-session use and rollback are recorded in [status](../status.md#phase-5-validation-record) and the [evidence guide](../../backend/fixtures/repairs/README.md). Scope below remains the acceptance specification.
 
 ## Goal
 

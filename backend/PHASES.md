@@ -1,6 +1,6 @@
 # Backend implementation phases
 
-Status: Phases 1–4 complete; Phases 5–8 unstarted. Owner: Rajdeep. Anushrut owns the separate UI and can use the [published backend contracts](docs/FRONTEND_HANDOFF.md). This implementation changes no frontend files. See [setup](README.md) and the [Phase 4 validation record](../docs/status.md#phase-4-validation-record).
+Status: Phases 1–5 complete; Phases 6–8 unstarted. Owner: Rajdeep. Anushrut owns the separate UI and can use the [published backend contracts](docs/FRONTEND_HANDOFF.md). This implementation changes no frontend files. See [setup](README.md) and the [Phase 4 validation record](../docs/status.md#phase-4-validation-record).
 
 All backend source, package configuration, tests, fixtures, development scripts, and runtime setup belong under `backend/`. Secrets and generated runtime data must not be committed. Shared repository instructions and product documentation remain at the repository root and under `docs/`.
 
@@ -71,6 +71,8 @@ Existing brief: the supervision part of [Task 03](../docs/tasks/03-executor-evid
 
 ## Phase 5 — First complete environment-repair loop
 
+**Complete:** actual Luna-generated serializer repair, Linux Docker isolation, all five verification gates, same-session Hermes recovery, persisted later-session discovery and rollback. See [setup](docs/REPAIR_SETUP.md), [evidence](fixtures/repairs/README.md), and the [validation record](../docs/status.md#phase-5-validation-record). Each isolated verification receives 20 requests/600 seconds; primary work shares 20 requests/600 active seconds; the whole operation is capped at 60 requests/1,800 wall seconds and two candidates. No new model credential is required on the verified setup.
+
 - Detect a supported failure automatically and assemble evidence for an actual model-generated diagnosis and adapter change.
 - Enforce candidate isolation, permitted edit paths, service grants, and attempt/time limits outside generated code.
 - Test the component, the original task in isolated state, a meaningful new task, and regressions using protected checks.
@@ -114,4 +116,4 @@ Existing brief: [Task 07](../docs/tasks/07-demo-evidence.md).
 
 ## Phase handoff
 
-For every phase report: implemented scope, changed files, exact checks and outcomes, evidence locations, known limitations, and whether its pass condition is met. Keep user-task success, isolated verification, and persistent-learning claims separate. Report Phase 4's completed evidence before any push, as requested by the user. Phase 5 or another later phase requires a separate explicit implementation request; no later phase has started.
+For every phase report: implemented scope, changed files, exact checks and outcomes, evidence locations, known limitations, and whether its pass condition is met. Keep user-task success, isolated verification, and persistent-learning claims separate. Report Phase 4's completed evidence before any push, as requested by the user. Phase 5 was explicitly assigned and is complete. Phases 6–8 require separate implementation requests and have not started.

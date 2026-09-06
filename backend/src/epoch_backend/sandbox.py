@@ -93,6 +93,65 @@ class Sandbox:
         with closing(self._connect()) as connection:
             return self._metadata(connection)
 
+    def select_environment(self, manifest: dict, *, expected_version: str | None = None):
+        """Host-only version activation. Executors cannot call this through MCP."""
+        from epoch_backend.candidate_runner import RUNNER_VERSION, digest
+
+        if manifest.get("version_id") != "builtin":
+            if (
+                manifest.get("project") != self.metadata()["project_id"]
+                or manifest.get("runner_version") != RUNNER_VERSION
+                or digest(manifest.get("source", "")) != manifest.get("artifact_sha256")
+            ):
+                raise SandboxError(
+                    "environment_invalid", "Environment scope or artifact is invalid."
+                )
+        with closing(self._connect()) as connection, connection:
+            connection.execute("BEGIN IMMEDIATE")
+            metadata = self._metadata(connection)
+            previous = metadata.get("adapter_manifest", {}).get("version_id", "builtin")
+            if expected_version is not None and expected_version != previous:
+                raise SandboxError("version_conflict", "Pinned environment changed unexpectedly.")
+            metadata["adapter_manifest"] = manifest
+            connection.execute(
+                "UPDATE sandbox_metadata SET record_json=? WHERE id=1", (_json(metadata),)
+            )
+            self._event(
+                connection,
+                "environment.selected",
+                {
+                    "previous": previous,
+                    "version_id": manifest["version_id"],
+                    "artifact_sha256": manifest.get("artifact_sha256"),
+                },
+            )
+
+    @staticmethod
+    def _serialize(metadata, ticket_id, title, items):
+        manifest = metadata.get("adapter_manifest", {"version_id": "builtin"})
+        args = {
+            "ticket_id": ticket_id,
+            "title": title,
+            "items": items,
+            "legacy": metadata["scenario"] == "broken_checklist",
+        }
+        if manifest["version_id"] == "builtin":
+            return serialize_checklist(**args)
+        from epoch_backend.candidate_runner import CandidateError, CandidateRunner, digest
+
+        if digest(manifest["source"]) != manifest["artifact_sha256"]:
+            raise SandboxError("artifact_changed", "Pinned executable digest mismatch.")
+        try:
+            wire = CandidateRunner(manifest["image_id"]).run(manifest["source"], args)
+        except CandidateError as error:
+            raise SandboxError(error.code, error.message) from error
+        # Generated code never owns service selection, object identity or grants.
+        if wire.get("ticket_id") != ticket_id or wire.get("title") != title:
+            raise SandboxError(
+                "adapter_scope_violation", "Adapter changed the authorized object identity."
+            )
+        return wire
+
     def initialize(
         self,
         scenario: str = "control",
@@ -498,7 +557,7 @@ class Sandbox:
         def create(connection, metadata):
             if not any(item["id"] == ticket_id for item in self._objects(connection, "tickets")):
                 raise SandboxError("not_found", "Ticket does not exist in this sandbox project.")
-            wire = serialize_checklist(**args, legacy=metadata["scenario"] == "broken_checklist")
+            wire = self._serialize(metadata, **args)
             try:
                 validated = validate_checklist_payload(wire)
             except AdapterContractError as error:
@@ -517,11 +576,11 @@ class Sandbox:
         def update(connection, metadata):
             previous = self._existing_object(connection, metadata, "checklists", checklist_id)
             self._existing_object(connection, metadata, "tickets", previous["ticket_id"])
-            wire = serialize_checklist(
+            wire = self._serialize(
+                metadata,
                 previous["ticket_id"],
                 previous["title"],
                 items,
-                legacy=metadata["scenario"] == "broken_checklist",
             )
             try:
                 validated = validate_checklist_payload(wire)

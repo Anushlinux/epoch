@@ -18,6 +18,19 @@ class Settings(BaseSettings):
     port: int = Field(default=8000, ge=1, le=65535)
     log_level: Literal["critical", "error", "warning", "info", "debug", "trace"] = "info"
     enable_hermes: bool = True
+    repair_image: str = (
+        "python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea"
+    )
+
+    @field_validator("repair_image")
+    @classmethod
+    def validate_repair_image(cls, value: str) -> str:
+        import re
+
+        if not re.fullmatch(r"[A-Za-z0-9._/:-]+@sha256:[a-f0-9]{64}", value):
+            raise ValueError("repair image must be pinned to a sha256 digest")
+        return value
+
     cors_origins: list[str] = Field(
         default_factory=lambda: ["http://localhost:5173", "http://127.0.0.1:5173"]
     )
