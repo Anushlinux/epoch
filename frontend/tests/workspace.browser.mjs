@@ -452,3 +452,63 @@ test("unavailable marker storage refuses submission before any fixture action st
   await expect(page.locator(".current-revision")).toContainText("Revision 1");
   await expect(page.locator(".history-record")).toHaveCount(0);
 });
+
+test('disconnected New request and an already-open composer cannot submit even through a dispatched form event', async ({ page }) => {
+  await page.getByRole('button', { name: 'New request', exact: true }).click();
+  await page.getByLabel('Your request', { exact: true }).fill('Keep this request while disconnected');
+  await page.getByRole('button', { name: 'Review clarification' }).click();
+  await page.getByLabel('Where should the result be shared?').fill('Just here');
+  await controls(page);
+  await page.getByRole('button', { name: 'Disconnect fixture' }).click();
+  await expect(page.getByRole('button', { name: 'New request', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Create fixture task' })).toBeDisabled();
+  await page.evaluate(async () => {
+    const { FixtureAdapter } = await import('/src/fixtures.mjs');
+    window.fixtureCommandsSent = 0;
+    const original = FixtureAdapter.prototype.command;
+    FixtureAdapter.prototype.command = function (...args) { window.fixtureCommandsSent++; return original.apply(this, args); };
+    document.querySelector('#request-form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  });
+  expect(await page.evaluate(() => window.fixtureCommandsSent)).toBe(0);
+  expect(await page.evaluate(() => sessionStorage.getItem('epoch.fixture.pending'))).toBeNull();
+  await expect(page.getByLabel('Where should the result be shared?')).toHaveValue('Just here');
+  await page.getByRole('button', { name: 'Reconnect fixture' }).click();
+  await expect(page.getByRole('button', { name: 'Create fixture task' })).toBeEnabled();
+});
+
+test('post-delivery checkpoint updates hide stale Delivered labels until an explicit new task outcome', async ({ page }) => {
+  await advance(page, 5);
+  await expect(page.locator('.task-state')).toHaveText('Delivered · fixture');
+  await page.evaluate(async () => {
+    const { FixtureAdapter } = await import('/src/fixtures.mjs');
+    const { acceptEvent } = await import('/src/state.mjs');
+    FixtureAdapter.prototype.reconnect = async function () {
+      const s = this.state;
+      const data = { ...s.checkpoints[0], status: 'checking' };
+      this.state = acceptEvent(s, { taskId: s.taskId, runId: s.runId, revision: s.revision, category: 'fixture', eventId: 'after-delivery-check', seq: s.seq + 1, kind: 'checkpoint', data });
+      return this.snapshot();
+    };
+  });
+  await controls(page); await page.getByRole('button', { name: 'Disconnect fixture' }).click();
+  await page.getByRole('button', { name: 'Reconnect fixture' }).click();
+  await expect(page.locator('.task-state')).toHaveText('Delivery needs confirmation · fixture');
+  await page.getByRole('tab', { name: 'Results', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Delivered fixture results', exact: true })).toHaveCount(0);
+  await page.evaluate(async () => {
+    const { FixtureAdapter } = await import('/src/fixtures.mjs');
+    const { acceptEvent } = await import('/src/state.mjs');
+    FixtureAdapter.prototype.reconnect = async function () {
+      for (const [kind, data] of [
+        ['checkpoint', { ...this.state.checkpoints[0], status: 'passed' }],
+        ['task-outcome', { status: 'delivered', result: this.state.result }],
+      ]) {
+        const s = this.state;
+        this.state = acceptEvent(s, { taskId: s.taskId, runId: s.runId, revision: s.revision, category: 'fixture', eventId: `confirm-${s.seq + 1}`, seq: s.seq + 1, kind, data });
+      }
+      return this.snapshot();
+    };
+  });
+  await controls(page); await page.getByRole('button', { name: 'Disconnect fixture' }).click();
+  await page.getByRole('button', { name: 'Reconnect fixture' }).click();
+  await expect(page.locator('.task-state')).toHaveText('Delivered · fixture');
+});

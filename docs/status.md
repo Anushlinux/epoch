@@ -39,7 +39,7 @@ Hermes discovery behavior, Neatlogs capture coverage, Workshop replay, and inter
 | Concrete runtime/tooling, library, schema, storage, transport, testing and CI decisions | Selected and recorded; future transport/isolation still unimplemented | Task 01 complete |
 | Python API/CLI, config validation, task persistence and shared contracts | Implemented; 66 tests and live-server restart smoke pass locally | Phase 1 complete |
 | Task brief/checkpoint planning, targeted continuation and feedback revisions | Unimplemented | Contracts in Task 01; executor/supervision in Task 03 |
-| User interface, checkpoint board, results and feedback flow | Real Phase 1 intake/list/detail integrated; future execution flows remain labeled fixtures | Actual local HTTP/browser intake verified; AO CORS limitation and later execution endpoints remain open |
+| User interface, checkpoint board, results and feedback flow | Real Phase 1 intake/list/detail integrated; future execution flows remain labeled fixtures | Actual local HTTP/browser intake verified; normal browser/AO intake supported at 127.0.0.1:5173; later execution endpoints remain open |
 | Local simulated business services and inspectable state | Unimplemented | Task 02 |
 | Permission-scoped tool registry and version lifecycle | Unimplemented | Tasks 02 and 04 |
 | Hermes integration and dynamic tool discovery | Unimplemented; compatibility unverified | Task 03 |
@@ -116,6 +116,8 @@ The [frontend-local contract proposal](../frontend/CONTRACT-PROPOSAL.md) is **PR
 
 Against the unchanged Phase 1 backend at `0a062dd`, the frontend verified actual health/create/list/detail, 201 intake, 200 identical/normalized retry, 409 conflict, 422 validation, 404 missing records, 403 disallowed origin, explicit allowed CORS and SQLite record/ID persistence across restart. Tasks stayed pending and health reported execution disabled. Temporary test data was isolated and removed; no backend source, configuration defaults or evaluator logic changed.
 
-`npm run test:all --prefix frontend` passed 37 state tests and 26 fixture browser tests. `npm run test:integration --prefix frontend` passed HTTP checks and 12 desktop/mobile browser cases using actual API requests. Transport fault injection tests are labeled separately. Full evidence and screenshots are in the frontend verification record.
+`npm run test:all --prefix frontend` passed 41 state tests and 30 fixture browser tests. `npm run test:integration --prefix frontend` passed HTTP checks and 12 desktop/mobile browser cases using actual API requests. Transport fault injection tests are labeled separately. Full evidence and screenshots are in the frontend verification record.
 
-AO can display the actual intake UI, but its generated `.localhost` origin is rejected by the current backend CORS configuration validator; direct AO API access was observed failing. This is reported for backend-owner coordination. Browser intake proof used the documented exact `http://localhost:5173` origin. No SSE, checkpoints, execution, feedback or repair endpoint was added or claimed. Actual supervised repair remains blocked on later phases.
+The frontend now has `npm run dev --prefix frontend`, a minimal Node HTTP host at `http://127.0.0.1:5173`, already supported by backend CORS. Actual normal-page browser tests and AO intake use this origin without backend changes, a proxy, source interception or special browser permissions. The older generated-origin static-file preview remains unsuitable for API integration. No SSE, checkpoints, execution, feedback or repair endpoint was added or claimed. Actual supervised repair remains blocked on later phases.
+
+Final fixture remediation rejects duplicate/dropped checkpoint identities and unsourced failed/needs-input snapshots, blocks disconnected request dispatch, and hides stale delivery labels after checkpoint updates without rewriting the supplied task verdict. The new state and desktop/mobile regressions pass.

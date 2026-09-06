@@ -11,9 +11,28 @@ const backend = path.resolve(frontend, '../backend');
 const data = await mkdtemp(path.join(tmpdir(), 'epoch-intake-proof-'));
 const port = await new Promise((resolve, reject) => { const server = net.createServer(); server.on('error', reject); server.listen(0, '127.0.0.1', () => { const port = server.address().port; server.close(() => resolve(port)); }); });
 const origin = `http://127.0.0.1:${port}`;
-const browserOrigin = 'http://localhost:5173';
+const browserOrigin = 'http://127.0.0.1:5173';
 let child;
+let frontendChild;
 let serverLog = '';
+async function startFrontend() {
+  frontendChild = spawn(process.execPath, [path.join(frontend, 'scripts/dev.mjs')], { cwd: frontend, stdio: ['ignore', 'pipe', 'pipe'] });
+  let log = '';
+  frontendChild.stderr.on('data', (chunk) => { log += chunk; });
+  await new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('Frontend startup timed out.')), 10000);
+    frontendChild.on('error', (error) => { clearTimeout(timeout); reject(error); });
+    frontendChild.once('exit', () => { clearTimeout(timeout); reject(new Error(`Frontend exited: ${log}`)); });
+    frontendChild.stdout.on('data', (chunk) => { if (chunk.toString().includes('Epoch frontend:')) { clearTimeout(timeout); resolve(); } });
+  });
+  const response = await fetch(browserOrigin);
+  assert.equal(response.status, 200);
+  assert.match(await response.text(), /Epoch · Saved tasks/);
+  assert.equal((await fetch(`${browserOrigin}/src/intake.mjs`)).status, 200);
+  assert.equal((await fetch(`${browserOrigin}/.env`)).status, 404);
+  assert.equal((await fetch(`${browserOrigin}/../backend/.env`)).status, 404);
+  assert.equal((await fetch(browserOrigin, { method: 'POST' })).status, 405);
+}
 async function start() {
   child = spawn(path.join(backend, '.venv/bin/epoch-backend'), ['serve'], {
     cwd: backend,
@@ -39,6 +58,7 @@ const http = async (route, body, headers = {}) => {
   return { status: response.status, body: await response.json() };
 };
 try {
+  await startFrontend();
   await start();
   const health = await http('/api/health'); assert.deepEqual(health.body, { status: 'ok', phase: 1, storage: 'ok', execution_enabled: false });
   const payload = { client_request_id: crypto.randomUUID(), message: 'Persisted HTTP intake proof · no execution', project_id: 'integration-proof' };
@@ -65,6 +85,10 @@ try {
   await writeFile(path.join(frontend, 'evidence/intake-http.json'), JSON.stringify({
     verified_at: new Date().toISOString(), category: 'actual-local-phase-1-http', backend_base: '0a062dde6fcf5f10f792cf77813fe8adbaf117e3', isolated_temporary_database: true,
     health: health.body, task: created.body, checks: { create: 201, identical_retry: 200, normalized_retry: 200, conflict: 409, validation: 422, missing: 404, disallowed_origin: 403, allowed_cors_preflight: 200, restart_record_unchanged: true, restart_identical_retry: 200 },
-    execution_occurred: false, browser_origin: browserOrigin, limitations: ['Temporary local intake/storage only; no executor or repair', 'Browser source served by test interception; API requests use the actual unchanged backend', 'Unknown acknowledgement and offline browser cases inject transport faults, not backend failures'],
+    execution_occurred: false, browser_origin: browserOrigin, limitations: ['Temporary local intake/storage only; no executor or repair', 'Actual frontend dev server at 127.0.0.1:5173 and unchanged backend; no source interception or security bypass', 'Unknown acknowledgement and offline browser cases inject transport faults, not backend failures'],
   }, null, 2) + '\n');
-} finally { await stop(); await rm(data, { recursive: true, force: true }); }
+} finally {
+  await stop();
+  if (frontendChild && frontendChild.exitCode === null) await new Promise((resolve) => { frontendChild.once('exit', resolve); frontendChild.kill('SIGTERM'); });
+  await rm(data, { recursive: true, force: true });
+}

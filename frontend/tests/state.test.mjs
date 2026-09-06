@@ -499,3 +499,51 @@ test("unknown acknowledgement lookup is read-only and rejects mismatched frozen 
   assert.equal(reloadedAdapter.commands.size, 0);
   assert.deepEqual(reloadedAdapter.snapshot(), reloaded);
 });
+
+test('same-scope reconnect rejects duplicate or dropped checkpoint IDs, including equal-length replacements', () => {
+  const current = new FixtureAdapter().snapshot();
+  for (const checkpoints of [
+    [current.checkpoints[0], current.checkpoints[0], current.checkpoints[2]],
+    current.checkpoints.slice(0, -1),
+    [...current.checkpoints, current.checkpoints[0]],
+  ]) {
+    const restored = reconnectState(current, { ...copy(current), checkpoints: copy(checkpoints) });
+    assert.equal(restored.connection, 'gap');
+    assert.deepEqual(restored.checkpoints, current.checkpoints);
+  }
+});
+
+test('snapshot failed and needs-input outcomes require matching scoped evidence and complete references', () => {
+  const current = new FixtureAdapter().snapshot();
+  for (const status of ['failed', 'needs-input']) {
+    for (const refs of [[], ['missing'], null]) {
+      const snapshot = copy(current);
+      Object.assign(snapshot.checkpoints[1], { status, evidenceIds: refs });
+      assert.equal(reconnectState(current, snapshot).connection, 'gap');
+    }
+  }
+});
+
+test('checkpoint changes after delivery invalidate only its presentation until a new explicit outcome', async () => {
+  const { isDeliveryCurrent } = await import('../src/state.mjs');
+  const original = complete().snapshot();
+  assert.equal(isDeliveryCurrent(original), true);
+  const checking = acceptEvent(original, event(original, 'checkpoint', { ...original.checkpoints[0], status: 'checking' }));
+  assert.equal(checking.status, 'delivered', 'supplied task verdict is retained');
+  assert.deepEqual(checking.result, original.result);
+  assert.equal(isDeliveryCurrent(checking), false);
+  const passed = acceptEvent(checking, event(checking, 'checkpoint', original.checkpoints[0]));
+  assert.equal(isDeliveryCurrent(passed), false, 'pass alone cannot reconfirm task delivery');
+  assert.equal(isDeliveryCurrent(reconnectState(passed, copy(passed))), false);
+  const confirmed = acceptEvent(passed, event(passed, 'task-outcome', { status: 'delivered', result: original.result }));
+  assert.equal(isDeliveryCurrent(confirmed), true);
+});
+
+test('scope transition rejects duplicate checkpoint IDs and unsourced failed feedback checks', () => {
+  const current = new FixtureAdapter().snapshot();
+  const next = revise(current, { text: 'Add a rollback note', kind: 'new-preference' }, 'feedback-proof');
+  const duplicate = copy(next); duplicate.checkpoints.push(copy(duplicate.checkpoints[0]));
+  assert.equal(adoptScope(current, duplicate).connection, 'gap');
+  const missing = copy(next); missing.checkpoints.at(-1).status = 'failed';
+  assert.equal(adoptScope(current, missing).connection, 'gap');
+});

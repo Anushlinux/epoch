@@ -18,7 +18,7 @@ Use Python for the backend, retain a CLI/test harness, and use local simulated s
 
 ## Anushrut: UI lane
 
-**Local implementation:** [Frontend fixture workspace](../../frontend/README.md), [PROPOSED contract](../../frontend/CONTRACT-PROPOSAL.md), and [UI verification](../../frontend/evidence/README.md). The fixture contract is not agreed with Rajdeep. The primary UI consumes the published Phase 1 intake/list/detail API. Future fixture mapping remains under review; actual execution endpoints remain unimplemented. See UI verification for actual local HTTP/browser proof and the AO CORS limitation.
+**Local implementation:** [Frontend fixture workspace](../../frontend/README.md), [PROPOSED contract](../../frontend/CONTRACT-PROPOSAL.md), and [UI verification](../../frontend/evidence/README.md). The fixture contract is not agreed with Rajdeep. The primary UI consumes the published Phase 1 intake/list/detail API. Future fixture mapping remains under review; actual execution endpoints remain unimplemented. See UI verification for actual local HTTP/browser/AO intake proof and the supported frontend dev command at `127.0.0.1:5173`.
 
 **Goal:** build the interface through which the user requests work, sees checkpoints and evidence, receives results, and provides revisions.
 

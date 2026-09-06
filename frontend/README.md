@@ -4,13 +4,25 @@ The primary page connects to the **real local Phase 1 task-intake API**. It save
 
 ## Open and connect
 
-From the repository root, use `ao preview frontend/index.html`. This opens the actual application through AO's existing static preview; no frontend server, runtime dependencies or launch configuration are needed. The fixture workspace is at `frontend/fixtures.html` and is linked from the app. Opening either page never submits a request automatically.
+Run the minimal frontend development host from the repository root:
 
-Set up the unchanged backend using its [README](../backend/README.md), then set **API origin** to its loopback HTTP origin and choose **Connect / reconnect**. The UI accepts `http://127.0.0.1:<port>` or `http://localhost:<port>`. Its default is `http://127.0.0.1:8000`. No credentials are used. Saving a request stores data only; it does not schedule work.
+```sh
+npm run dev --prefix frontend
+```
 
-For an existing local frontend host, configure the backend's `EPOCH_CORS_ORIGINS` to a JSON list containing that exact origin. The documented defaults include `http://localhost:5173`. A browser may also ask for local-network access; allow it for the intended local workspace. Do not disable browser security. Direct `file://` loading is unsupported.
+Open `http://127.0.0.1:5173` in a browser, or use `ao preview http://127.0.0.1:5173` in AO. This ordinary HTTP page connects directly to the backend; there is no API proxy or request interception. Node's built-in HTTP server serves only the frontend entrypoints/assets, binds to loopback and uses port 5173, which the backend already permits. No dependencies, backend CORS changes or `.ao/launch.json` are needed. If port 5173 is occupied, stop your existing frontend explicitly before starting this one; the command never kills another process or silently changes the origin.
 
-**Current AO connection limitation:** AO's static preview uses a generated `.localhost` subdomain. Phase 1's configuration validator accepts only exact `localhost`, `127.0.0.1` and `::1` CORS hostnames. Setting the generated AO origin explicitly fails `check-config`; leaving it out causes an actual browser CORS denial. The UI can be inspected in AO, but intake there remains blocked pending a backend-owner decision. No backend source change or proxy workaround is included. Actual browser integration was verified from the documented `http://localhost:5173` origin with test-source interception and real API requests, as described in the evidence record.
+Set up the unchanged backend using its [README](../backend/README.md). For an isolated local preview on macOS/Linux, after its `uv sync --frozen` setup, run in another terminal:
+
+```sh
+EPOCH_DATA_DIR="$(mktemp -d)" uv run --project backend --frozen epoch-backend serve
+```
+
+The temporary data directory keeps this preview separate from existing tasks. The default API origin is `http://127.0.0.1:8000`; set that in the app and choose **Connect / reconnect**. The UI also accepts another explicit loopback HTTP port. The backend's default allowed origins already include `http://127.0.0.1:5173` and `http://localhost:5173`. No credentials are used. Saving a request stores data only; it does not schedule work.
+
+Both servers must remain running while using the preview; stop each with Ctrl+C when finished. Closing only the browser does not stop them. The separate future fixture page is `http://127.0.0.1:5173/fixtures.html` and is linked from the app. Opening either page never submits automatically.
+
+The older `ao preview frontend/index.html` static-file path is still available for disconnected inspection, but its generated `.localhost` subdomain is outside the current backend CORS validator. Use the supported dev URL above for functional integration. Actual AO intake through that URL is verified in the evidence record. Direct `file://` loading is unsupported.
 
 ## Submission and recovery
 
@@ -40,6 +52,6 @@ npm run test:all --prefix frontend
 npm run test:integration --prefix frontend
 ```
 
-The integration runner launches the unchanged installed backend CLI on a temporary port/database, tests actual HTTP and browser intake, verifies restart persistence, and cleans up. It does not create a frontend server. Playwright intercepts only frontend source files; API requests reach the real backend. Deliberate transport-fault cases are separately labeled.
+Stop any existing frontend dev host before running `test:integration`, which needs port 5173. The integration runner starts the actual frontend dev command and unchanged installed backend CLI on a temporary backend port/database. It tests real HTTP/browser intake and restart persistence, then stops its servers and removes its database. The normal intake page and modules load over HTTP; source interception and special browser permissions are not used. Deliberate API transport-fault cases remain separately labeled.
 
 HTML/CSS/browser modules remain provisional, with no frontend runtime framework, production build or frontend CI workflow. Backend selections and its CI workflow are recorded separately. Actual supervised repair remains **blocked on later backend phases**.

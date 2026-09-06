@@ -18,17 +18,29 @@ export const checkpointEvidence = (state, cp) =>
   (cp.evidenceIds || [])
     .map((id) => state.evidence.find((e) => e.id === id))
     .filter(Boolean);
-export function hasPassEvidence(state, cp) {
+function hasOutcomeEvidence(state, cp, verdict = cp.status) {
   return checkpointEvidence(state, cp).some(
-    (e) =>
-      scoped(state, e) &&
-      e.checkpointId === cp.id &&
-      e.criterionVersion === cp.criterionVersion &&
-      e.verdict === "passed" &&
-      e.observed &&
-      e.expected,
+    (e) => scoped(state, e) && e.checkpointId === cp.id &&
+      e.criterionVersion === cp.criterionVersion && e.verdict === verdict &&
+      Boolean(e.observed && e.expected),
   );
 }
+export const hasPassEvidence = (state, cp) => hasOutcomeEvidence(state, cp, "passed");
+const uniqueIds = (records) => Array.isArray(records) &&
+  records.every((record) => typeof record?.id === "string" && record.id.length > 0) &&
+  new Set(records.map((record) => record.id)).size === records.length;
+function checkpointIsSourced(state, cp) {
+  return CHECKPOINT_STATES.includes(cp?.status) && Array.isArray(cp.evidenceIds) &&
+    cp.evidenceIds.every((id) => state.evidence.some((e) => e.id === id && scoped(state, e))) &&
+    (!["passed", "failed", "needs-input"].includes(cp.status) || hasOutcomeEvidence(state, cp));
+}
+function validPresentationCursors(state) {
+  return [state.checkpointSeq, state.outcomeSeq].every((seq) => Number.isInteger(seq) && seq >= 0 && seq <= state.seq) &&
+    (state.status !== "delivered" || state.outcomeSeq > 0);
+}
+// These cursors record receipt ordering only. The supplied task verdict is never rewritten.
+export const isDeliveryCurrent = (state) => state.status === "delivered" &&
+  validPresentationCursors(state) && state.outcomeSeq > state.checkpointSeq && canDeliver(state, state.result);
 export function canDeliver(state, result) {
   return (
     state.checkpoints.length > 0 &&
@@ -86,26 +98,12 @@ export function acceptEvent(state, event) {
       )
         return reject("checkpoint identity or criterion changed.");
       // Only display fields may change; source, criteria and dependencies are immutable.
+      const changed = cp.status !== data.status || JSON.stringify(cp.evidenceIds) !== JSON.stringify(data.evidenceIds);
+      if (changed) next.checkpointSeq = event.seq;
       cp.status = data.status;
       cp.evidenceIds = copy(data.evidenceIds);
-      if (
-        cp.evidenceIds.some(
-          (id) => !next.evidence.some((e) => e.id === id && scoped(next, e)),
-        )
-      )
-        return reject("a referenced record is unavailable.");
-      if (cp.status === "passed" && !hasPassEvidence(next, cp))
-        return reject("a passing checkpoint needs matching outcome evidence.");
-      if (
-        ["failed", "needs-input"].includes(cp.status) &&
-        !checkpointEvidence(next, cp).some(
-          (e) =>
-            e.checkpointId === cp.id &&
-            e.criterionVersion === cp.criterionVersion &&
-            e.verdict === cp.status,
-        )
-      )
-        return reject("the checkpoint outcome has no matching evidence.");
+      if (!checkpointIsSourced(next, cp))
+        return reject("the checkpoint outcome has no complete matching evidence.");
       break;
     }
     case "activity":
@@ -137,6 +135,7 @@ export function acceptEvent(state, event) {
       if (data.status === "delivered" && !canDeliver(next, data.result))
         return reject("delivery has unresolved checks or missing artifacts.");
       next.status = data.status;
+      next.outcomeSeq = event.seq;
       next.result = copy(data.result || null);
       break;
     default:
@@ -144,7 +143,9 @@ export function acceptEvent(state, event) {
   }
   next.seq = event.seq;
   next.seen.push(event.eventId);
-  next.notice = "";
+  next.notice = next.status === "delivered" && !isDeliveryCurrent(next)
+    ? "Fixture checkpoints changed after the last delivery report. Previous results are retained; a new explicit task outcome is needed to confirm delivery."
+    : "";
   return next;
 }
 export function reconnectState(current, snapshot) {
@@ -160,7 +161,10 @@ export function reconnectState(current, snapshot) {
   if (
     !Number.isInteger(snapshot.seq) ||
     !Array.isArray(snapshot.checkpoints) ||
-    !Array.isArray(snapshot.evidence)
+    !Array.isArray(snapshot.evidence) ||
+    !uniqueIds(snapshot.checkpoints) || !uniqueIds(snapshot.evidence) ||
+    !validPresentationCursors(snapshot) ||
+    snapshot.checkpointSeq < current.checkpointSeq || snapshot.outcomeSeq < current.outcomeSeq
   )
     return {
       ...current,
@@ -198,10 +202,10 @@ export function reconnectState(current, snapshot) {
         JSON.stringify(cp.source) !== JSON.stringify(prior.source) ||
         JSON.stringify(cp.dependencies) !==
           JSON.stringify(prior.dependencies) ||
-        (cp.status === "passed" && !hasPassEvidence(snapshot, cp))
+        !checkpointIsSourced(snapshot, cp)
       );
     }) ||
-    (snapshot.status === "delivered" && !canDeliver(snapshot, snapshot.result))
+    (snapshot.status === "delivered" && snapshot.outcomeSeq > snapshot.checkpointSeq && !canDeliver(snapshot, snapshot.result))
   )
     return {
       ...current,
@@ -256,6 +260,8 @@ export function adoptScope(current, snapshot, submitted) {
     !Array.isArray(snapshot.activity) ||
     !Array.isArray(snapshot.repairs) ||
     !Array.isArray(snapshot.seen) ||
+    !uniqueIds(snapshot.checkpoints) || !uniqueIds(snapshot.evidence) ||
+    !validPresentationCursors(snapshot) ||
     !snapshot.intent
   )
     return reject();
@@ -309,9 +315,9 @@ export function adoptScope(current, snapshot, submitted) {
         cp.evidenceIds.some(
           (id) => !snapshot.evidence.some((e) => e.id === id),
         ) ||
-        (cp.status === "passed" && !hasPassEvidence(snapshot, cp)),
+        !checkpointIsSourced(snapshot, cp),
     ) ||
-    (snapshot.status === "delivered" && !canDeliver(snapshot, snapshot.result))
+    (snapshot.status === "delivered" && snapshot.outcomeSeq > snapshot.checkpointSeq && !canDeliver(snapshot, snapshot.result))
   )
     return reject();
   return {
@@ -354,6 +360,8 @@ export function revise(state, feedback, commandId) {
     },
     runId: `${state.taskId}-r${revision}`,
     seq: 0,
+    checkpointSeq: 0,
+    outcomeSeq: 0,
     seen: [],
     status: "planned",
     result: null,

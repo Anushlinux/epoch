@@ -1,12 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-const root = fileURLToPath(new URL('../', import.meta.url));
 const api = process.env.EPOCH_INTAKE_TEST_ORIGIN;
-const origin = 'http://localhost:5173';
+const origin = 'http://127.0.0.1:5173';
 const key = 'epoch.intake.pending.v1';
-const mime = { '.html': 'text/html', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' };
 const payload = (message) => ({ client_request_id: crypto.randomUUID(), message, project_id: 'browser-proof' });
 async function post(data) {
   const response = await fetch(`${api}/api/tasks`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
@@ -22,17 +17,6 @@ async function connect(page) {
 async function open(page) {
   await page.goto(`${origin}/index.html`);
 }
-test.beforeEach(async ({ page, context }) => {
-  await context.grantPermissions(['local-network-access'], { origin });
-  await page.route(`${origin}/**`, async (route) => {
-    const url = new URL(route.request().url());
-    const file = path.resolve(root, `.${decodeURIComponent(url.pathname)}`);
-    if (!file.startsWith(root)) return route.abort();
-    try { return route.fulfill({ body: await readFile(file), contentType: mime[path.extname(file)] || 'text/plain' }); }
-    catch { return route.fulfill({ status: 404, body: 'Missing frontend source' }); }
-  });
-});
-
 test('actual intake/list/detail, form validation, saved text, keyboard and responsive layout', async ({ page }, info) => {
   const errors = []; page.on('pageerror', (error) => errors.push(error.message));
   await open(page);

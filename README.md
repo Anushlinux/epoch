@@ -64,7 +64,7 @@ The 10-hour target is: agree contracts and smoke-test integrations in hour 1; co
 
 ## Working with this repository
 
-Open the task workspace with `ao preview frontend/index.html`; its setup notes explain the current AO CORS connection limitation. Run its state tests with `npm test --prefix frontend`; see the [frontend verification record](frontend/evidence/README.md) for browser checks. The primary UI consumes the Phase 1 intake API below; fixture execution remains separate. Neither provides a working supervisor.
+Run `npm run dev --prefix frontend` and open the task workspace with `ao preview http://127.0.0.1:5173`; its setup notes describe starting the separate backend. Run its state tests with `npm test --prefix frontend`; see the [frontend verification record](frontend/evidence/README.md) for browser checks. The primary UI consumes the Phase 1 intake API below; fixture execution remains separate. Neither provides a working supervisor.
 
 From `backend/`, run `uv sync --frozen`, then `uv run --frozen epoch-backend serve`. The health check is at `http://127.0.0.1:8000/api/health`; API docs are at `/docs`. Follow the [backend README](backend/README.md) for Python/uv prerequisites, local cache setup, configuration, tests and the live-server smoke check. Claude and Copilot point to [AGENTS.md](AGENTS.md) for shared rules.
 

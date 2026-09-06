@@ -20,7 +20,7 @@ Epoch is intended to supervise task delivery and support verified environment re
 
 ## Capabilities and Constraints
 
-Preserve original requests, explicit and inferred requirements, source references and revisions. Task completion and repair activation are separate claims. Every current execution record is visibly a development fixture. Phase 1 backend intake endpoints and a handoff are now published. The primary page connects to published Phase 1 intake/list/detail routes. Future fixture mapping and execution/recovery integration remain unsettled. AO static preview intake is blocked by the backend CORS hostname restriction; actual browser intake has been verified from a documented exact loopback origin. No private reasoning or credentials belong in this browser.
+Preserve original requests, explicit and inferred requirements, source references and revisions. Task completion and repair activation are separate claims. Every current execution record is visibly a development fixture. Phase 1 backend intake endpoints and a handoff are now published. The primary page connects to published Phase 1 intake/list/detail routes. Future fixture mapping and execution/recovery integration remain unsettled. The minimal frontend dev host uses the backend-supported loopback origin on port 5173. Normal browser and AO intake connect through that URL; generated-origin static-file preview remains for disconnected inspection only. No private reasoning or credentials belong in this browser.
 
 ## Evidence on Hand
 
