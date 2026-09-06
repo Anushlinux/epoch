@@ -18,6 +18,8 @@ Implement and verify Neatlogs tracing and Raindrop Workshop inspection/replay ag
 
 Package the three implemented scenarios into a reproducible CLI demonstration of one release workflow. Show requested outcome, actual failure, automatic investigation, generated environment change, trusted verification, publication and benefit on a meaningful later task. Use readable summaries with inspectable traces, actual diffs and simulated state one step away.
 
+Coordinate with Anushrut so the product interface displays the same real checkpoints and evidence. Demonstrate a user-feedback revision and distinguish targeted task guidance from persistent environment learning. UI implementation remains Anushrut's separately owned lane; the CLI remains the backend reproduction path.
+
 Exercise clean starting state and persistent repaired versions deliberately: the baseline must not inherit repaired state, while the later-session demonstration must load the actual published artifact. Document how to reproduce both. Keep UI, live business services, new repair families and claims of broad multi-domain support out of scope.
 
 ## Exclusions

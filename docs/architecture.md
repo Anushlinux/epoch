@@ -1,10 +1,10 @@
 # Intended architecture and data flow
 
-**Design only: none of these runtime components exists yet.** Python is the future implementation language. A command-line interface and local simulated services come first. [Task 01](tasks/01-technical-plan.md) chooses libraries, concrete schemas, persistence, transport, and layout; this document specifies responsibilities without selecting those details.
+**Design only: none of these runtime components exists yet.** Python is the future backend language and local simulated services come first. Rajdeep builds the backend with a CLI/test harness; Anushrut builds the Epoch UI in parallel after shared contracts are agreed. [Task 01](tasks/01-technical-plan.md) chooses libraries, concrete schemas, persistence, transport, and layout. The current [supervisor flow](../README.md#user-flow) records the later user decision; the original direction remains unchanged.
 
 ## Core idea
 
-Hermes does the user's work. Epoch observes failures and repairs a limited part of the environment Hermes uses. The executor stays fixed during a repair experiment, so a successful later task can be attributed to an environment change rather than an executor rewrite.
+Epoch supervises delivery: it converts a request into sourced checkpoints and a structured brief, delegates execution to Hermes, evaluates progress, directs targeted continuations, and reports results. Hermes performs the business work. When the cause is environmental, Epoch investigates and repairs the authorized tools or context. The executor stays fixed during a repair experiment; initial briefs/checks remain equivalent and supervisory interventions are recorded separately so a later improvement can be attributed correctly.
 
 For example, Hermes can submit valid release data to a tool whose adapter serializes it incorrectly. The debugger should change that adapter, then have Hermes use the corrected version to create an inspectable checklist. The debugger sending back a made-up checklist link would fail the product contract.
 
@@ -12,7 +12,8 @@ For example, Hermes can submit valid release data to a tool whose adapter serial
 
 | Component | Owns | Must not do |
 | --- | --- | --- |
-| CLI / task entry | Submit tasks and corrections; display outcomes, run identifiers, evidence and limitations | Present a scripted animation as an execution |
+| Epoch UI / CLI harness | Submit requests and feedback; display checkpoints, outcomes, evidence and limitations | Invent checkmarks or present fixture playback as live execution |
+| Task supervisor | Form sourced checkpoints and enhanced briefs; monitor observable progress; give bounded corrective instructions; report results and interpret user feedback | Rewrite user intent, silently weaken checks, or perform business operations instead of Hermes |
 | Hermes executor | Interpret the request, discover and call tools, use supplied context, report completion | Become an editable repair target during an experiment |
 | Shared registry and dispatch | Permission-scoped discovery, descriptions, invocation requirements, calls and version selection | Reveal or run tools outside the caller's grants |
 | Business adapters and simulated services | Perform authorized operations and retain inspectable simulated ticket, page, message and directory state | Return success without the corresponding effect |
@@ -45,7 +46,10 @@ These are information requirements, not executable schemas or selected storage f
 User request / correction
           |
           v
-         CLI <---- outcome and repair report
+      Epoch UI <---- outcome, checkpoint and repair report
+          |
+          v
+      Supervisor: sourced checkpoints + structured task brief
           |
           v
         Hermes <---- scoped context assembly <---- retained documents
@@ -74,13 +78,15 @@ User request / correction
                                   future Hermes session
 ```
 
-1. Establish success conditions from the user request, explicit constraints, authoritative documents, and tool contracts. Retain each condition's source. Distinguish inferred conditions from explicit ones. Ambiguity is a reason to seek clarification through Hermes or stop, not invent a requirement.
+1. The supervisor establishes success conditions from the user request, explicit constraints, authoritative documents, and tool contracts, then gives Hermes a structured brief. Retain each condition's source. Distinguish inferred conditions from explicit ones. Material ambiguity prompts a user clarification through the interface; do not invent a requirement.
 2. Capture the tools and versions visible to Hermes, requests and responses, supplied context and its metadata, and final application state. An absent trace is an evidence gap, not proof that a step did not happen.
-3. Evaluate observable outcomes. A tool can succeed while delivering a message to the wrong destination. A user correction opens an investigation but may reflect a changed goal rather than a defect.
+3. Evaluate observable outcomes at meaningful tool/step boundaries. A tool can succeed while delivering a message to the wrong destination. A skipped step can receive a targeted supervisor continuation that reuses completed work. Tool/capability/context defects enter the repair loop below. Do not depend on private thinking or token-by-token inspection.
 4. Diagnose against actual evidence and editable code. Classify the candidate as existing-tool repair, missing-tool creation, scoped context repair, or outside the permitted boundary.
 5. Stage the smallest supported change. The candidate cannot write to the executor, evaluator, acceptance criteria, permissions, baseline evidence, or unrelated files. Enforce filesystem, network, service, attempt, time and cost limits outside generated code.
 6. Verify the component, rerun from equivalent isolated starting state, exercise a meaningful new input, and check previously passing behavior. Preserve every result, including rejected attempts and missing measurements.
 7. Publish only on trusted checks passing. Persist the artifact and evidence, preserve the prior version, and activate at a safe boundary. Each run must identify its environment version. Test rollback and use from a fresh executor session.
+
+After checkpoints pass, return the result and evidence to the user. Dissatisfaction can reveal an evaluation mistake, omitted requirement, or new preference. Preserve the prior intent/results, record a new intent revision when appropriate, and delegate the revision to Hermes. A changed preference does not by itself justify changing a shared tool. Bound both task continuations and environment-repair attempts; completion is not guaranteed when evidence, permissions, or budgets are insufficient.
 
 ## Isolation and replay safety
 

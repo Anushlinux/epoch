@@ -11,11 +11,13 @@ Only the documentation below exists. No product code or runtime tests have been 
 - [AGENTS.md](../AGENTS.md): canonical shared rules, with minimal [Claude](../CLAUDE.md) and [Copilot](../.github/copilot-instructions.md) entrypoints.
 - [Architecture](architecture.md): intended boundaries and evidence flow.
 - [Integration checklist](integrations.md): verification required before compatibility claims.
-- [Seven ordered task briefs](tasks/README.md): future scope, dependencies, acceptance criteria, required evidence, and prompts.
+- [Seven ordered backend task briefs and the UI lane](tasks/README.md): Rajdeep/Anushrut ownership, future scope, dependencies, acceptance criteria, required evidence, and prompts.
 
 ## Approved decisions
 
-Use Python for future implementation, build a CLI before UI, and start with local simulated services. Keep the approved direction unchanged. Choose runtime/tooling, libraries, concrete schemas, storage, transport, testing, CI and layout in Task 01 before its minimal foundation; those choices have not been made.
+The later user decision is an Epoch interface with a task supervisor: define verifiable checkpoints, send enhanced task briefs to Hermes, monitor observable progress, issue bounded corrective instructions, repair the environment when justified, and handle feedback after delivery. Keep the approved direction unchanged as historical product intent.
+
+Rajdeep owns the Python backend, supervisor, Hermes integration, checks, tools and repairs. Anushrut owns the UI, feedback flow, evidence presentation and frontend integration/tests. Agree contracts in Task 01, then run the UI lane alongside the ordered backend tasks. Retain a CLI/test harness and start with local simulated services. Runtime/tooling, libraries, concrete schemas, storage, transport, testing, CI and layout still require selection in Task 01; none is implemented by this documentation update.
 
 ## Requirements awaiting implementation
 
@@ -31,6 +33,8 @@ Hermes discovery behavior, Neatlogs capture coverage, Workshop replay, and inter
 | --- | --- | --- |
 | Concrete runtime/tooling, library, schema, storage, transport, testing and CI decisions | Not selected | Task 01 |
 | Python runtime and command-line interface foundation | Unimplemented | Task 01 onward |
+| Task brief/checkpoint planning, targeted continuation and feedback revisions | Unimplemented | Contracts in Task 01; executor/supervision in Task 03 |
+| User interface, checkpoint board, results and feedback flow | Unimplemented; assigned to Anushrut | UI lane alongside Rajdeep's backend tasks after shared contracts |
 | Local simulated business services and inspectable state | Unimplemented | Task 02 |
 | Permission-scoped tool registry and version lifecycle | Unimplemented | Tasks 02 and 04 |
 | Hermes integration and dynamic tool discovery | Unimplemented; compatibility unverified | Task 03 |
@@ -45,7 +49,7 @@ Hermes discovery behavior, Neatlogs capture coverage, Workshop replay, and inter
 | Repeatable CLI demonstration and measured report | Unimplemented | Task 07 |
 | Neatlogs and Raindrop Workshop integration | Unimplemented; compatibility unverified | Plan in Task 01; implement and verify in Task 07 |
 | Live Jira, Notion, Slack or directory connections | Unimplemented; not in initial local implementation scope | Separate future authorization |
-| Graphical interface, production deployment and broad multi-domain support | Unimplemented; deferred | Outside these initial briefs |
+| Production deployment and broad multi-domain support | Unimplemented; deferred | Outside these initial briefs |
 
 No package manifest, dependency installation, application scaffold, runtime test suite, CI workflow, global configuration, or live integration is part of this foundation. There are no runtime benchmark results or successful repair demonstrations to report.
 
@@ -56,7 +60,7 @@ Foundation handoff must check the following and report actual outcomes in the pu
 1. Compare `docs/direction.md` byte-for-byte with the supplied source file. Record matching SHA-256 hashes. The source used for this foundation is `/Users/bhaskarpandit/.ao/electron/terminal-drops/1788694360022-direction_1_.md`; this is provenance, not a portable dependency or setup path.
 2. Resolve every relative Markdown link and fragment to an existing file and heading. Check preserved footnote references separately. This does not verify remote URLs or installed integration behavior.
 3. Confirm the README leads to the canonical instructions and all planning documents. Confirm the Claude and Copilot files resolve to the same AGENTS.md and do not duplicate its policies.
-4. Check that exactly seven ordered briefs each contain goal, prerequisites, owned area, exclusions, acceptance checks, evidence, and a copy-paste prompt.
+4. Check that the seven ordered backend briefs each contain goal, prerequisites, owned area, exclusions, acceptance checks, evidence, and a copy-paste prompt. Check that the UI lane in the task README identifies Anushrut's ownership, dependencies, acceptance and handoff separately.
 5. Inspect all changed and untracked files against the base commit: only the intended Markdown documentation and agent entry files may be added or changed. Run `git diff --check` and the corresponding staged check before committing.
 6. Follow the AO preview guide and open `ao preview README.md` when working in AO. Inspect the rendered primary handoff without introducing a server, dependencies, or launch configuration.
 
@@ -67,3 +71,7 @@ These checks validate documentation integrity and navigation only. Update the ru
 The source copy was compared byte-for-byte during this handoff. Both files have SHA-256 `791826322bab72f3198c862cad796e2c5298c1ed5801fb8db8bd70a6101e3df5`. Checks passed for 88 local Markdown links, two heading fragments and five footnotes across 16 Markdown files. The Claude import target and Copilot pointer resolve to the canonical AGENTS.md. All seven briefs have the required goal, prerequisites, owned area, exclusions, acceptance checks, evidence and prompt sections. The change inventory contains only the intended Markdown files, with no tracked validation scripts. The README was opened with AO preview and its rendered content inspected. No nonexistent application command is presented as runnable; future commands must be established and tested during implementation.
 
 The full staged `git diff --check` reports three trailing-whitespace findings in the unchanged source at `docs/direction.md` lines 3–5. Those original two-space Markdown hard breaks are intentionally preserved. Strict checking of all authored files passes with `git diff --cached --check -- . ':!docs/direction.md'`. A separate `git -c core.whitespace=-blank-at-eol diff --cached --check` also passes; the override applies only to that invocation and changes no repository or global settings. This exception does not waive whitespace checking for authored documentation.
+
+### Supervisor and ownership documentation update
+
+Pulled the documentation foundation at `d681128` before updating the supervisor flow and Anushrut/Rajdeep assignments. Checked 91 local links including four heading fragments, all seven backend brief structures, and the shared agent entrypoints. The original direction Git blob retains SHA-256 `791826322bab72f3198c862cad796e2c5298c1ed5801fb8db8bd70a6101e3df5`, and its working file has no Git diff. The source's original Markdown hard breaks remain preserved. All ten changed files are Markdown and the authored diff passes `git diff --check`. AO preview is unavailable on this host; no runtime or preview dependency was added. Runtime and integration checks remain unexecuted because no application code is part of this change.

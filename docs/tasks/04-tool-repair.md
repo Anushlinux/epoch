@@ -30,7 +30,7 @@ No missing-tool or context repair, UI, live business services, executor edits, e
 - Diagnosis identifies the observed failed condition and supporting trace/code. The candidate changes actual serialization behavior and creates the required simulated checklist, not just a success response.
 - Component tests, isolated rerun, meaningful fresh release variation and regressions pass trusted checks before publication. Baseline and repaired comparisons use equivalent starting state.
 - A fresh Hermes session uses the durable repaired version through normal discovery with unchanged executor configuration and controlled unrelated memory.
-- A failing candidate stays inactive with evidence retained. Tests enforce forbidden-write/network boundaries and stop at configured attempt/time/cost limits. Out-of-scope planning failures produce limitation reports.
+- A failing candidate stays inactive with evidence retained. Tests enforce forbidden-write/network boundaries and stop at configured attempt/time/cost limits. Planning failures are routed to Task 03's bounded supervision or reported as unresolved; they are not disguised as environment repairs.
 - Partial-success replay does not duplicate effects. Publication occurs at a safe boundary; every run identifies its version. A restart preserves the active artifact and rollback restores the previous version.
 - Evidence links the failure, generated diff, tests, publication decision and later benefit. No trusted criteria or failed traces are altered.
 

@@ -2,7 +2,7 @@
 
 **All integrations are unimplemented and unverified in Epoch.** This is a future checklist, not a record of completed tests. The [preserved source notes](direction.md#source-notes) record vendor documentation references checked for the direction document. This foundation has not repeated those external checks or tested installed versions.
 
-Use Python and local simulated services first. Task 01 selects libraries, schemas, storage, and transport after checking the required contracts. A graphical interface and live business-service connections are deferred. A local interface does not mean model inference is local; provider selection and data routing must be explicit.
+Use Python and local simulated services first. Task 01 selects libraries, schemas, storage, and transport after checking the required contracts. Anushrut owns the separately assigned product UI; live business-service connections remain deferred. A local interface does not mean model inference is local; provider selection and data routing must be explicit.
 
 ## Dated official references from the direction
 
@@ -32,6 +32,7 @@ Task 02 supplies basic local traces and trusted checks without these tracing int
 - [ ] Verify one-time connection to the chosen environment interface with the installed Hermes version. The direction mentions generic discovery functions, Model Context Protocol (MCP), or a thin adapter as options, not selections.
 - [ ] Show permission-scoped discovery, tool description and invocation requirements, successful invocation, validation failure, and denied access.
 - [ ] Capture executor implementation, system prompt, model configuration, discovery interface and controlled memory state before the experiment; prove they stay fixed across repair.
+- [ ] Verify structured brief delivery, observable progress capture, and bounded targeted continuation against unmet checkpoints. Record supervisor interventions separately and use equivalent initial briefs/checks when comparing environment versions.
 - [ ] Publish a verified new capability and show Hermes discovers and invokes it through the same interface, without an executor or per-tool prompt edit. Test in a fresh executor session as well.
 - [ ] Verify version selection and activation at a safe boundary. If runtime tool-list notifications are selected, test their actual delivery, cache refresh, and callable results; a new file or notification alone is insufficient.
 - [ ] If Hermes cannot be used, report the blocker. A test double may validate a component but cannot establish Hermes compatibility or the final repair claim.

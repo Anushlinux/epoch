@@ -4,7 +4,7 @@ Status: unstarted. This brief describes future implementation; no selection or r
 
 ## Goal
 
-Choose the smallest practical Python stack and establish the shared foundation that later tasks can build against. Keep the CLI before UI and local simulated services before live business integrations.
+Rajdeep chooses the smallest practical Python backend stack and establishes the shared foundation with Anushrut. Retain a CLI/test harness and local simulated services. Agree the product UI contracts before Anushrut's dependent integration; its implementation is a separate lane.
 
 ## Prerequisites
 
@@ -15,6 +15,8 @@ Read [AGENTS.md](../../AGENTS.md), [README](../../README.md), [status](../status
 First record runtime/version, tooling, libraries, concrete schemas, persistence, registry transport, isolation mechanism, source layout, testing and continuous integration (CI) choices, with reasons. Decide what CI should run and what must remain local or requires separately authorized access. Then establish only the minimal Python package/CLI entry, configuration, persistence/version foundation and test harness justified by that plan; add the selected repository-local CI checks if applicable. These are future task deliverables, not authorization to add them in the current docs-only change.
 
 Define shared contracts for scoped tool invocation, context input, task/run evidence, sourced success conditions, candidate artifacts and repair/publication records. Map request flow and component responsibilities. Separate one-time executor setup from runtime repair, and plan later Neatlogs/Workshop verification without assuming interoperability.
+
+Include user request/clarification, enhanced task brief, checkpoint identity/dependencies/evidence, supervisor continuation, intent revision, feedback, and completion/error states. Agree API/event shapes with Anushrut and supply clearly labeled development fixtures. Keep criteria/evaluator ownership outside candidate edits, and record task guidance separately from persistent environment changes.
 
 ## Exclusions
 
