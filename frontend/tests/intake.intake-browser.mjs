@@ -126,7 +126,7 @@ test("actual intake/list/detail, form validation, saved text, keyboard and respo
     window.scrollTo(0, 0);
   });
   await page.screenshot({
-    path: `evidence/intake-${info.project.name}.png`,
+    path: `evidence/phase3-intake-${info.project.name}.png`,
     fullPage: true,
   });
   await page.reload();
@@ -393,12 +393,9 @@ test("real chat and debugger retain task selection and an independent unsent dra
   await expect(
     page.getByRole("heading", { name: "No execution recorded" }),
   ).toBeVisible();
-  await expect(page.locator(".pipeline-stage")).toHaveCount(6);
-  await expect(page.locator(".pipeline .badge")).toHaveText(
-    Array(6).fill("Not started"),
-  );
+  await expect(page.getByRole("button", { name: "Start release run" })).toBeDisabled();
   await expect(page.locator(".context-column")).toContainText(
-    "Request saved. Execution is not available yet.",
+    "Saving a request does not start execution.",
   );
   await page.goBack();
   await expect(page.locator(".conversation blockquote")).toHaveText(

@@ -9,11 +9,11 @@ As of September 6, 2026, **backend Phases 1–3 are implemented**: intake, local
 - Trusted checks inspect actual saved business objects. The broken checklist adapter violates its service contract and creates no checklist. Atomic idempotency prevents duplicate effects. Missing-lookup and outdated-guidance scenarios prepare later phases; no generated repairs exist.
 - The Hermes bridge uses the user's existing installation and configured remote inference route. It grants three MCP facade tools, captures observable messages/tool activity, and bounds turns and wall time. It records implementation, prompt, model, discovery and memory baselines. It does not expose private reasoning or alter personal Hermes configuration.
 - HTTP endpoints publish run status, final results, state, trace and reconnectable SSE events for Anushrut. Cancellation and restart preserve partial effects; unfinished runs become interrupted rather than replaying automatically. The [frontend handoff](../backend/docs/FRONTEND_HANDOFF.md) and [execution schemas](../backend/contracts/execution-schemas.json) describe the implemented contract.
-- Tests, locked dependencies, schema exports and a no-model server smoke harness are included. The [GitHub workflow](../.github/workflows/backend.yml) is configured; no remote CI result or completed consuming UI integration is claimed.
+- Tests, locked dependencies, schema exports and a no-model server smoke harness are included. The [GitHub workflow](../.github/workflows/backend.yml) is configured; no remote CI result is claimed. The consuming frontend integration is recorded below.
 
 [README](../README.md), [architecture](architecture.md), [integration checklist](integrations.md), [backend phases](../backend/PHASES.md), and the [ordered task briefs/UI lane](tasks/README.md) describe the remaining work. [AGENTS.md](../AGENTS.md) is the canonical guidance through the [Claude](../CLAUDE.md) and [Copilot](../.github/copilot-instructions.md) entrypoints. The [direction](direction.md) remains unchanged historical product intent.
 
-The [frontend workspace](../frontend/README.md) and its [verification record](../frontend/evidence/README.md) preserve implemented Phase 1 intake and future-workflow fixtures. **The committed frontend is not compatible with Phase 3 yet:** its health validator requires `phase: 1` and `execution_enabled: false`, and its task parser accepts only `pending`. Phase 3 reports `phase: 3` even with execution disabled and can persist later task states. Current execution is supported through the backend CLI/API; frontend adaptation and live run/SSE consumption remain Anushrut's separate work. Frontend files are unchanged by this merge.
+The [frontend workspace](../frontend/README.md) now accepts Phase 3 health and published task states. It connects task intake to explicit release requests, runtime availability, run history, checkpoints, trusted results, simulated state, persisted trace/SSE and asynchronous cancellation. Exact run submissions survive uncertain acknowledgements; reconnect/navigation do not replay work. The [verification record](../frontend/evidence/README.md) distinguishes actual HTTP/storage checks from the explicitly substituted test executor used in browser execution tests. This integration did not run a new Hermes/model acceptance test.
 
 ## Approved decisions
 
@@ -39,12 +39,12 @@ Neatlogs, Workshop, secure candidate isolation, live Jira/Notion/Slack/directory
 | Stateful simulations, permissions, discovery, invocation and trusted outcomes | Implemented; official SDK MCP round trips tested | Phase 2 complete |
 | Seeded checklist, lookup and context failure scenarios | Implemented in local sandbox | Repairs in Phases 5–7 |
 | Actual installed Hermes, explicit release briefs and correlated evidence | Implemented; control and defect executions recorded below | Phase 3 acceptance only; Task 03 also requires Phase 4 |
-| Run status/state/trace, SSE, cancellation and restart handling | Implemented and tested | Consuming UI integration remains separate |
-| Frontend intake and future-workflow fixtures | Phase 1 HTTP/browser integration historically verified; committed health/status parser rejects Phase 3 | Anushrut must adapt the UI before current backend integration |
+| Run status/state/trace, SSE, cancellation and restart handling | Implemented and tested; consuming UI connected | New model-backed browser acceptance remains unexecuted |
+| Frontend intake, explicit release execution and future-workflow fixtures | Phase 3 HTTP/browser integration verified with real storage/checks and an explicit test executor | Automatic supervision/repair UI awaits backend phases |
 | Automatic checkpoint planning, continuations and feedback revisions | Unimplemented | Phase 4 |
 | Debugger, isolated generated repair, publication and rollback | Unimplemented | Phase 5 |
 | Generated missing tools and scoped context repairs | Unimplemented | Phases 6–7 |
-| Neatlogs/Workshop, full UI integration and complete repair demo | Unimplemented in this backend handoff | Phase 8 |
+| Neatlogs/Workshop and complete supervised repair demo | Unimplemented; existing Phase 3 UI connected | Phase 8 |
 | Live business-service connections and production operation | Deferred | Separate future scope |
 
 No autonomous repair, persistent-learning improvement, agent benchmark, or UI sign-off is claimed. A successful executor conversation is recorded separately from trusted task success.
@@ -102,7 +102,7 @@ The following frontend evidence was recorded before the Phase 3 merge. It is ret
 
 The UI preserves original requests and clarifications, displays all six sourced checkpoint states, keeps task and repair outcomes separate, retains rejected candidates and partial artifacts, and records feedback as explicit revisions with previous results retained. Local tests cover evidence/identity guards, stale and duplicate events, stream gaps, uncertain submissions, retry/reconnect, forms, keyboard navigation, mobile layout and text escaping. See the [verification record](../frontend/evidence/README.md) for actual commands, outcomes, screenshots and limitations.
 
-The [frontend-local contract proposal](../frontend/CONTRACT-PROPOSAL.md) is **PROPOSED, not agreed**. At this historical handoff, the backend published Phase 1 intake endpoints and future data contracts. The primary UI consumed those intake models directly; the future fixture proposal remained separate and unagreed. Execution, streaming, feedback and repair endpoints were unimplemented at that point. The current [backend handoff](../backend/docs/FRONTEND_HANDOFF.md) now includes Phase 3 execution and SSE; supervision, feedback and repair remain unimplemented, and the committed UI still needs its Phase 3 adaptation. The fixture adapter stores data only in page memory and cannot establish durable duplicate prevention, secure repair isolation, trusted evaluation or backend compatibility.
+The [frontend-local contract proposal](../frontend/CONTRACT-PROPOSAL.md) is **PROPOSED, not agreed**. At this historical handoff, the backend published Phase 1 intake endpoints and future data contracts. The primary UI consumed those intake models directly; the future fixture proposal remained separate and unagreed. Execution, streaming, feedback and repair endpoints were unimplemented at that point. The current [backend handoff](../backend/docs/FRONTEND_HANDOFF.md) now includes Phase 3 execution and SSE; supervision, feedback and repair remain unimplemented, and the later frontend integration record below documents its Phase 3 adaptation. The fixture adapter stores data only in page memory and cannot establish durable duplicate prevention, secure repair isolation, trusted evaluation or backend compatibility.
 
 ### Frontend Phase 1 intake integration
 
@@ -166,3 +166,32 @@ Documentation integrity checks passed for 168 local links, five heading fragment
 Pulled main at `4bfb841d4c2a5b931d7e5238a30cd11b41d2db1c` before merging Phase 2–3 commit `e6735b4` in an isolated checkout. Shared documentation reconciles both histories; backend source remains identical to that Phase 3 commit, and the complete frontend tree remains identical to pulled main. The original workspace and its in-progress frontend changes were preserved.
 
 Against the merged checkout, 156 backend tests passed with the same two dependency warnings. Ruff checks and formatting passed for 39 files; exported contracts matched source; the actual CLI HTTP/restart smoke passed. No new model inference was invoked; the existing genuine Hermes acceptance evidence above remains the executor proof. The committed frontend still rejects Phase 3 health and non-pending task states, so current release execution uses the CLI/API pending Anushrut's separate frontend adaptation. No Phase 3 browser integration or remote CI result is claimed.
+
+### Phase 3 frontend connection validation
+
+Connected the existing chat/debugger to current intake, runtime, explicit release
+runs, run history, checkpoints, trusted results, simulated state, trace/SSE and
+cancellation. New runs require explicit submission; unresolved acknowledgements
+retain their exact identity and payload across reload. Read-only reconnect uses
+persisted evidence and never replays execution. Stale task responses and unrelated
+run/event identities cannot replace the selected record.
+
+Validation passed: 50 frontend unit/state tests; 34 fixture browser tests; 14
+actual Phase 3 intake browser cases; 8 execution browser cases using real HTTP,
+SSE, SQLite, simulated tools and trusted checks with an explicitly substituted test
+executor; and 156 backend tests. Ruff and schema-export checks passed. Exact
+commands, screenshots and saved run/state/trace records are in the [frontend
+verification record](../frontend/evidence/README.md#phase-3-frontendbackend-connection--september-6-2026).
+No new Hermes/model execution is claimed. Production backend source and trusted
+checks remain unchanged; the new Python harness lives only under backend tests.
+
+The current host's existing port-8000 server still reports Phase 1. It was left
+untouched; a current Phase 3 server runs on port 8002. That server reports Hermes
+unavailable because local model configuration cannot be read safely. Browser
+execution tests therefore establish frontend/API behavior with a test executor,
+not provider readiness. The new UI reflects this unavailable state honestly.
+
+The original direction retains SHA-256
+`791826322bab72f3198c862cad796e2c5298c1ed5801fb8db8bd70a6101e3df5`, including its
+original Markdown hard breaks. Authored changes pass `git diff --check`.
+AO preview is unavailable on this host; no preview dependency was added.

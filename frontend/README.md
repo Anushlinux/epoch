@@ -1,6 +1,6 @@
 # Epoch frontend
 
-Epoch has a Hermes-inspired chat interface and a separate debugger pipeline. The real workspace saves and reads Phase 1 tasks. The interactive Atlas release example is a separate, clearly labeled demo.
+Epoch has a Hermes-inspired chat interface and a separate debugger pipeline. The real workspace connects to the Phase 3 backend for task intake, explicit release execution and verified results. The interactive Atlas release example is a separate, clearly labeled demo.
 
 ## Run
 
@@ -19,7 +19,7 @@ The host uses Node's built-in HTTP server and binds to loopback. It serves only 
 | URL | Behavior |
 | --- | --- |
 | `/chat` | Real request intake and saved conversations |
-| `/debugger?task=UUID` | Saved request context and an unstarted pipeline |
+| `/debugger?task=UUID` | Actual run history, sourced checkpoints, activity and simulated state |
 | `/demo/chat` | Existing Atlas 2.4 release fixture as a conversation |
 | `/demo/debugger` | The same demo's failure, candidate, checks, publication and continuation |
 | `/`, `/index.html` | Compatibility aliases for real chat |
@@ -29,9 +29,36 @@ Same-mode navigation retains in-memory drafts, selection, disclosures and page s
 
 ## Real task intake
 
-A chat is currently one saved request, with a system receipt saying **Request saved. Execution is not available yet.** No executor or reply is fabricated. New chat starts another request. The debugger remains unstarted for real tasks because no execution endpoint exists.
+A chat starts as one saved request. Saving does not start Hermes. After saving,
+enter a release value, choose a sandbox scenario, and select **Start release run**.
+The release template creates a ticket, attaches the required checklist and notifies
+QA with both links. It does not infer arbitrary workflows from your message.
 
-The existing Phase 1 adapter and HTTP contracts remain unchanged. Before POST it freezes the client request ID, message, project label, and API origin; stores the complete pending payload in per-tab session storage; and blocks edits until reconciliation. An unknown acknowledgement is recoverable by read-only reconnect followed by an explicit exact retry. No replacement ID is silently allocated. Rejected content returns to the draft only through an explicit action. Unavailable or corrupt recovery storage blocks new submissions.
+The UI reads `/api/runtime` and blocks starting while execution is unavailable or
+another run is active. Installation detection is not a model-connectivity test.
+The backend uses its existing Hermes configuration; no credentials come from the
+browser. Business objects are local simulations. The server's configured model
+provider receives the execution inputs when you explicitly start a run.
+
+Both chat and debugger show the selected run's backend checkpoints, source and
+evidence references, trusted verification, final executor text, missing evidence,
+and partial objects. **Run history** selects earlier attempts. **Request
+cancellation** waits for the backend's terminal status. **Start another release
+run** opens a separate sandbox; it does not resume or repair the previous attempt.
+
+The intake and execution adapters each freeze their own request ID and payload in
+per-tab session storage before POST. Uncertain acknowledgements survive reload.
+Reconnect and navigation only read; **Retry exact run request** uses the original
+ID, task, content and server. Explicitly rejected requests return to the form only
+through a review action. Corrupt or unavailable recovery storage blocks new writes
+for the affected operation.
+
+Named Server-Sent Events (SSE) trigger authoritative run/state/trace refreshes.
+Persisted trace sequences provide ordered, deduplicated activity. Read-only polling
+also recovers stream failures and unknown future event types. The stream closes
+when the backend records a terminal status. Same-page navigation reuses the trace
+cursor; a full reload safely rereads persisted history from zero. Neither action
+replays execution. Missing evidence never becomes a fabricated success.
 
 The server normalizes outer whitespace. Responses are validated; late or unrelated records do not replace current selection. Missing selected tasks retain a clearly unavailable receipt while healthy list/connection reads continue. Switching servers clears previous receipts. Pagination and detail refresh remain available.
 
@@ -54,8 +81,9 @@ npm ci --prefix frontend
 npm exec --prefix frontend -- playwright install chromium
 npm run test:all --prefix frontend
 npm run test:integration --prefix frontend
+npm run test:execution --prefix frontend
 ```
 
-The integration runner uses isolated temporary backend data and a configurable frontend port (`EPOCH_FRONTEND_PORT`, default 5173), stopping only its own processes. It exercises real HTTP intake and restart persistence. Browser transport-fault cases are labeled separately. See [the evidence record](evidence/README.md) for actual results and limitations.
+The integration runner uses isolated temporary backend data and a configurable frontend port (`EPOCH_FRONTEND_PORT`, default 5173), stopping only its own processes. It exercises real HTTP intake and restart persistence. The execution runner uses `backend/tests/frontend_server.py`, an explicit test-only executor with real API, SQLite, sandbox tools and trusted checks. It does not invoke Hermes or a model and is never used by the production entrypoint. Browser transport-fault cases are labeled separately. See [the evidence record](evidence/README.md) for actual results and limitations.
 
-The frontend remains plain HTML/CSS/browser modules with no runtime framework or build step. [Design notes](DESIGN.md), [implementation plan](PLAN.md), and [product context](PRODUCT.md) describe this UI scope. Backend execution and later repair phases remain separate work.
+The frontend remains plain HTML/CSS/browser modules with no runtime framework or build step. [Design notes](DESIGN.md), [implementation plan](PLAN.md), and [product context](PRODUCT.md) describe this UI scope. The [backend handoff](../backend/docs/FRONTEND_HANDOFF.md) is the implemented API contract. The [integration plan](INTEGRATION_PLAN.md) records this scope. Automatic supervision, user-feedback revisions and generated repair remain later backend phases.

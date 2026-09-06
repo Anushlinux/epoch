@@ -1,0 +1,23 @@
+.execution-panel { margin-top: 28px; min-width: 0; }
+.execution-panel section { min-width: 0; }
+.execution-panel h2 { font-size: 18px; margin: 0 0 10px; }
+.execution-panel h3 { font-size: 14px; margin: 22px 0 10px; }
+.execution-panel p { overflow-wrap: anywhere; }
+.release-controls, .live-run { padding: 22px 0; border-top: 1px solid var(--line); }
+.release-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+.release-fields > div { min-width: 0; }
+.release-fields label, .run-history label { display: block; margin-bottom: 6px; color: var(--muted); }
+.execution-panel input, .execution-panel select { width: 100%; min-width: 0; padding: 9px 10px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+.run-history { margin: 18px 0; }
+.run-id { overflow-wrap: anywhere; }
+.run-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
+.live-checkpoints, .verification-checks, .live-events { list-style: none; padding: 0; }
+.live-checkpoint { padding: 15px 0; border-bottom: 1px solid var(--line); }
+.live-checkpoint .inline-row { align-items: start; gap: 12px; }
+.live-checkpoint .badge { flex-shrink: 0; }
+.verification-checks li { margin: 10px 0; }
+.executor-response { white-space: pre-wrap; overflow-wrap: anywhere; padding: 14px; background: var(--surface); border-radius: 6px; }
+.execution-panel pre { max-height: 400px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.live-events { max-height: 540px; overflow: auto; }
+.execution-panel summary { overflow-wrap: anywhere; }
+@media (max-width: 760px) { .release-fields { grid-template-columns: 1fr; } .live-checkpoint .inline-row { flex-wrap: wrap; } }

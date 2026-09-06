@@ -1,4 +1,4 @@
-// Actual unchanged Phase 1 server + temporary SQLite data. No backend source edits.
+// Actual Phase 3 server with execution disabled + temporary SQLite data. No backend source edits.
 import { spawn } from "node:child_process";
 import { mkdtemp, rm, mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -6,6 +6,7 @@ import path from "node:path";
 import net from "node:net";
 import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
+const executionMode = process.argv.includes("--execution");
 const frontend = fileURLToPath(new URL("../", import.meta.url));
 const backend = path.resolve(frontend, "../backend");
 const data = await mkdtemp(path.join(tmpdir(), "epoch-intake-proof-"));
@@ -78,7 +79,7 @@ async function startFrontend() {
   assert.equal((await fetch(browserOrigin, { method: "POST" })).status, 405);
 }
 async function start() {
-  child = spawn(path.join(backend, ".venv/bin/epoch-backend"), ["serve"], {
+  child = spawn(path.join(backend, executionMode ? ".venv/bin/python" : ".venv/bin/epoch-backend"), executionMode ? ["tests/frontend_server.py"] : ["serve"], {
     cwd: backend,
     env: {
       ...process.env,
@@ -87,6 +88,7 @@ async function start() {
       EPOCH_HOST: "127.0.0.1",
       EPOCH_CORS_ORIGINS: JSON.stringify([browserOrigin]),
       EPOCH_LOG_LEVEL: "warning",
+      EPOCH_ENABLE_HERMES: "false",
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -137,9 +139,9 @@ try {
   const health = await http("/api/health");
   assert.deepEqual(health.body, {
     status: "ok",
-    phase: 1,
+    phase: 3,
     storage: "ok",
-    execution_enabled: false,
+    execution_enabled: executionMode,
   });
   const payload = {
     client_request_id: crypto.randomUUID(),
@@ -206,7 +208,7 @@ try {
         path.join(frontend, "node_modules/@playwright/test/cli.js"),
         "test",
         "--config",
-        "playwright.intake.config.mjs",
+        executionMode ? "playwright.execution.config.mjs" : "playwright.intake.config.mjs",
       ],
       {
         cwd: frontend,
@@ -221,15 +223,15 @@ try {
     tests.on("error", reject);
     tests.on("exit", resolve);
   });
-  assert.equal(result, 0, "Browser intake checks failed");
+  assert.equal(result, 0, "Browser integration checks failed");
   await mkdir(path.join(frontend, "evidence"), { recursive: true });
   await writeFile(
-    path.join(frontend, "evidence/intake-http.json"),
+    path.join(frontend, executionMode ? "evidence/phase3-execution-http.json" : "evidence/phase3-intake-http.json"),
     JSON.stringify(
       {
         verified_at: new Date().toISOString(),
-        category: "actual-local-phase-1-http",
-        backend_base: "0a062dde6fcf5f10f792cf77813fe8adbaf117e3",
+        category: executionMode ? "local-http-with-explicit-test-executor" : "actual-local-phase-3-http",
+        backend_source_changed: false,
         isolated_temporary_database: true,
         health: health.body,
         task: created.body,
@@ -245,10 +247,11 @@ try {
           restart_record_unchanged: true,
           restart_identical_retry: 200,
         },
-        execution_occurred: false,
+        execution_occurred: executionMode,
+        actual_hermes_invoked: false,
         browser_origin: browserOrigin,
         limitations: [
-          "Temporary local intake/storage only; no executor or repair",
+          executionMode ? "Real HTTP/storage/trusted checks with an explicit test executor; no Hermes/model or repair" : "Temporary local intake/storage only; no executor or repair",
           `Actual frontend dev server at ${browserOrigin} and unchanged backend; no source interception or security bypass`,
           "Unknown acknowledgement and offline browser cases inject transport faults, not backend failures",
         ],

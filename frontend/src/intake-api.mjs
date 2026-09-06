@@ -1,4 +1,4 @@
-// Phase 1 only: these routes and fields come from backend/docs/FRONTEND_HANDOFF.md.
+// Implemented routes and fields from backend/docs/FRONTEND_HANDOFF.md.
 export const PENDING_KEY = 'epoch.intake.pending.v1';
 export const ORIGIN_KEY = 'epoch.intake.origin.v1';
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -6,6 +6,7 @@ const object = (x) => x && typeof x === 'object' && !Array.isArray(x);
 const keys = (x, names) => object(x) && Object.keys(x).every((key) => names.includes(key));
 const text = (x, max) => typeof x === 'string' && x.trim().length > 0 && [...x].length <= max;
 const timestamp = (x) => typeof x === 'string' && /(?:Z|[+-]\d{2}:\d{2})$/.test(x) && Number.isFinite(Date.parse(x));
+export const TASK_STATUSES = ['pending', 'planning', 'awaiting_clarification', 'running', 'verifying', 'repairing', 'completed', 'blocked', 'failed', 'cancelled'];
 export class IntakeError extends Error {
   constructor(message, status = 0, code = 'unavailable') {
     super(message); this.status = status; this.code = code;
@@ -29,8 +30,8 @@ export function sameRequest(a, b) {
   return validRequest(a) && validRequest(b) && a.client_request_id === b.client_request_id && a.message.trim() === b.message.trim() && a.project_id.trim() === b.project_id.trim();
 }
 export function taskRecord(x) {
-  if (!keys(x, ['schema_version', 'id', 'request', 'status', 'created_at', 'updated_at']) || x.schema_version !== 1 || !uuid.test(x.id) || !validRequest(x.request) || x.status !== 'pending' || !timestamp(x.created_at) || !timestamp(x.updated_at))
-    throw new IntakeError('This response does not match the supported Phase 1 pending-task contract.', 0, 'contract');
+  if (!keys(x, ['schema_version', 'id', 'request', 'status', 'created_at', 'updated_at']) || x.schema_version !== 1 || !uuid.test(x.id) || !validRequest(x.request) || !TASK_STATUSES.includes(x.status) || !timestamp(x.created_at) || !timestamp(x.updated_at))
+    throw new IntakeError('This response does not match the published task contract.', 0, 'contract');
   return structuredClone(x);
 }
 export class IntakeAPI {
@@ -59,8 +60,8 @@ export class IntakeAPI {
   }
   async health() {
     const { body, status } = await this.call('/api/health');
-    if (status !== 200 || !keys(body, ['status', 'phase', 'storage', 'execution_enabled']) || body.status !== 'ok' || body.phase !== 1 || body.storage !== 'ok' || body.execution_enabled !== false)
-      throw new IntakeError('Unsupported server capabilities. This view requires Phase 1 with execution disabled.', 0, 'contract');
+    if (status !== 200 || !keys(body, ['status', 'phase', 'storage', 'execution_enabled']) || body.status !== 'ok' || body.phase !== 3 || body.storage !== 'ok' || typeof body.execution_enabled !== 'boolean')
+      throw new IntakeError('Unsupported server capabilities. This view requires the published Phase 3 API.', 0, 'contract');
     return body;
   }
   async list(offset = 0) {

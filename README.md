@@ -4,7 +4,7 @@ Epoch is a planned task supervisor and debugger. The user describes the desired 
 
 **Current state: task intake, simulated business services, MCP tools and actual Hermes execution are implemented.** An explicitly selected release workflow can create local tickets/checklists/messages, record activity, and report independently verified results through the API. Submitting a task alone leaves it pending. Automatic supervision, feedback revisions and generated repairs remain unimplemented. See [backend setup](backend/README.md) and the [implementation status](docs/status.md) for validation and remaining gaps.
 
-The [frontend workspace](frontend/README.md) includes historically verified Phase 1 task intake and a separate future-workflow fixture page. Its committed intake adapter still requires Phase 1 health and pending-only tasks, so it cannot connect to the Phase 3 backend yet. Use the backend CLI or API for current release execution; Anushrut owns the frontend compatibility update. Fixture progress, repairs, test results and artifacts remain authored examples.
+The [frontend workspace](frontend/README.md) connects to the Phase 3 API. Save a task, explicitly start the supported release workflow, and inspect actual run history, sourced checkpoints, execution activity, trusted results and simulated objects. Cancellation and reconnect preserve recorded evidence. The separate future-workflow fixture page remains illustrative; automatic supervision and repair are not implemented.
 
 ## Start here
 
@@ -66,7 +66,7 @@ The 10-hour target is: agree contracts and smoke-test integrations in hour 1; co
 
 ## Working with this repository
 
-Run `npm run dev --prefix frontend` and open `ao preview http://127.0.0.1:5173` to inspect the frontend. Run its state tests with `npm test --prefix frontend`; see the [frontend verification record](frontend/evidence/README.md) for historical Phase 1 HTTP/browser checks. This host serves the existing interface, but its Phase 1-only intake validation currently rejects the Phase 3 backend. The separate fixture page remains illustrative. No frontend source or tests are changed by this backend merge.
+Run `npm run dev --prefix frontend` and open `http://127.0.0.1:5173/chat`. In **Connection settings**, connect to the backend's local origin. Saving a request leaves it pending; **Start release run** explicitly starts execution when the server reports availability. Run state tests with `npm test --prefix frontend`, actual intake browser checks with `npm run test:integration --prefix frontend`, and execution browser checks with `npm run test:execution --prefix frontend`. The execution test runner uses an explicit test executor with real HTTP/storage/checks; it does not prove live model execution. See the [frontend verification record](frontend/evidence/README.md).
 
 From `backend/`, run `uv sync --frozen`, then `uv run --frozen epoch-backend serve`. The health check is at `http://127.0.0.1:8000/api/health`; API docs are at `/docs`. Follow the [backend README](backend/README.md) for Python/uv prerequisites, local cache setup, configuration, tests and the live-server smoke check. Claude and Copilot point to [AGENTS.md](AGENTS.md) for shared rules.
 
