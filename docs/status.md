@@ -1,10 +1,10 @@
 # Current implementation status
 
-As of September 6, 2026, **backend Phase 1 is implemented and locally verified**. It provides task intake, configuration, persistence and shared contracts. The supervisor, Hermes executor and repair loop remain unimplemented; the approved direction is still a product target.
+As of September 6, 2026, **backend Phase 1 is implemented and locally verified**, alongside tested **frontend task intake and separate future-workflow fixtures**. The backend provides task intake, configuration, persistence and shared contracts. The supervisor, Hermes executor and repair loop remain unimplemented; the approved direction is still a product target.
 
 ## Implemented facts
 
-The repository contains the following documentation and the bounded Phase 1 foundation:
+The repository contains the documentation, bounded Phase 1 foundation and frontend workspace below. Its primary page connects to real Phase 1 task intake/list/detail. Execution activity, outcomes, candidate diffs, test records and artifacts remain on a separate fixture page; these are authored examples, not business-service effects or supervised repair evidence:
 
 - [README](../README.md): product summary, current state, and reading order.
 - [Direction](direction.md): unchanged source document.
@@ -15,6 +15,8 @@ The repository contains the following documentation and the bounded Phase 1 foun
 - [Backend API/CLI](../backend/README.md): health, task creation/read/list, normalized retry idempotency, explicit configuration validation and SQLite persistence across restarts. Tasks remain pending; no execution is scheduled.
 - [Technical selections](../backend/DECISIONS.md), [contract models](../backend/src/epoch_backend/contracts.py), deterministic [schema bundle](../backend/contracts/schemas.json), and labelled [UI fixtures](../backend/fixtures/development.json). Future execution/repair models are data contracts only.
 - [Tests](../backend/tests/test_api.py), [live-server smoke harness](../backend/scripts/smoke_test.py), uv lockfile, Ruff checks and a [GitHub workflow](../.github/workflows/backend.yml). Local results are recorded below; remote CI execution is not yet verified.
+
+- [Frontend workspace](../frontend/README.md): request/clarification, sourced checkpoints, activity, repair evidence, fixture results, feedback revisions and frontend tests.
 
 ## Approved decisions
 
@@ -37,7 +39,7 @@ Hermes discovery behavior, Neatlogs capture coverage, Workshop replay, and inter
 | Concrete runtime/tooling, library, schema, storage, transport, testing and CI decisions | Selected and recorded; future transport/isolation still unimplemented | Task 01 complete |
 | Python API/CLI, config validation, task persistence and shared contracts | Implemented; 66 tests and live-server restart smoke pass locally | Phase 1 complete |
 | Task brief/checkpoint planning, targeted continuation and feedback revisions | Unimplemented | Contracts in Task 01; executor/supervision in Task 03 |
-| User interface, checkpoint board, results and feedback flow | Unimplemented; assigned to Anushrut | UI lane alongside Rajdeep's backend tasks after shared contracts |
+| User interface, checkpoint board, results and feedback flow | Real Phase 1 intake/list/detail integrated; future execution flows remain labeled fixtures | Actual local HTTP/browser intake verified; normal browser/AO intake supported at 127.0.0.1:5173; later execution endpoints remain open |
 | Local simulated business services and inspectable state | Unimplemented | Task 02 |
 | Permission-scoped tool registry and version lifecycle | Unimplemented | Tasks 02 and 04 |
 | Hermes integration and dynamic tool discovery | Unimplemented; compatibility unverified | Task 03 |
@@ -55,7 +57,7 @@ Hermes discovery behavior, Neatlogs capture coverage, Workshop replay, and inter
 | Live Jira, Notion, Slack or directory connections | Unimplemented; not in initial local implementation scope | Separate future authorization |
 | Production deployment and broad multi-domain support | Unimplemented; deferred | Outside these initial briefs |
 
-Phase 1 adds only its local package, locked dependencies, API/CLI, configuration, persistence, contracts, fixtures and checks. It adds no global configuration or live integration. There are no agent benchmarks, successful repair demonstrations, user-facing UI or live SSE events to report.
+Phase 1 adds only its local package, locked dependencies, API/CLI, configuration, persistence, contracts, fixtures and checks. It adds no global configuration or live integration. The separate UI lane adds a provisional browser interface with no runtime dependencies and frontend-local Playwright tests. It does not change backend selections or add a frontend CI workflow. There are no agent benchmarks, successful repair demonstrations, integrated user-task execution or live SSE events to report.
 
 ## Documentation validation
 
@@ -103,3 +105,19 @@ Windows sandbox ACLs blocked pytest temporary-directory access, so the successfu
 Documentation checks passed for 135 local links, six heading fragments, seven task brief structures and the canonical agent entrypoints. The direction Git blob still hashes to `791826322bab72f3198c862cad796e2c5298c1ed5801fb8db8bd70a6101e3df5`; its Windows worktree remains unchanged at SHA-256 `714c89515b81ad887935de309d5b69ec43a77ee623c13fbff6fadc56f371a9a7`, including the original Markdown hard breaks. Authored changes pass `git diff --check`. AO preview remains unavailable on this host.
 
 Anushrut has the published HTTP/error contracts and fixture states; this does not claim a completed UI integration or personal sign-off. Phase 2 and every subsequent phase remain unstarted. Hermes, Neatlogs, Workshop, isolation, live-service, supervision and generated-repair tests remain unexecuted because those components are outside Phase 1.
+
+### Frontend fixture implementation
+
+The UI preserves original requests and clarifications, displays all six sourced checkpoint states, keeps task and repair outcomes separate, retains rejected candidates and partial artifacts, and records feedback as explicit revisions with previous results retained. Local tests cover evidence/identity guards, stale and duplicate events, stream gaps, uncertain submissions, retry/reconnect, forms, keyboard navigation, mobile layout and text escaping. See the [verification record](../frontend/evidence/README.md) for actual commands, outcomes, screenshots and limitations.
+
+The [frontend-local contract proposal](../frontend/CONTRACT-PROPOSAL.md) is **PROPOSED, not agreed**. The Phase 1 [backend handoff](../backend/docs/FRONTEND_HANDOFF.md) now publishes intake endpoints and future data contracts. The primary UI consumes the published intake models directly; the future fixture proposal remains separate and unagreed. Actual supervised repair verification remains blocked because execution, streaming, feedback and repair endpoints are unimplemented. The fixture adapter stores data only in page memory and cannot establish durable duplicate prevention, secure repair isolation, trusted evaluation or backend compatibility.
+
+### Frontend Phase 1 intake integration
+
+Against the unchanged Phase 1 backend at `0a062dd`, the frontend verified actual health/create/list/detail, 201 intake, 200 identical/normalized retry, 409 conflict, 422 validation, 404 missing records, 403 disallowed origin, explicit allowed CORS and SQLite record/ID persistence across restart. Tasks stayed pending and health reported execution disabled. Temporary test data was isolated and removed; no backend source, configuration defaults or evaluator logic changed.
+
+`npm run test:all --prefix frontend` passed 41 state tests and 30 fixture browser tests. `npm run test:integration --prefix frontend` passed HTTP checks and 12 desktop/mobile browser cases using actual API requests. Transport fault injection tests are labeled separately. Full evidence and screenshots are in the frontend verification record.
+
+The frontend now has `npm run dev --prefix frontend`, a minimal Node HTTP host at `http://127.0.0.1:5173`, already supported by backend CORS. Actual normal-page browser tests and AO intake use this origin without backend changes, a proxy, source interception or special browser permissions. The older generated-origin static-file preview remains unsuitable for API integration. No SSE, checkpoints, execution, feedback or repair endpoint was added or claimed. Actual supervised repair remains blocked on later phases.
+
+Final fixture remediation rejects duplicate/dropped checkpoint identities and unsourced failed/needs-input snapshots, blocks disconnected request dispatch, and hides stale delivery labels after checkpoint updates without rewriting the supplied task verdict. The new state and desktop/mobile regressions pass.

@@ -1,0 +1,43 @@
+{
+  "verified_at": "2026-09-06T13:56:40.764Z",
+  "category": "actual-local-phase-1-http",
+  "backend_base": "0a062dde6fcf5f10f792cf77813fe8adbaf117e3",
+  "isolated_temporary_database": true,
+  "health": {
+    "status": "ok",
+    "phase": 1,
+    "storage": "ok",
+    "execution_enabled": false
+  },
+  "task": {
+    "schema_version": 1,
+    "id": "b02812f3-9284-4856-b1eb-5d0c0447947f",
+    "request": {
+      "client_request_id": "7738e789-4a29-455d-bc24-83dd387f3d86",
+      "message": "Persisted HTTP intake proof · no execution",
+      "project_id": "integration-proof"
+    },
+    "status": "pending",
+    "created_at": "2026-09-06T13:56:28.968156Z",
+    "updated_at": "2026-09-06T13:56:28.968156Z"
+  },
+  "checks": {
+    "create": 201,
+    "identical_retry": 200,
+    "normalized_retry": 200,
+    "conflict": 409,
+    "validation": 422,
+    "missing": 404,
+    "disallowed_origin": 403,
+    "allowed_cors_preflight": 200,
+    "restart_record_unchanged": true,
+    "restart_identical_retry": 200
+  },
+  "execution_occurred": false,
+  "browser_origin": "http://127.0.0.1:5173",
+  "limitations": [
+    "Temporary local intake/storage only; no executor or repair",
+    "Actual frontend dev server at 127.0.0.1:5173 and unchanged backend; no source interception or security bypass",
+    "Unknown acknowledgement and offline browser cases inject transport faults, not backend failures"
+  ]
+}

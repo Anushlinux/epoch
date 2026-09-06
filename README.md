@@ -2,7 +2,7 @@
 
 Epoch is a planned task supervisor and debugger. The user describes the desired result in the interface; Epoch turns that request into verifiable checkpoints, gives Hermes a structured task brief, monitors execution, and directs corrections until the checks pass or a clear limit is reached. When the cause lies in the tools or supplied context, Epoch verifies and publishes an environment repair that benefits future tasks.
 
-**Current state: backend Phase 1 implemented.** The local Python API saves and reads tasks, persists them in SQLite, validates configuration, and publishes shared contracts and UI fixtures. Submitted tasks remain pending. Hermes execution, supervision, simulated business tools and repairs are unimplemented. See [backend setup](backend/README.md) and the [implementation status](docs/status.md).
+**Current state: backend Phase 1, frontend task intake and a separate fixture workspace are implemented.** The local Python API saves and reads tasks, persists them in SQLite, validates configuration, and publishes shared contracts and UI fixtures. Submitted tasks remain pending. Hermes execution, supervision, simulated business tools and repairs are unimplemented. The [frontend workspace](frontend/README.md) saves and reads real Phase 1 tasks. Its separate future-workflow page uses authored examples for all progress, repairs, test results and artifacts. See [backend setup](backend/README.md) and the [implementation status](docs/status.md).
 
 ## Start here
 
@@ -64,11 +64,13 @@ The 10-hour target is: agree contracts and smoke-test integrations in hour 1; co
 
 ## Working with this repository
 
+Run `npm run dev --prefix frontend` and open the task workspace with `ao preview http://127.0.0.1:5173`; its setup notes describe starting the separate backend. Run its state tests with `npm test --prefix frontend`; see the [frontend verification record](frontend/evidence/README.md) for browser checks. The primary UI consumes the Phase 1 intake API below; fixture execution remains separate. Neither provides a working supervisor.
+
 From `backend/`, run `uv sync --frozen`, then `uv run --frozen epoch-backend serve`. The health check is at `http://127.0.0.1:8000/api/health`; API docs are at `/docs`. Follow the [backend README](backend/README.md) for Python/uv prerequisites, local cache setup, configuration, tests and the live-server smoke check. Claude and Copilot point to [AGENTS.md](AGENTS.md) for shared rules.
 
 For documentation changes, check relative links and anchors, preserve the exact direction source, inspect the diff for scope, and run `git diff --check`. The [documentation validation notes](docs/status.md#documentation-validation) describe the handoff checks and their limits.
 
-The preserved direction remains unchanged. The supervisor flow and named work split above record the user's later decision and supersede the earlier passive-debugger/CLI-only presentation. Only Phase 1 is implemented; later phases require an explicit assignment.
+The preserved direction remains unchanged. The supervisor flow and named work split above record the user's later decision and supersede the earlier passive-debugger/CLI-only presentation. Backend Phase 1, frontend intake integration and future-workflow fixtures are implemented; execution integration and later phases require a separate assignment.
 
 ## Generic agent startup prompt
 

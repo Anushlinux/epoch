@@ -1,0 +1,39 @@
+{
+  "verified_at": "2026-09-06T14:01:53.749266+00:00",
+  "category": "actual-ao-browser-intake",
+  "frontend_origin": "http://127.0.0.1:5173",
+  "api_origin": "http://127.0.0.1:8000",
+  "health": {
+    "status": "ok",
+    "phase": 1,
+    "storage": "ok",
+    "execution_enabled": false
+  },
+  "task": {
+    "schema_version": 1,
+    "id": "7670bab2-0d53-4174-983e-4961fcaefc91",
+    "request": {
+      "client_request_id": "82e194b0-b74c-43b1-9146-ea7211ca62db",
+      "message": "Prepare the Atlas release checklist. Keep QA ownership and rollback steps. This request remains pending in Phase 1.",
+      "project_id": "AO intake proof"
+    },
+    "status": "pending",
+    "created_at": "2026-09-06T14:01:26.525375Z",
+    "updated_at": "2026-09-06T14:01:26.525375Z"
+  },
+  "task_count": 1,
+  "actions": [
+    "AO Connect / reconnect",
+    "AO form entry and Save request",
+    "AO Reload detail",
+    "Independent HTTP list/detail record confirmation"
+  ],
+  "source_interception": false,
+  "backend_source_changed": false,
+  "execution_occurred": false,
+  "preview_left_running": true,
+  "limitations": [
+    "Local Phase 1 intake only; no execution or repair",
+    "Initial AO tab actions were unresponsive; fresh AO tab restored interaction"
+  ]
+}

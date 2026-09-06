@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f4f5f1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <title>Epoch · Task workspace · Fixture preview</title>
+    <link rel="icon" href="./mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./src/styles.css" />
+    <script type="module" src="./src/app.mjs"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#workspace">Skip to workspace</a>
+    <div id="app"></div>
+    <div
+      id="announcement"
+      class="sr-only"
+      role="status"
+      aria-live="polite"
+    ></div>
+    <dialog id="inspector" aria-labelledby="inspector-title">
+      <div class="dialog-heading">
+        <h2 id="inspector-title">Fixture evidence</h2>
+        <button id="close-inspector" type="button">Close</button>
+      </div>
+      <p class="fixture-note">Authored UI fixture · not execution evidence</p>
+      <div id="inspector-content"></div>
+      <button id="download-artifact" type="button" class="primary">
+        Download fixture JSON
+      </button>
+    </dialog>
+    <noscript
+      ><main>
+        <h1>Epoch fixture workspace</h1>
+        <p>
+          Enable JavaScript to explore this local interface. No backend is
+          connected and no task will execute.
+        </p>
+      </main></noscript
+    >
+  </body>
+</html>
