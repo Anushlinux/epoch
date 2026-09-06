@@ -54,7 +54,7 @@
       "name": "HealthResponse",
       "value": {
         "execution_enabled": false,
-        "phase": 5,
+        "phase": 7,
         "status": "ok",
         "storage": "ok"
       }

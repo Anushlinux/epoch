@@ -1,5 +1,7 @@
 # Epoch
 
+**Latest development:** Phases 6 and 7 are implemented and pushed for integration, but untested at the user's request. Phase 5 evidence remains historical. The current API reports phase 7. See [the new handoff](backend/docs/PHASES_6_7_HANDOFF.md).
+
 Epoch is a task supervisor with an environment-repair debugger. The user describes the desired result in the interface; Epoch turns that request into verifiable checkpoints, gives Hermes a structured task brief, monitors execution, and directs corrections until the checks pass or a clear limit is reached. Phase 5 verifies and publishes checklist-adapter repairs for later tasks; missing-tool and context repairs remain later phases.
 
 **Current state: backend Phases 1–5 are implemented and verified.** OpenAI `gpt-5.6-luna` plans sourced checkpoints and generates serializer corrections; the existing Hermes executor performs the work. Phase 5 adds opt-in Docker-isolated checks, original/fresh task verification, durable versions and rollback. Normal operations share 20 model requests/600 seconds; each repair verification gets its own 20/600 limit, with a 60-request/1,800-second overall repair ceiling and two candidate attempts. See [repair setup](backend/docs/REPAIR_SETUP.md) and [implementation status](docs/status.md).

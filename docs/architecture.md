@@ -137,3 +137,14 @@ Primary work shares 20 requests/600 active seconds; each isolated verification g
 candidates. Available token counts supplement request accounting, without a
 subscription dollar-cap guarantee. See [Phase 5 plan](../backend/PHASE_5_PLAN.md)
 and [setup](../backend/docs/REPAIR_SETUP.md) for the concrete implementation.
+
+## Phase 6/7 development extension (untested)
+
+Environment versions compose immutable per-target source/contract records and a
+bundle digest. Only verified QA lookup code can be shared across projects; its
+host supplies current-project records under directory.read. Retrieval policy and
+serializer changes stay project-scoped. Scoped schemas and implementation origins
+are visible through the unchanged generic MCP facade. Historical documents remain
+stored and addressable by explicit version. The debugger receives structural
+failure facts while raw context remains local. See the [development handoff](../backend/docs/PHASES_6_7_HANDOFF.md).
+No runtime acceptance was performed for this extension at the user's request.

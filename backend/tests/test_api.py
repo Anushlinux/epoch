@@ -50,7 +50,7 @@ def test_health_identifies_foundation_without_claiming_execution(client):
     assert response.status_code == 200
     assert response.json() == {
         "status": "ok",
-        "phase": 5,
+        "phase": 7,
         "storage": "ok",
         "execution_enabled": False,
     }
@@ -67,6 +67,7 @@ def test_repair_runtime_and_environment_history(client, monkeypatch):
     assert response.json() == {
         "project": "demo",
         "active_version": "builtin",
+        "effective_artifacts": {},
         "versions": [],
         "repairs": [],
         "history": [],

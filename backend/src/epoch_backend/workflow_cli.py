@@ -53,7 +53,9 @@ def add_commands(subparsers):
     run.add_argument("--max-turns", type=int, default=20)
     run.add_argument("--supervised", action="store_true", help="Enable the OpenAI debugger")
     run.add_argument(
-        "--repair", action="store_true", help="Enable supervised generated checklist repair"
+        "--repair",
+        action="store_true",
+        help="Enable supervised serializer, missing-lookup and context repair",
     )
     run.add_argument(
         "--demo-omit-notification",

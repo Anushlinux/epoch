@@ -1,6 +1,6 @@
 # Task 06: Repair supplied context
 
-Status: unstarted. Intended future implementation.
+Status: development delivered without testing, as explicitly requested by the user. Runtime gates are implemented; the acceptance checks below have not been executed. See [Phase 6/7 handoff](../../backend/docs/PHASES_6_7_HANDOFF.md).
 
 ## Goal
 

@@ -67,10 +67,11 @@ class ExecutionRecord(Contract):
     error: dict[str, Any] | None = None
     supervision: SupervisionState | None = None
     environment_version: str = "builtin"
+    environment_artifacts: dict[str, str] = Field(default_factory=dict)
 
 
 class RuntimeInfo(Contract):
-    phase: Literal[5] = 5
+    phase: Literal[7] = 7
     execution_enabled: bool
     hermes_available: bool
     active_run_id: UUID | None = None
@@ -79,6 +80,10 @@ class RuntimeInfo(Contract):
     automatic_supervision: Literal[True] = True
     automatic_repair: Literal[True] = True
     repair_opt_in: Literal[True] = True
+    repair_targets: list[str] = Field(
+        default_factory=lambda: ["checklist_serializer.py", "qa_lookup.py", "runbook_selector.py"]
+    )
+    development_validation: Literal["phases_6_7_untested"] = "phases_6_7_untested"
     installation: dict[str, Any] = Field(default_factory=dict)
     debugger: dict[str, Any] = Field(default_factory=dict)
     supervision_enabled: bool = False

@@ -12,6 +12,7 @@ from uuid import uuid4
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, TypeAdapter, ValidationError
 
 from epoch_backend.sandbox import Sandbox, SandboxError
+from epoch_backend.repair_surfaces import LOOKUP, LOOKUP_NAME, CONTEXT, SERIALIZER, artifacts
 
 TOOL_INTERFACE_VERSION = "epoch-tools-v1"
 TOOL_VERSION = "sandbox-v2"
@@ -57,7 +58,19 @@ class SendMessage(Arguments):
     idempotency_key: IdempotencyKey
 
 
+class LookupOwner(Arguments):
+    project_id: ShortText
+
+
+class LookupResult(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    status: Literal["found", "missing", "ambiguous"]
+    project_id: str
+    owner: dict | None
+
+
 class UpdateMessage(Arguments):
+    channel: ShortText | None = None
     message_id: Title
     text: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=8000)]
     idempotency_key: IdempotencyKey
@@ -111,6 +124,7 @@ class ToolDefinition:
     arguments: type[Arguments]
     operation: str
     read_only: bool
+    permission: str | None = None
 
 
 _TOOLS = (
@@ -164,7 +178,7 @@ _TOOLS = (
     ToolDefinition(
         "messages.update",
         "Replace text on an existing simulated message in this run, preserving its "
-        "identity, channel and links. Use a new idempotency key for changed content "
+        "identity and links. An optional channel corrects the notice to the authoritative QA destination. Use a new idempotency key for changed content "
         "and reuse it only for identical retries.",
         UpdateMessage,
         "update_message",
@@ -198,6 +212,7 @@ _OUTPUTS = {
     "messages.update": TypeAdapter(MessageResult),
     "messages.list": TypeAdapter(list[MessageResult]),
     "runbooks.read": TypeAdapter(RunbookResult),
+    LOOKUP_NAME: TypeAdapter(LookupResult),
 }
 
 
@@ -228,8 +243,25 @@ class ToolRegistry:
         # Assert initialization and identity before exposing any capability.
         sandbox.metadata()
 
+    def _definitions(self):
+        artifact = artifacts(self.sandbox.metadata().get("adapter_manifest", {})).get(LOOKUP)
+        if artifact is None:
+            return _TOOLS
+        contract = artifact["tool_contract"]
+        return (
+            *_TOOLS,
+            ToolDefinition(
+                LOOKUP_NAME,
+                contract["description"],
+                LookupOwner,
+                "lookup_qa_owner",
+                True,
+                "directory.read",
+            ),
+        )
+
     def _visible(self, tool: ToolDefinition) -> bool:
-        return tool.name in self.sandbox.metadata()["grants"]
+        return (tool.permission or tool.name) in self.sandbox.metadata()["grants"]
 
     def _error(self, code: str, message: str, **event: Any) -> dict[str, Any]:
         error = {"code": code, "message": message}
@@ -244,16 +276,29 @@ class ToolRegistry:
             "version": TOOL_VERSION,
             "simulated": True,
             "read_only": tool.read_only,
-            "required_permission": tool.name,
+            "required_permission": tool.permission or tool.name,
         }
 
     def discover_tools(self) -> dict[str, Any]:
         metadata = self.sandbox.metadata()
-        tools = [self._summary(tool) for tool in _TOOLS if self._visible(tool)]
-        version = metadata.get("adapter_manifest", {}).get("version_id", "builtin")
+        tools = [self._summary(tool) for tool in self._definitions() if self._visible(tool)]
+        manifest = metadata.get("adapter_manifest", {})
+        installed = artifacts(manifest)
+        version = manifest.get("version_id", "builtin")
         for tool in tools:
             if tool["name"].startswith("checklists.") and not tool["read_only"]:
                 tool["implementation_version"] = version
+            target = (
+                LOOKUP
+                if tool["name"] == LOOKUP_NAME
+                else CONTEXT
+                if tool["name"] == "runbooks.read"
+                else SERIALIZER
+                if tool["name"] in {"checklists.create", "checklists.update"}
+                else None
+            )
+            if target in installed:
+                tool["implementation_version"] = installed[target].get("origin_version", version)
         result = {
             "interface_version": TOOL_INTERFACE_VERSION,
             "project_id": metadata["project_id"],
@@ -264,7 +309,11 @@ class ToolRegistry:
         return {"ok": True, "result": result}
 
     def describe_tool(self, name: str) -> dict[str, Any]:
-        tool = _TOOL_BY_NAME.get(name) if isinstance(name, str) else None
+        tool = (
+            next((t for t in self._definitions() if t.name == name), None)
+            if isinstance(name, str)
+            else None
+        )
         if tool is None:
             return self._error(
                 "tool_not_found", "The requested tool is not available.", tool_name=name
@@ -282,6 +331,13 @@ class ToolRegistry:
             result["implementation_version"] = (
                 self.sandbox.metadata().get("adapter_manifest", {}).get("version_id", "builtin")
             )
+        if name == LOOKUP_NAME:
+            artifact = artifacts(self.sandbox.metadata().get("adapter_manifest", {}))[LOOKUP]
+            result.update(
+                input_schema=artifact["tool_contract"]["input_schema"],
+                output_schema=artifact["tool_contract"]["output_schema"],
+                implementation_version=artifact.get("origin_version", artifact["artifact_sha256"]),
+            )
         self.sandbox.record_event("tool.described", {"tool_name": name, "result": result})
         return {"ok": True, "result": result}
 
@@ -291,10 +347,28 @@ class ToolRegistry:
         correlation["environment_version"] = (
             self.sandbox.metadata().get("adapter_manifest", {}).get("version_id", "builtin")
         )
+        selected = (
+            LOOKUP
+            if name == LOOKUP_NAME
+            else CONTEXT
+            if name == "runbooks.read"
+            else SERIALIZER
+            if name in {"checklists.create", "checklists.update"}
+            else None
+        )
+        installed = artifacts(self.sandbox.metadata().get("adapter_manifest", {}))
+        if selected in installed:
+            correlation["implementation_version"] = installed[selected].get(
+                "origin_version", installed[selected]["artifact_sha256"]
+            )
         self.sandbox.record_event(
             "tool.called", {**correlation, "arguments": _safe_arguments(arguments)}
         )
-        tool = _TOOL_BY_NAME.get(name) if isinstance(name, str) else None
+        tool = (
+            next((t for t in self._definitions() if t.name == name), None)
+            if isinstance(name, str)
+            else None
+        )
         if tool is None:
             return self._error(
                 "tool_not_found", "The requested tool is not available.", **correlation

@@ -15,6 +15,7 @@ from epoch_backend.candidate_runner import CandidateError
 from epoch_backend.config import Settings
 from epoch_backend.contracts import Checkpoint, SourceReference, Task, TaskBrief, TaskStatus
 from epoch_backend.environment_store import EnvironmentStore
+from epoch_backend.repair_surfaces import artifacts
 from epoch_backend.execution_contracts import ExecutionRecord, ReleaseRunRequest, RuntimeInfo
 from epoch_backend.execution_store import ExecutionStore
 from epoch_backend.sandbox import Sandbox, SandboxError
@@ -281,6 +282,10 @@ class ExecutionService:
                 created_at=now,
                 updated_at=now,
                 environment_version=manifest["version_id"],
+                environment_artifacts={
+                    name: item.get("origin_version", item["artifact_sha256"])
+                    for name, item in artifacts(manifest).items()
+                },
             )
             if request.supervised:
                 operation = SupervisionOperation(

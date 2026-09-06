@@ -8,6 +8,7 @@ from pathlib import Path
 from uuid import UUID, uuid4
 
 from epoch_backend.candidate_runner import MAX_SOURCE_BYTES, CandidateError, digest
+from epoch_backend.repair_surfaces import LOOKUP, SERIALIZER, artifacts, bundle_hash
 
 BASE_VERSION = "builtin"
 REQUIRED_PROOFS = {"component", "isolation", "original_replay", "fresh_release", "regression"}
@@ -114,17 +115,42 @@ class EnvironmentStore:
             )
         if digest(record["source"]) != record["artifact_sha256"]:
             raise CandidateError("artifact_changed", "Stored executable artifact digest mismatch.")
+        if "artifacts" in record:
+            artifacts(record)
         return record
+
+    def _shared_lookup(self):
+        with closing(self._connect()) as connection:
+            rows = connection.execute(
+                "SELECT v.id FROM active a JOIN versions v ON a.version=v.id ORDER BY v.rowid DESC"
+            ).fetchall()
+        for row in rows:
+            version = self.version(row[0])
+            item = artifacts(version).get(LOOKUP)
+            if version["status"] == "published" and item and item.get("portable"):
+                return item
+        return None
 
     def manifest(self, project: str, identity: str | None = None, *, staged: bool = False):
         identity = identity or self.active_id(project)
         if identity == BASE_VERSION:
-            return {"version_id": BASE_VERSION}
+            shared = self._shared_lookup()
+            values = {LOOKUP: shared} if shared else {}
+            return {
+                "version_id": BASE_VERSION,
+                "artifacts": values,
+                "bundle_sha256": bundle_hash(values),
+            }
         version = self.version(identity, project=project)
         if version["status"] != "published" and not (staged and version["status"] == "staged"):
             raise CandidateError(
                 "version_inactive", "Unverified or rejected artifact cannot execute."
             )
+        selected = artifacts(version)
+        if LOOKUP not in selected:
+            shared = self._shared_lookup()
+            if shared:
+                selected[LOOKUP] = shared
         return {
             "version_id": identity,
             "project": project,
@@ -132,6 +158,9 @@ class EnvironmentStore:
             "artifact_sha256": version["artifact_sha256"],
             "image_id": version["image_id"],
             "runner_version": version["runner_version"],
+            "target": version.get("target", SERIALIZER),
+            "artifacts": selected,
+            "bundle_sha256": bundle_hash(selected),
         }
 
     def stage(
@@ -144,6 +173,8 @@ class EnvironmentStore:
         parent: str,
         diagnosis: dict,
         diff: str,
+        target: str = SERIALIZER,
+        tool_contract: dict | None = None,
     ) -> dict:
         if not source.strip() or len(source.encode()) > MAX_SOURCE_BYTES:
             raise CandidateError("invalid_candidate", "Generated source is empty or too large.")
@@ -161,6 +192,19 @@ class EnvironmentStore:
             "diff": diff,
             "proofs": [],
         }
+        inherited = artifacts(self.manifest(project, parent))
+        inherited[target] = {
+            "source": source,
+            "artifact_sha256": record["artifact_sha256"],
+            "image_id": image_id,
+            "runner_version": runner_version,
+            "origin_version": record["id"],
+            "origin_project": project,
+            "tool_contract": tool_contract,
+            "portable": target == LOOKUP,
+        }
+        record.update(target=target, artifacts=inherited, bundle_sha256=bundle_hash(inherited))
+        artifacts(record)
         with closing(self._connect()) as connection, connection:
             connection.execute(
                 "INSERT INTO versions VALUES(?,?,?)", (record["id"], project, json.dumps(record))
@@ -212,6 +256,7 @@ class EnvironmentStore:
                     "publication_denied",
                     "Every required trusted check must pass for this exact artifact.",
                 )
+            artifacts(record)
             current = connection.execute(
                 "SELECT version FROM active WHERE project=?", (record["project"],)
             ).fetchone()
@@ -316,6 +361,14 @@ class EnvironmentStore:
             return {
                 "project": project,
                 "active_version": self.active_id(project),
+                "effective_artifacts": {
+                    name: {
+                        "origin_version": item.get("origin_version"),
+                        "origin_project": item.get("origin_project"),
+                        "artifact_sha256": item["artifact_sha256"],
+                    }
+                    for name, item in artifacts(self.manifest(project)).items()
+                },
                 "versions": rows("versions"),
                 "repairs": rows("repairs"),
                 "history": rows("history"),

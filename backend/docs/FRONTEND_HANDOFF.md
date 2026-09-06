@@ -1,18 +1,20 @@
 # Frontend contract for Anushrut
 
+**Current development contract: phase 7.** Phases 6/7 are implemented but untested. The user requested a code-only push. See [Phase 6/7 integration changes](PHASES_6_7_HANDOFF.md) for generated lookup/retrieval artifacts and new response fields. Runtime publication gates remain mandatory.
+
 Rajdeep owns the backend; Anushrut owns the UI. Phase 4 adds optional OpenAI `gpt-5.6-luna` supervision to the existing release workflow: sourced checkpoints, progress checks, targeted Hermes continuations, clarification and user-feedback revisions. Task submission alone still leaves a task `pending`; a separate run request starts execution. Phase 5 adds opt-in generated checklist repair, verification, project versions and rollback.
 
 This document describes the implemented HTTP contract. Actual installed-Hermes/model acceptance results and evidence gaps are recorded separately in [implementation status](../../docs/status.md). Installation detection alone does not prove a model call will succeed.
 
 The default API origin is `http://127.0.0.1:8000`. Allowed browser origins default to `http://localhost:5173` and `http://127.0.0.1:5173`; configure `EPOCH_CORS_ORIGINS` as a JSON list for another local frontend origin. This is a single-user local server without authentication or multi-user isolation. All business effects and `simulated://` references are simulated. The UI talks to HTTP; Hermes accesses the tools through the backend's MCP connection.
 
-**Existing frontend compatibility:** the committed [intake client](../../frontend/src/intake-api.mjs) requires health `phase: 3`; the [execution client](../../frontend/src/execution-api.mjs) also requires Phase 3 with automatic supervision/repair false. These guards reject the Phase 5 backend. Anushrut owns updating those guards and adding supervision/repair states. This backend change edits no frontend files. Historical browser evidence used real HTTP/storage with an explicit test executor; it does not prove current model-backed UI support.
+**Existing frontend compatibility:** the committed [intake client](../../frontend/src/intake-api.mjs) requires health `phase: 3`; the [execution client](../../frontend/src/execution-api.mjs) also requires Phase 3 with automatic supervision/repair false. These guards reject the Phase 7 backend. Anushrut owns updating those guards and adding supervision/repair states. This backend change edits no frontend files. Historical browser evidence used real HTTP/storage with an explicit test executor; it does not prove current model-backed UI support.
 
 ## Available routes
 
 | Request | Success response | Expected error responses |
 | --- | --- | --- |
-| `GET /api/health` | 200: `{"status":"ok","phase":5,"storage":"ok","execution_enabled":true}`; the final flag may be false | 503 when task storage is unavailable |
+| `GET /api/health` | 200: `{"status":"ok","phase":7,"storage":"ok","execution_enabled":true}`; the final flag may be false | 503 when task storage is unavailable |
 | `GET /api/runtime` | 200: `RuntimeInfo`, including availability, enablement and `active_run_id` | Internal errors when applicable |
 | `POST /api/tasks` | 201 new intake; 200 identical retry; returns `Task` | 409 changed content with the same request ID; 422 invalid input |
 | `GET /api/tasks?limit=20&offset=0` | 200: `TaskList`, newest first | 422 invalid pagination |
@@ -179,7 +181,7 @@ The original `Run` and `ProgressEvent` models are not these runtime wire formats
 
 Set both `supervised: true` and `repair_enabled: true` on the release run request.
 Repair is opt-in and cannot be combined with the omission demonstration. Existing
-run requests remain valid. `RuntimeInfo.phase` is 5; `automatic_repair` and
+run requests remain valid. `RuntimeInfo.phase` is 7; `automatic_repair` and
 `repair_opt_in` are true. Availability is separately inspected through
 `GET /api/repair/runtime`; it is not a model-connectivity test.
 

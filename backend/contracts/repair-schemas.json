@@ -1,6 +1,42 @@
 {
-  "description": "Phase 5 candidate proposals, rollback requests and host repair limits.",
+  "description": "Phase 7 generated artifact proposals, rollback requests and host repair limits; Phases 6 and 7 untested.",
   "models": {
+    "GeneratedToolContract": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "maxLength": 1500,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "input_schema_json": {
+          "maxLength": 12000,
+          "minLength": 2,
+          "title": "Input Schema Json",
+          "type": "string"
+        },
+        "name": {
+          "const": "directory.lookup_qa_owner",
+          "title": "Name",
+          "type": "string"
+        },
+        "output_schema_json": {
+          "maxLength": 12000,
+          "minLength": 2,
+          "title": "Output Schema Json",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "input_schema_json",
+        "output_schema_json"
+      ],
+      "title": "GeneratedToolContract",
+      "type": "object"
+    },
     "RepairLimits": {
       "additionalProperties": false,
       "properties": {
@@ -50,6 +86,44 @@
       "type": "object"
     },
     "RepairProposal": {
+      "$defs": {
+        "GeneratedToolContract": {
+          "additionalProperties": false,
+          "properties": {
+            "description": {
+              "maxLength": 1500,
+              "minLength": 1,
+              "title": "Description",
+              "type": "string"
+            },
+            "input_schema_json": {
+              "maxLength": 12000,
+              "minLength": 2,
+              "title": "Input Schema Json",
+              "type": "string"
+            },
+            "name": {
+              "const": "directory.lookup_qa_owner",
+              "title": "Name",
+              "type": "string"
+            },
+            "output_schema_json": {
+              "maxLength": 12000,
+              "minLength": 2,
+              "title": "Output Schema Json",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "description",
+            "input_schema_json",
+            "output_schema_json"
+          ],
+          "title": "GeneratedToolContract",
+          "type": "object"
+        }
+      },
       "additionalProperties": false,
       "properties": {
         "diagnosis": {
@@ -82,9 +156,24 @@
           "type": "string"
         },
         "target": {
-          "const": "checklist_serializer.py",
+          "enum": [
+            "checklist_serializer.py",
+            "qa_lookup.py",
+            "runbook_selector.py"
+          ],
           "title": "Target",
           "type": "string"
+        },
+        "tool_contract": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GeneratedToolContract"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "uncertainty": {
           "maxLength": 2000,

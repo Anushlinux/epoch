@@ -11,6 +11,19 @@ from epoch_backend.candidate_runner import RUNNER_VERSION, CandidateError, diges
 from epoch_backend.environment_store import EnvironmentStore, stamp
 from epoch_backend.operation_budget import BudgetExceeded
 from epoch_backend.repair_contracts import RepairProposal
+from epoch_backend.repair_surfaces import (
+    SERIALIZER,
+    LOOKUP,
+    artifacts,
+    investigation,
+    extended_trigger,
+    normalize_tool_contract,
+)
+from epoch_backend.extended_verification import (
+    surface_proofs,
+    verification_manifest,
+    require_artifact_use,
+)
 from epoch_backend.repair_verification import (
     clone_sandbox,
     component_proofs,
@@ -38,7 +51,7 @@ the next proposal. Do not return Markdown fences around the Python module.
 """
 
 
-def supported_error(events: list[dict]) -> dict | None:
+def supported_error(events: list[dict], sandbox=None) -> dict | None:
     for event in reversed(events):
         payload = event.get("payload", {})
         if (
@@ -47,7 +60,7 @@ def supported_error(events: list[dict]) -> dict | None:
             and payload.get("error", {}).get("code") == "adapter_contract_error"
         ):
             return event
-    return None
+    return extended_trigger(events, sandbox) if sandbox is not None else None
 
 
 def protected_identity():
@@ -61,6 +74,9 @@ def protected_identity():
             "tool_registry.py",
             "candidate_runner.py",
             "repair_verification.py",
+            "repair_surfaces.py",
+            "extended_verification.py",
+            "environment_store.py",
             "hermes_bridge.py",
         )
     }
@@ -84,10 +100,31 @@ def repair_environment(
     metadata = copy.deepcopy(sandbox.metadata())
     project = metadata["project_id"]
     previous = metadata.get("adapter_manifest", {}).get("version_id", "builtin")
-    prior_source = (
-        ("import json\n\n" + inspect.getsource(serialize_checklist))
-        if previous == "builtin"
-        else store.version(previous, project=project)["source"]
+    target = event.get("repair_target", SERIALIZER)
+    installed = artifacts(metadata.get("adapter_manifest", {}))
+    prior_source = installed.get(target, {}).get("source", "")
+    if target == SERIALIZER and not prior_source:
+        prior_source = "import json\n\n" + inspect.getsource(serialize_checklist)
+    context = investigation(target, sandbox, sandbox.events()) if target != SERIALIZER else {}
+    diagnosis_instructions = (
+        DIAGNOSIS_INSTRUCTIONS
+        if target == SERIALIZER
+        else (
+            "You are Epoch's OpenAI debugger. Inspect the supplied structural failure evidence, "
+            "authorized interface and trusted expectations. Raw directory rows and source document "
+            "bodies are retained locally, not supplied. Return unsupported when these facts do not "
+            "support the proposed cause. Generate a complete Python module for the specified target "
+            "and entrypoint only. No filesystem, network, credentials, effects, test edits or grants. "
+            "Code receives authorized JSON in Docker. Never hardcode identities or document IDs. "
+            "For missing lookup generate tool_contract with the supplied name, your description, and "
+            "input_schema_json/output_schema_json containing JSON strings of the supplied schemas. "
+            "schemas plus your accurate description. Classify zero/one/multiple QA-owner matches "
+            "as missing/found/ambiguous; return the exact found record or null. "
+            "For retrieval return an existing document ID, preserve explicit versions and historical "
+            "access, respect project scope and raise ValueError for missing or ambiguous guidance. "
+            "Return tool_contract=null for retrieval. Cite evidence UUIDs and disclose uncertainty. "
+            "This is a context hypothesis until independent original/fresh replay verifies it."
+        )
     )
     protected = protected_identity()
     before = sandbox.snapshot()
@@ -101,7 +138,8 @@ def repair_environment(
         "status": "investigating",
         "previous_version": previous,
         "attempts": [],
-        "editable_target": "checklist_serializer.py",
+        "editable_target": target,
+        "investigation": context,
         "source_before": prior_source,
         "source_before_sha256": digest(prior_source),
         "protected_baseline": protected,
@@ -150,18 +188,29 @@ def repair_environment(
             evidence = [
                 e
                 for e in sandbox.events()
-                if e["payload"].get("call_id") == event["payload"].get("call_id")
+                if target != SERIALIZER
+                or e["payload"].get("call_id") == event["payload"].get("call_id")
             ]
             proposal = call_debugger(
                 "repair",
-                DIAGNOSIS_INSTRUCTIONS,
+                diagnosis_instructions,
                 {
-                    "observed_failure": event,
-                    "related_events": evidence,
+                    "observed_failure": event
+                    if target == SERIALIZER
+                    else {"id": event["id"], "type": event["type"], "target": target},
+                    "authorized_surface": context,
+                    "target": target,
+                    "related_events": evidence
+                    if target == SERIALIZER
+                    else [{"id": e["id"], "type": e["type"]} for e in evidence],
                     "editable_source": prior_source,
-                    "service_contract": ChecklistPayload.model_json_schema(),
+                    "service_contract": ChecklistPayload.model_json_schema()
+                    if target == SERIALIZER
+                    else context,
                     "interface": (
                         "serialize_checklist(ticket_id, title, items, *, legacy=False) -> dict"
+                        if target == SERIALIZER
+                        else context["entrypoint"]
                     ),
                     "rejected_attempts": [
                         {
@@ -190,14 +239,21 @@ def repair_environment(
                 raise CandidateError(
                     "diagnosis_unsourced", "Debugger cited evidence outside this failure."
                 )
+            if proposal.target != target:
+                raise CandidateError("surface_denied", "Proposal changed an unauthorized surface.")
+            contract = (
+                normalize_tool_contract(proposal.tool_contract)
+                if target == LOOKUP and proposal.outcome == "repair"
+                else None
+            )
             if proposal.outcome != "repair":
                 raise CandidateError("repair_unsupported", proposal.diagnosis)
             diff = "".join(
                 difflib.unified_diff(
                     prior_source.splitlines(True),
                     proposal.source.splitlines(True),
-                    fromfile="before/checklist_serializer.py",
-                    tofile="after/checklist_serializer.py",
+                    fromfile="before/" + target,
+                    tofile="after/" + target,
                 )
             )
             version = store.stage(
@@ -208,6 +264,8 @@ def repair_environment(
                 parent=previous,
                 diagnosis=attempt["proposal"],
                 diff=diff,
+                target=target,
+                tool_contract=contract,
             )
             active_candidate = version["id"]
             attempt.update(
@@ -220,7 +278,7 @@ def repair_environment(
             emit("repair.candidate_staged", {"repair_id": report["id"], "candidate": version})
             proofs = attempt["proofs"]
             proofs.append({**isolation, "artifact_sha256": version["artifact_sha256"]})
-            proofs.extend(component_proofs(version, cancelled, budget))
+            proofs.extend(surface_proofs(version, sandbox, budget, cancelled))
             save()
             budget.check()
             if all(p["passed"] for p in proofs):
@@ -242,6 +300,7 @@ def repair_environment(
                     progress,
                     cancelled,
                 )
+                require_artifact_use(proof, target, version["id"])
                 proof["artifact_sha256"] = version["artifact_sha256"]
                 proofs.append(proof)
                 save()
@@ -250,19 +309,26 @@ def repair_environment(
                     fresh = Sandbox(
                         folder / "fresh" / "sandbox.sqlite3", str(record.task_id), fresh_id
                     )
+                    fresh_project = (
+                        ("phase6-verification" if project == "demo" else "demo")
+                        if target == LOOKUP
+                        else project
+                    )
                     fresh.initialize(
                         scenario=metadata["scenario"],
-                        project_id=project,
+                        project_id=fresh_project,
                         release=metadata["release"][:60] + "-verify-" + fresh_id[:6],
                         grants=metadata["grants"],
                     )
                     fresh.revise_requirements(
                         str(uuid4()),
-                        [*metadata["expected_items"], "Verify multilingual notes: 安全"],
+                        [*metadata["expected_items"], "Verify multilingual notes: 安全"]
+                        if len(metadata["expected_items"]) < 50
+                        else metadata["expected_items"],
                         metadata.get("required_message_phrases", []),
                         [{"kind": "trusted_verification", "source": "fresh-release-v1"}],
                     )
-                    fresh.select_environment(manifest)
+                    fresh.select_environment(verification_manifest(manifest, fresh_project))
                     plan = operation.plan.model_copy(
                         update={
                             "instructions": (
@@ -281,7 +347,10 @@ def repair_environment(
                         progress,
                         cancelled,
                     )
+                    require_artifact_use(proof, target, version["id"])
                     proof["artifact_sha256"] = version["artifact_sha256"]
+                    proof["verification_project"] = fresh_project
+                    proof["source_project"] = project
                     proofs.append(proof)
                     save()
             budget.check()
@@ -312,6 +381,10 @@ def repair_environment(
                         "Verified version published but run activation failed.",
                     ) from exc
                 record.environment_version = published["id"]
+                record.environment_artifacts = {
+                    name: item.get("origin_version", item["artifact_sha256"])
+                    for name, item in artifacts(published).items()
+                }
                 attempt.update(status="published", finished_at=stamp())
                 report.update(
                     status="published",

@@ -1,5 +1,11 @@
 # Current implementation status
 
+**Current code includes Phases 6 and 7 development, explicitly untested at the user's request.**
+Their runtime gates are implemented but have not been exercised. Earlier Phase 5
+results below do not validate these changes. API health/runtime now report phase 7.
+See [the handoff](../backend/docs/PHASES_6_7_HANDOFF.md).
+
+
 As of September 6, 2026, **backend Phases 1–5 are implemented and verified**. The release supervisor uses OpenAI `gpt-5.6-luna` for sourced plans and corrective instructions. Existing Hermes performs the business work through local MCP simulations. Opt-in Phase 5 repairs the checklist serializer through actual Luna generation, Docker isolation, trusted verification and durable project versions.
 
 ## Implemented facts
@@ -9,7 +15,7 @@ As of September 6, 2026, **backend Phases 1–5 are implemented and verified**. 
 - Hermes retains one actual conversation across automatic continuations. A separately submitted feedback/clarification operation starts a new conversation over the same saved sandbox. Updates preserve object IDs and links, and previous operation snapshots/results remain available.
 - Every ordinary explicit operation shares at most **20 authorized model requests and 600 seconds** across the debugger and Hermes. Opt-in repair gives each isolated verification its own 20/600 limit, with a 60-request/1,800-second overall ceiling and at most two candidates; primary work retains 20 requests/600 active seconds. The parent admits each executor request before network dispatch, including summaries/retries. Continuations cannot reset the budget. A new user operation has a new budget. Cancellation, deadline and baseline failures prevent completion.
 - The debugger uses structured output without tools. Trusted checks inspect saved outcomes after meaningful tool completions and pass boundaries. Plans, public activity, checks, interventions, user revisions and errors are retained; private reasoning is not exported.
-- The MCP facade exposes scoped simulations, including in-place checklist/message updates. Additive trusted criteria are administered by host code and excluded from MCP discovery. The evaluator is `release-state-v3`; historical Phase 3 artifacts keep their original criteria and outcomes. The opt-in Phase 5 controller can repair the checklist serializer; missing tools and context defects remain unsupported.
+- The MCP facade exposes scoped simulations, including in-place checklist/message updates. Additive trusted criteria are administered by host code and excluded from MCP discovery. The evaluator is `release-state-v3`; historical Phase 3 artifacts keep their original criteria and outcomes. The opt-in Phase 5 controller can repair the checklist serializer; generated missing-tool/context paths are now developed but untested.
 - HTTP provides run/status/state/trace/SSE, feedback, clarifications and revision history. Request IDs and expected revision IDs prevent duplicate/stale submissions. Restart marks incomplete operations interrupted and keeps partial effects; there is no automatic replay.
 - Locked dependencies, schemas, test doubles and real local MCP/server checks are included. Actual model evidence is recorded separately. The [frontend handoff](../backend/docs/FRONTEND_HANDOFF.md) and [supervision schemas](../backend/contracts/supervision-schemas.json) define Anushrut's integration surface.
 
@@ -23,7 +29,7 @@ The user's Phase 4 assignment selected OpenAI `gpt-5.6-luna`, a maximum of 20 ag
 
 ## Requirements awaiting implementation
 
-Missing-tool generation, context repair, Neatlogs/Workshop and the supervision/repair UI remain later work. Phase 5 uses restricted Linux Docker for generated Python; ordinary simulated services alone are not a secure execution boundary. The saved adapter and later-session benefit below establish narrow persistent environment repair, not general-purpose learning.
+Missing-tool and context code awaits acceptance; Neatlogs/Workshop and the supervision/repair UI remain later work. Phase 5 uses restricted Linux Docker for generated Python; ordinary simulated services alone are not a secure execution boundary. The saved adapter and later-session benefit below establish narrow persistent environment repair, not general-purpose learning.
 
 ## Verified scope and remaining assumptions
 
@@ -45,7 +51,7 @@ The server has no authentication, multi-user isolation or distributed workers. N
 | Frontend intake, explicit release execution and future-workflow fixtures | Phase 3 HTTP/browser integration verified with real storage/checks and an explicit test executor | Anushrut must integrate current supervision/repair contracts |
 | Automatic checkpoint planning, continuations and feedback revisions | Implemented; actual-model evidence retained | Phase 4 complete |
 | Debugger, isolated generated checklist repair, publication and rollback | Implemented; actual Docker/Luna/Hermes acceptance below | Phase 5 complete |
-| Generated missing tools and scoped context repairs | Unimplemented | Phases 6–7 |
+| Generated missing tools and scoped context repairs | Development delivered, untested | Phases 6–7 acceptance pending |
 | Neatlogs/Workshop and complete supervised repair demo | Unimplemented; existing Phase 3 UI connected | Phase 8 |
 | Live business-service connections and production operation | Deferred | Separate future scope |
 
@@ -363,3 +369,24 @@ is identical to pulled main, and the original checkout's unfinished merge remain
 untouched. The previously tested backend source is unchanged; its 296-test result
 is retained rather than claiming new model inference. Publication checks verify
 Git ancestry, unchanged frontend/direction, exported contracts and authored diffs.
+
+## Phases 6 and 7 development publication
+
+The user explicitly requested both phases and a push without running tests. Work
+starts from main `28d922a` on `codex/backend-phases-6-7`. Changes implement artifact
+bundles, generated QA-owner lookup contracts/code, scoped dynamic discovery,
+portable lookup reuse, generated current/historical runbook selection, supported
+failure detection, prior-artifact runtime regressions and safe notice correction.
+Existing model, Docker, budgets and publication/rollback mechanisms remain in use.
+
+No tests, lint checks, model calls, Docker probes or acceptance demos were run.
+Python files were formatted and shared schemas generated as development outputs;
+these are not runtime validation. The implementation is unverified, with no new
+passing test count or integration claim. Runtime verification is still required
+before the product publishes a generated artifact. Raw directory/runbook content
+was removed from the proposed new diagnosis payload after an approval rejection;
+only structural facts, digests, UUIDs and schemas are added to that debugger input.
+
+Frontend and original direction remain outside the edit scope. No new settings,
+credentials, dependencies or manual database migration are required. Anushrut owns
+phase-7 frontend compatibility and acceptance. Phase 8 remains unstarted.

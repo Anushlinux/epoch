@@ -185,7 +185,7 @@ def documents() -> dict[Path, dict]:
     return {
         BACKEND / "contracts" / "repair-schemas.json": {
             "schema_version": 1,
-            "description": "Phase 5 candidate proposals, rollback requests and host repair limits.",
+            "description": "Phase 7 generated artifact proposals, rollback requests and host repair limits; Phases 6 and 7 untested.",
             "models": {
                 name: value.model_json_schema()
                 for name, value in vars(repair).items()
@@ -197,7 +197,7 @@ def documents() -> dict[Path, dict]:
         BACKEND / "contracts" / "execution-schemas.json": {
             "schema_version": 1,
             "description": (
-                "Phase 5 run, trace, supervision and opt-in checklist repair interfaces."
+                "Phase 7 run, trace, supervision and opt-in multi-surface repair interfaces (untested additions)."
             ),
             "models": {
                 name: value.model_json_schema()

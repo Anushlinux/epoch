@@ -1,5 +1,5 @@
 {
-  "description": "Phase 5 run, trace, supervision and opt-in checklist repair interfaces.",
+  "description": "Phase 7 run, trace, supervision and opt-in multi-surface repair interfaces (untested additions).",
   "models": {
     "ExecutionRecord": {
       "$defs": {
@@ -944,6 +944,13 @@
           "title": "Created At",
           "type": "string"
         },
+        "environment_artifacts": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Environment Artifacts",
+          "type": "object"
+        },
         "environment_version": {
           "default": "builtin",
           "title": "Environment Version",
@@ -1221,6 +1228,12 @@
           "title": "Debugger",
           "type": "object"
         },
+        "development_validation": {
+          "const": "phases_6_7_untested",
+          "default": "phases_6_7_untested",
+          "title": "Development Validation",
+          "type": "string"
+        },
         "execution_enabled": {
           "title": "Execution Enabled",
           "type": "boolean"
@@ -1247,8 +1260,8 @@
           "type": "integer"
         },
         "phase": {
-          "const": 5,
-          "default": 5,
+          "const": 7,
+          "default": 7,
           "title": "Phase",
           "type": "integer"
         },
@@ -1257,6 +1270,13 @@
           "default": true,
           "title": "Repair Opt In",
           "type": "boolean"
+        },
+        "repair_targets": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Repair Targets",
+          "type": "array"
         },
         "simulation_only": {
           "const": true,

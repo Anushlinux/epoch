@@ -1,6 +1,6 @@
 # Backend implementation phases
 
-Status: Phases 1–5 complete; Phases 6–8 unstarted. Owner: Rajdeep. Anushrut owns the separate UI and can use the [published backend contracts](docs/FRONTEND_HANDOFF.md). This implementation changes no frontend files. See [setup](README.md) and the [Phase 4 validation record](../docs/status.md#phase-4-validation-record).
+Status: Phases 1–5 have recorded acceptance; Phases 6–7 development delivered without testing by explicit user request; Phase 8 unstarted. Owner: Rajdeep. Anushrut owns the separate UI and can use the [published backend contracts](docs/FRONTEND_HANDOFF.md). This implementation changes no frontend files. See [setup](README.md) and the [Phase 4 validation record](../docs/status.md#phase-4-validation-record).
 
 All backend source, package configuration, tests, fixtures, development scripts, and runtime setup belong under `backend/`. Secrets and generated runtime data must not be committed. Shared repository instructions and product documentation remain at the repository root and under `docs/`.
 
@@ -86,6 +86,8 @@ Existing brief: [Task 04](../docs/tasks/04-tool-repair.md).
 
 ## Phase 6 — Missing-tool generation
 
+**Development delivered, untested:** generated lookup contract/code, scoped discovery, cross-project runtime verification and portable published lookup artifacts. Acceptance checks below have not been run. See [handoff](docs/PHASES_6_7_HANDOFF.md).
+
 - Confirm a needed capability is absent from the permitted catalog.
 - Generate and test a QA-owner lookup adapter against the already authorized directory service, including its description and schema.
 - Publish it through the same repair machinery and prove Hermes discovers and invokes it without executor changes.
@@ -95,6 +97,8 @@ Existing brief: [Task 04](../docs/tasks/04-tool-repair.md).
 Existing brief: [Task 05](../docs/tasks/05-missing-tool.md).
 
 ## Phase 7 — Context repair
+
+**Development delivered, untested:** evidence-gated selector generation, historical/scoped retrieval, notice destination correction and runtime verification. Acceptance checks below have not been run. See [handoff](docs/PHASES_6_7_HANDOFF.md).
 
 - Diagnose a failure caused by unsuitable retrieved guidance using the documents actually supplied to Hermes.
 - Generate and verify a scoped retrieval-policy change while keeping access controls and source documents intact.
@@ -116,4 +120,4 @@ Existing brief: [Task 07](../docs/tasks/07-demo-evidence.md).
 
 ## Phase handoff
 
-For every phase report: implemented scope, changed files, exact checks and outcomes, evidence locations, known limitations, and whether its pass condition is met. Keep user-task success, isolated verification, and persistent-learning claims separate. Report Phase 4's completed evidence before any push, as requested by the user. Phase 5 was explicitly assigned and is complete. Phases 6–8 require separate implementation requests and have not started.
+For every phase report: implemented scope, changed files, exact checks and outcomes, evidence locations, known limitations, and whether its pass condition is met. Keep user-task success, isolated verification, and persistent-learning claims separate. Report Phase 4's completed evidence before any push, as requested by the user. Phase 5 was explicitly assigned and is complete. Phases 6 and 7 were explicitly assigned and developed without testing as requested. Phase 8 remains unassigned.

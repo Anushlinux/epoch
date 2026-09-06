@@ -532,7 +532,7 @@ def run_supervised(
                 if record.request.repair_enabled and not operation.repairs:
                     from epoch_backend.repair_controller import repair_environment, supported_error
 
-                    trigger = supported_error(sandbox.events(after=operation_event_start))
+                    trigger = supported_error(sandbox.events(after=operation_event_start), sandbox)
                     if trigger is not None:
                         record.status = operation.status = "repairing"
                         persist()
@@ -556,10 +556,13 @@ def run_supervised(
                         session.account_verification_pause(budget.paused_seconds - previous_pause)
                         metadata = sandbox.metadata()
                         instruction = (
-                            "The controller verified and activated a new checklist adapter. "
+                            "The controller verified and activated an environment change. Rediscover available "
+                            "tools and reread applicable context using the ordinary interfaces. "
                             "Retry the failed operation using the existing objects and original "
                             "idempotency keys where arguments are unchanged. Complete the original "
-                            "requirements without duplicate effects.\n" + record.brief.instructions
+                            "requirements without duplicate effects. Update an existing notice if its destination "
+                            "was wrong; preserve its links and identity.\n"
+                            + record.brief.instructions
                         )
                         intervention = SupervisorIntervention(
                             id=uuid4(),

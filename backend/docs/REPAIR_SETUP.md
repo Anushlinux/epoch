@@ -1,5 +1,7 @@
 # Phase 5: generated checklist repair
 
+The Docker/settings guidance still applies. The current Phase 6/7 extensions are developed but untested; see [their handoff](PHASES_6_7_HANDOFF.md).
+
 Epoch can detect a checklist serializer contract failure, ask the existing OpenAI
 `gpt-5.6-luna` debugger for a sourced Python correction, verify it, and save the
 accepted adapter for later release runs in that project. Hermes still creates the

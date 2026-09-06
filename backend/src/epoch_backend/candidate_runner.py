@@ -30,7 +30,7 @@ resource.setrlimit(resource.RLIMIT_CPU, (2, 2))
 payload = json.load(sys.stdin)
 namespace = {"__name__": "epoch_candidate"}
 exec(compile(payload["source"], "checklist_serializer.py", "exec"), namespace)
-result = namespace["serialize_checklist"](**payload["arguments"])
+result = namespace[payload.get("entrypoint", "serialize_checklist")](**payload["arguments"])
 print(json.dumps(result, allow_nan=False))
 """
 
@@ -136,11 +136,16 @@ class CandidateRunner:
         arguments: dict,
         *,
         timeout: float = 12,
+        entrypoint: str = "serialize_checklist",
         cancelled: threading.Event | None = None,
     ) -> dict:
         if not isinstance(source, str) or not 0 < len(source.encode()) <= MAX_SOURCE_BYTES:
             raise CandidateError("invalid_candidate", "Candidate source exceeds its allowed size.")
-        payload = json.dumps({"source": source, "arguments": arguments}, allow_nan=False).encode()
+        if entrypoint not in {"serialize_checklist", "lookup_owner", "select_runbook"}:
+            raise CandidateError("invalid_entrypoint", "Candidate entrypoint is not authorized.")
+        payload = json.dumps(
+            {"source": source, "arguments": arguments, "entrypoint": entrypoint}, allow_nan=False
+        ).encode()
         if len(payload) > 100_000:
             raise CandidateError("invalid_candidate", "Candidate input exceeds its allowed size.")
         if (

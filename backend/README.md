@@ -1,5 +1,7 @@
 # Epoch backend
 
+**Current code: Phase 7, with Phase 6/7 additions untested by explicit user request.** See [the development/integration handoff](docs/PHASES_6_7_HANDOFF.md). Earlier validation below applies to the recorded earlier code. No new environment settings are required.
+
 The backend provides durable task intake, simulated release services, scoped MCP tools, trusted outcome checks and bounded execution through an existing Hermes installation. Phase 4 adds optional OpenAI `gpt-5.6-luna` supervision: sourced release checkpoints, targeted Hermes continuations, clarification and explicit feedback revisions. Intake stays `pending` until a release run is started. Phase 5 adds opt-in generated checklist repair with isolated verification, durable versions and rollback; see [repair setup](docs/REPAIR_SETUP.md).
 
 Rajdeep owns this backend. Anushrut's UI handoff is in [FRONTEND_HANDOFF.md](docs/FRONTEND_HANDOFF.md). See [technical decisions](DECISIONS.md), [phase boundaries](PHASES.md), and the repository [status](../docs/status.md).

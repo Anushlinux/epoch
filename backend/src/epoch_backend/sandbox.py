@@ -35,6 +35,7 @@ TOOL_NAMES = (
     "messages.update",
     "messages.list",
     "runbooks.read",
+    "directory.read",
 )
 SCENARIOS = ("control", "broken_checklist", "missing_lookup", "outdated_context")
 
@@ -96,6 +97,9 @@ class Sandbox:
     def select_environment(self, manifest: dict, *, expected_version: str | None = None):
         """Host-only version activation. Executors cannot call this through MCP."""
         from epoch_backend.candidate_runner import RUNNER_VERSION, digest
+        from epoch_backend.repair_surfaces import artifacts
+
+        artifacts(manifest)
 
         if manifest.get("version_id") != "builtin":
             if (
@@ -135,14 +139,14 @@ class Sandbox:
             "items": items,
             "legacy": metadata["scenario"] == "broken_checklist",
         }
-        if manifest["version_id"] == "builtin":
-            return serialize_checklist(**args)
-        from epoch_backend.candidate_runner import CandidateError, CandidateRunner, digest
+        from epoch_backend.repair_surfaces import SERIALIZER, artifacts, invoke
+        from epoch_backend.candidate_runner import CandidateError
 
-        if digest(manifest["source"]) != manifest["artifact_sha256"]:
-            raise SandboxError("artifact_changed", "Pinned executable digest mismatch.")
+        artifact = artifacts(manifest).get(SERIALIZER)
+        if artifact is None:
+            return serialize_checklist(**args)
         try:
-            wire = CandidateRunner(manifest["image_id"]).run(manifest["source"], args)
+            wire = invoke(artifact, SERIALIZER, args)
         except CandidateError as error:
             raise SandboxError(error.code, error.message) from error
         # Generated code never owns service selection, object identity or grants.
@@ -611,11 +615,21 @@ class Sandbox:
 
         return self._mutate("messages.send", idempotency_key, args, create)
 
-    def update_message(self, message_id: str, text: str, idempotency_key: str) -> dict:
+    def update_message(
+        self, message_id: str, text: str, idempotency_key: str, channel: str | None = None
+    ) -> dict:
         message_id, text = _text(message_id, "message_id"), _text(text, "text", 8000)
         args = {"message_id": message_id, "text": text}
+        if channel is not None:
+            channel = _text(channel, "channel", 100)
+            args["channel"] = channel
 
         def update(connection, metadata):
+            if channel is not None and channel != metadata["qa_channel"]:
+                raise SandboxError(
+                    "access_denied",
+                    "Destination correction is limited to this task's authoritative QA channel.",
+                )
             previous = self._existing_object(connection, metadata, "messages", message_id)
             allowed = {
                 item["url"]
@@ -625,7 +639,7 @@ class Sandbox:
             }
             if any(link not in allowed for link in previous["links"]):
                 raise SandboxError("invalid_reference", "Message references unresolved objects.")
-            return "messages", {**previous, "text": text}
+            return "messages", {**previous, "text": text, "channel": channel or previous["channel"]}
 
         return self._mutate("messages.update", idempotency_key, args, update, update=True)
 
@@ -643,6 +657,25 @@ class Sandbox:
     def list_messages(self) -> list[dict]:
         return self._list("messages")
 
+    def lookup_qa_owner(self, project_id: str) -> dict:
+        from epoch_backend.repair_surfaces import LOOKUP, artifacts, invoke, lookup_result
+        from epoch_backend.candidate_runner import CandidateError
+
+        metadata = self.metadata()
+        if "directory.read" not in metadata["grants"]:
+            raise SandboxError("access_denied", "Directory access is not granted.")
+        if _text(project_id, "project_id", 100) != metadata["project_id"]:
+            raise SandboxError("access_denied", "Directory lookup is scoped to this project.")
+        artifact = artifacts(metadata.get("adapter_manifest", {})).get(LOOKUP)
+        if artifact is None:
+            raise SandboxError("tool_not_found", "No generated directory adapter is installed.")
+        records = [r for r in self._list("directory") if r["project_id"] == project_id]
+        try:
+            result = invoke(artifact, LOOKUP, {"records": records, "project_id": project_id})
+            return lookup_result(result, records, project_id)
+        except CandidateError as exc:
+            raise SandboxError(exc.code, exc.message) from exc
+
     def read_runbook(self, purpose: str = "current", version: str | None = None) -> dict:
         if purpose not in ("current", "historical") or version not in (None, "v1", "v2"):
             raise SandboxError(
@@ -650,6 +683,41 @@ class Sandbox:
             )
         with closing(self._connect()) as connection:
             metadata = self._metadata(connection)
+            if "runbooks.read" not in metadata["grants"]:
+                raise SandboxError("access_denied", "Runbook access is not granted.")
+            from epoch_backend.repair_surfaces import CONTEXT, artifacts, invoke, selected_document
+            from epoch_backend.candidate_runner import CandidateError
+
+            artifact = artifacts(metadata.get("adapter_manifest", {})).get(CONTEXT)
+            if artifact:
+                documents = [
+                    d
+                    for d in self._objects(connection, "runbooks")
+                    if d["project_id"] == metadata["project_id"]
+                ]
+                try:
+                    result = invoke(
+                        artifact,
+                        CONTEXT,
+                        {
+                            "documents": documents,
+                            "project_id": metadata["project_id"],
+                            "purpose": purpose,
+                            "version": version,
+                        },
+                    )
+                    document = selected_document(
+                        result, documents, metadata["project_id"], purpose, version
+                    )
+                except CandidateError as exc:
+                    raise SandboxError(exc.code, exc.message) from exc
+                return {
+                    **document,
+                    "selection_rule_version": artifact.get(
+                        "origin_version", artifact["artifact_sha256"]
+                    ),
+                    "requested_purpose": purpose,
+                }
             selected = version or (
                 "v1"
                 if purpose == "historical" or metadata["scenario"] == "outdated_context"

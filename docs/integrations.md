@@ -91,3 +91,10 @@ Live business-service checks require a separately authorized scope and are not n
 ## Completion rule
 
 Only checked items with reproducible execution evidence can support runtime compatibility claims. Partial integrations stay partial in [status](status.md). Preserve the complete verified local loop if integration breadth must shrink, and state exactly what was omitted.
+
+## Phase 6/7 development status
+
+Generated directory/retrieval code and runtime verification gates are implemented
+but untested by explicit user instruction. They use the same local simulations,
+Docker image and existing Luna/Hermes route; no new live integration is claimed.
+See [handoff](../backend/docs/PHASES_6_7_HANDOFF.md) before integration.
