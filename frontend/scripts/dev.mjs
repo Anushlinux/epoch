@@ -29,6 +29,7 @@ const routes = new Map([
   ["/chat", "/index.html"],
   ["/debugger", "/index.html"],
   ["/incidents", "/index.html"],
+  ["/traces", "/index.html"],
   ["/demo/chat", "/fixtures.html"],
   ["/demo/debugger", "/fixtures.html"],
 ]);

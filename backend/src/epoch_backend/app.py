@@ -22,6 +22,7 @@ from epoch_backend.incident_api import incident_router
 from epoch_backend.sandbox import SandboxError
 from epoch_backend.storage import RequestConflict, SQLiteStore
 from epoch_backend.telemetry_api import telemetry_router
+from epoch_backend.trace_api import trace_router
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(execution_router(execution))
     app.include_router(incident_router(execution.incidents))
     app.include_router(telemetry_router(execution.telemetry))
+    app.include_router(trace_router(execution.telemetry.traces))
 
     @app.exception_handler(CandidateError)
     async def pdf_error(request: Request, exc: CandidateError):

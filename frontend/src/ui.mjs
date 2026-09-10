@@ -47,7 +47,7 @@ export function urlFor(demo, page, task = "", hash = "") {
   return `${demo ? "/demo" : ""}/${page}${task ? `?task=${encodeURIComponent(task)}` : ""}${hash ? `#${encodeURIComponent(hash)}` : ""}`;
 }
 export function currentPage() {
-  return location.pathname.endsWith("/incidents") ? "incidents" : location.pathname.endsWith("/debugger") ? "debugger" : "chat";
+  return location.pathname.endsWith("/traces") ? "traces" : location.pathname.endsWith("/incidents") ? "incidents" : location.pathname.endsWith("/debugger") ? "debugger" : "chat";
 }
 export function routeLink(demo, page, task, label, glyph = "", extra = "") {
   return `<a href="${urlFor(demo, page, task)}" data-route ${extra}>${glyph ? icon(glyph) : ""}${label}</a>`;
@@ -67,6 +67,8 @@ export function shell({
   debuggerChatId = "",
   sessionsLabel = "",
 }) {
+  if (!demo) bottom = `<a class="nav-item ${page === 'traces' ? 'selected' : ''}" href="/traces" ${page === 'traces' ? 'aria-current="page"' : ''}>${icon('activity')}<span>Traces</span></a>` + bottom;
+  const footerMessage = demo ? "No tools or tests execute" : page === "traces" ? "Trace explorer · read-only" : page === "chat" ? "Hermes chat · simulated tools" : "Debugger · runs on request";
   return `<aside class="sidebar" id="sidebar" aria-label="Workspace navigation"><div class="sidebar-brand"><a href="${urlFor(demo, "chat")}" data-route aria-label="Epoch chat"><span class="brand-mark">E</span><span>epoch</span></a><button class="icon-button mobile-close" data-action="close-nav" aria-label="Close navigation">${icon("close")}</button></div>
     <nav class="primary-nav"><button class="nav-item" data-action="new" ${locked ? "disabled" : ""}>${icon("plus")}<span>New chat</span><kbd>⌘ N</kbd></button>${debuggerChatId ? `<a data-route href="/debugger?chat=${encodeURIComponent(debuggerChatId)}" class="nav-item ${page === "debugger" ? "selected" : ""}" ${page === "debugger" ? 'aria-current="page"' : ""}>${icon("pipeline")}Debugger</a>` : routeLink(demo, "debugger", demo ? task : "", "Debugger", "pipeline", `class="nav-item ${page === "debugger" ? "selected" : ""}" ${page === "debugger" ? 'aria-current="page"' : ""}`)}${!demo ? routeLink(false, "incidents", "", "Incidents", "activity", `class="nav-item ${page === "incidents" ? "selected" : ""}" ${page === "incidents" ? 'aria-current="page"' : ""}`) : ""}</nav>
     <div class="session-heading"><span>${escape(sessionsLabel || (demo ? "DEMO SESSION" : page === "chat" ? "CHATS" : "EVALUATIONS"))}</span>${!demo ? `<button class="icon-button" id="refresh-list" data-action="refresh-list" aria-label="Refresh list">${icon("refresh")}</button>` : ""}</div><div class="session-list">${nav}</div>
@@ -75,7 +77,7 @@ export function shell({
     <div class="shell"><header class="topbar"><div class="topbar-left"><button class="icon-button" data-action="toggle-nav" aria-label="Toggle navigation" aria-controls="sidebar" aria-expanded="false">${icon("panel")}</button>${page === "debugger" ? debuggerChatId ? `<a data-route class="back-link" href="/chat?chat=${encodeURIComponent(debuggerChatId)}">${icon("back")}Back to chat</a>` : routeLink(demo, "chat", demo ? task : "", "Back to chat", "back", 'class="back-link"') : `<span class="header-title">${escape(title)}</span>`}</div><div class="topbar-actions">${demo ? '<span class="demo-label">Demo · authored data</span>' : ""}${status}${actions}</div></header>
     ${demo ? '<div class="demo-strip">All progress, repairs, tests and artifacts are authored examples. No task is executing.</div>' : ""}
     <main id="workspace" tabindex="-1" class="workspace ${page !== "chat" ? "debug-workspace" : "chat-workspace"}"><div id="page-scroll" class="page-scroll">${content}</div>${composer}</main>
-    <footer class="statusbar"><span>${demo ? "Local demo" : "Local workspace"}<span class="footer-dot">·</span>${demo ? "No tools or tests execute" : page === "chat" ? "Hermes chat · simulated tools" : "Debugger · runs on request"}</span><span>epoch <span class="footer-dot">/</span> ${page}</span></footer></div>`;
+    <footer class="statusbar"><span>${demo ? "Local demo" : "Local workspace"}<span class="footer-dot">·</span>${footerMessage}</span><span>epoch <span class="footer-dot">/</span> ${page}</span></footer></div>`;
 }
 
 // Restore native input selection, disclosures, and independent page scroll positions.
@@ -135,7 +137,7 @@ export class View {
     if (!focus && selection && field?.setSelectionRange)
       field.setSelectionRange(...selection);
     this.root.querySelectorAll("textarea[data-autogrow]").forEach(grow);
-    document.title = `Epoch · ${currentPage() === "incidents" ? "Incidents" : currentPage() === "debugger" ? "Debugger" : "Chat"}`;
+    document.title = `Epoch · ${currentPage() === "traces" ? "Traces" : currentPage() === "incidents" ? "Incidents" : currentPage() === "debugger" ? "Debugger" : "Chat"}`;
     syncNav();
   }
 }

@@ -1,5 +1,10 @@
 # Incidents and Neatlogs setup
 
+For independent local SDK collection and trace browsing, use the new
+[trace explorer profile](TRACE_EXPLORER.md). It does not initialize incident analysis
+or execution. That feature is implemented but unverified; the incident flow below
+continues to describe the regular server.
+
 Epoch groups saved execution evidence into inspectable incidents. Slack/support
 JSON imports and Neatlogs traces add related evidence. Analyze and question actions
 use the existing Luna route only when explicitly requested. Opening an incident

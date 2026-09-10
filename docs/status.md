@@ -1,5 +1,36 @@
 # Current implementation status
 
+## Neatlogs local trace explorer, feature Phases 1–2 — September 10, 2026
+
+**Implemented but unverified, by explicit user request.** This is a separate feature
+assignment, not completion of the older backend repair phases. Branch:
+`codex/neatlogs-local-debugger`. See [setup and contracts](../backend/docs/TRACE_EXPLORER.md)
+and the [bounded assignment](../backend/docs/TRACE_EXPLORER_PLAN.md).
+
+Added a local-only collector profile, normalized SQLite span/search projection,
+restartable backfill, immutable-ID conflict receipts, trace list/detail APIs, CLI
+inspection and `/traces` UI with filtering, hierarchy, original evidence and visible
+collection/indexing gaps. The SDK example executes synthetic invoice tools without
+a model or live refund. The example was authored but not executed. Existing raw
+telemetry and task/repair databases are preserved.
+
+`uv sync --frozen --cache-dir .uv-cache` completed successfully without changing the
+lockfile. Changes were reviewed statically and diff formatting checked. No tests,
+syntax/lint commands, SDK probes, example executions, server/browser acceptance or
+model calls were run. No runtime compatibility, persistence or UI acceptance claim
+is made. Full validation remains pending.
+
+The original direction document remains byte-for-byte unchanged, including its
+three existing Markdown hard breaks. `git diff --check` passed for tracked changes;
+the same formatting check passed against new files using `--no-index`.
+
+Required setup: synchronize locked dependencies and provide process-only
+`EPOCH_TELEMETRY_TOKEN` to both collector and SDK. The `trace-debugger` CLI profile
+requires cloud forwarding disabled. An isolated `EPOCH_DATA_DIR` is recommended;
+schema additions are automatic and preserve old evidence. No new credential, Docker
+or model setup is required. AI questions, similar-run search, comparison, MCP,
+replay, repairs and incident enhancements require later explicit authorization.
+
 ## Inline chat activity restored — September 7, 2026
 
 User feedback reversed the separate activity panel. Hermes now shows its working

@@ -1,5 +1,10 @@
 # Epoch backend
 
+**Local trace explorer:** [setup and usage](docs/TRACE_EXPLORER.md) covers Neatlogs
+capture, persistent original spans, search and the standalone `trace-debugger`
+server profile. Phases 1–2 are implemented but unverified; testing was explicitly
+skipped. No model is required and later feature phases are outside this delivery.
+
 **Current code: Phase 7, with Phase 6/7 additions untested by explicit user request.** See [the development/integration handoff](docs/PHASES_6_7_HANDOFF.md). Earlier validation below applies to the recorded earlier code. Incident and Neatlogs integration adds optional telemetry flags and process-only credentials; see [incident setup](docs/INCIDENTS_SETUP.md).
 
 The backend provides durable task intake, simulated release services, scoped MCP tools, trusted outcome checks and bounded execution through an existing Hermes installation. Phase 4 adds optional OpenAI `gpt-5.6-luna` supervision: sourced release checkpoints, targeted Hermes continuations, clarification and explicit feedback revisions. Intake stays `pending` until a release run is started. Phase 5 adds opt-in generated checklist repair with isolated verification, durable versions and rollback; see [repair setup](docs/REPAIR_SETUP.md).

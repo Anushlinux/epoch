@@ -175,6 +175,7 @@ function render(options = {}) {
         : "Not connected.");
 }
 async function routeChanged() {
+  if (location.pathname === "/traces") { location.assign(location.href); return; }
   const query = new URLSearchParams(location.search);
   if (currentPage() === "chat" || (currentPage() === "debugger" && !query.has("task") && query.get("mode") !== "release")) { location.assign(location.href); return; }
   incidentProjectDraft = null;

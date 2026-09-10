@@ -23,13 +23,18 @@ def main(argv: list[str] | None = None) -> int:
     # Intake and explicit workflow commands share validated local configuration.
     subparsers.add_parser("check-config", help="Validate settings without creating storage")
     subparsers.add_parser("init-db", help="Initialize durable local task storage")
-    subparsers.add_parser("serve", help="Start the local intake and execution API")
+    serving = subparsers.add_parser("serve", help="Start the local Epoch API")
+    serving.add_argument("--profile", choices=["default", "trace-debugger"], default="default",
+                         help="trace-debugger starts only local collection and browsing")
     from epoch_backend.workflow_cli import add_commands
 
     add_commands(subparsers)
     from epoch_backend.incident_cli import add_incident_arguments
 
     add_incident_arguments(subparsers)
+    from epoch_backend.trace_cli import add_trace_arguments
+
+    add_trace_arguments(subparsers)
     args = parser.parse_args(argv)
 
     try:
@@ -50,6 +55,16 @@ def main(argv: list[str] | None = None) -> int:
         print(settings.model_dump_json(indent=2))
         return 0
     try:
+        if args.command in {"traces", "trace"}:
+            from epoch_backend.trace_cli import handle_trace_command
+
+            return handle_trace_command(args, settings)
+        if args.command == "serve" and args.profile == "trace-debugger":
+            from epoch_backend.trace_app import create_trace_app
+
+            uvicorn.run(create_trace_app(settings), host=settings.host, port=settings.port,
+                        log_level=settings.log_level)
+            return 0
         if args.command in {
             "incidents",
             "incident",

@@ -1,5 +1,13 @@
 # Implementation tasks: Anushrut and Rajdeep
 
+**September 10 feature assignment:** the user assigned Rajdeep both backend and UI
+for [Neatlogs trace explorer Phases 1–2](../../backend/docs/TRACE_EXPLORER_PLAN.md),
+with testing explicitly skipped. This scope is local SDK capture/storage and trace
+browsing/search only. [Setup](../../backend/docs/TRACE_EXPLORER.md) and
+[status](../status.md) record the unverified delivery. Later trace-debugger phases
+remain gated on a separate user instruction; historical repair phase acceptance
+is unchanged.
+
 **Tasks 01–03 are implemented and verified; Phase 4 actual-model evidence is recorded in [status](../status.md#phase-4-validation-record). Task 04 (Phase 5) is implemented with [actual repair evidence](../status.md#phase-5-validation-record); Tasks 05–06 have untested development delivered by explicit user request; Task 07 remains unimplemented.** Rajdeep owns the backend. Anushrut owns the separate UI and can connect to the [live endpoint handoff](../../backend/docs/FRONTEND_HANDOFF.md). A copied prompt authorizes only its assigned scope. Follow the smaller [backend phases](../../backend/PHASES.md); Task 03 spans Phases 3 and 4.
 
 Read [AGENTS.md](../../AGENTS.md), [direction](../direction.md), [status](../status.md), [architecture](../architecture.md), and the [integration checklist](../integrations.md) before starting. Preserve the direction unchanged.

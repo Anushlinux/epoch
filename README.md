@@ -1,5 +1,11 @@
 # Epoch
 
+**New, unverified:** [Neatlogs trace explorer Phases 1–2](backend/docs/TRACE_EXPLORER.md)
+adds local SDK capture, persistent original spans, searchable inputs/outputs and a
+read-only `/traces` interface. `serve --profile trace-debugger` runs collection and
+browsing without task execution or repairs. Testing was explicitly skipped; AI
+questions and later feature phases remain unimplemented.
+
 **Current integration:** the frontend connects to the Phase 7 backend. Incident grouping, on-demand Luna investigation, JSON evidence imports and local Neatlogs ingestion with optional cloud export extend the existing repair flow. See [setup](backend/docs/INCIDENTS_SETUP.md) and [validation status](docs/status.md). Full Phase 6/7 model-backed repair acceptance remains pending; the API still reports phase 7.
 
 Epoch pairs Hermes chat with an explicitly invoked debugger. The user chats with Hermes normally, then opens **Debugger** for that conversation and starts an investigation when they want to understand a failure. The debugger uses saved requests and observed execution evidence. Release supervision and verified environment repair remain separate, supported example workflows; they are not prerequisites for chatting. See the [current change plan](docs/CHAT_DEBUGGER_PLAN.md).

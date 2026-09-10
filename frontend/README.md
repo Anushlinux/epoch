@@ -1,5 +1,10 @@
 # Epoch frontend
 
+The new [local trace explorer](../backend/docs/TRACE_EXPLORER.md) at `/traces`
+shows captured Neatlogs executions, searchable inputs/outputs and original evidence.
+It supports the standalone collector profile. This addition is implemented but
+unverified; browser and unit testing were explicitly skipped.
+
 Epoch opens with a normal Hermes conversation. The debugger investigates a selected conversation only after an explicit action. Release execution and the interactive Atlas fixture remain separate, clearly labeled examples. The incident workspace supports broader imported evidence.
 
 ## Run
@@ -23,6 +28,7 @@ The host uses Node's built-in HTTP server and binds to loopback. It serves only 
 | `/debugger?mode=release` | Separate release evaluation example using local simulated services |
 | `/debugger?task=UUID` | Actual run history, sourced checkpoints, activity and simulated state |
 | `/incidents` | Incident list, source evidence, related runs, recurrence and explicit Luna analysis |
+| `/traces` | Local trace search, expandable span hierarchy and original evidence; no model calls |
 | `/demo/chat` | Existing Atlas 2.4 release fixture as a conversation |
 | `/demo/debugger` | The same demo's failure, candidate, checks, publication and continuation |
 | `/`, `/index.html` | Compatibility aliases for real chat |

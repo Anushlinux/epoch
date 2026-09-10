@@ -22,6 +22,8 @@ from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import (
     ExportTraceServiceResponse,
 )
 
+from epoch_backend.trace_store import TraceStore
+
 MAX_BYTES = 4 * 1024 * 1024
 MAX_SPANS = 1000
 CLOUD_ENDPOINT = "https://ingest.neatlogs.com/v1/traces"
@@ -129,9 +131,10 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 class TelemetryService:
-    def __init__(self, settings, incidents):
+    def __init__(self, settings, incidents=None):
         self.settings, self.incidents = settings, incidents
         self.path = settings.data_dir / "telemetry.sqlite3"
+        self.traces = TraceStore(self.path)
         self.enabled = getattr(settings, "telemetry_enabled", True)
         self.cloud_enabled = getattr(settings, "neatlogs_cloud_enabled", False)
         self._token = os.environ.get("EPOCH_TELEMETRY_TOKEN", "").strip()
@@ -171,15 +174,24 @@ class TelemetryService:
                 )
             connection.execute("""CREATE TABLE IF NOT EXISTS native_cursors (
                 run_id TEXT PRIMARY KEY, sequence INTEGER NOT NULL)""")
+            connection.execute("""CREATE TABLE IF NOT EXISTS span_conflicts (
+                identity TEXT NOT NULL, payload_sha256 TEXT NOT NULL,
+                local_source BLOB NOT NULL, received_at TEXT NOT NULL,
+                PRIMARY KEY(identity,payload_sha256))""")
             # A process may have died during export; retry the same stable IDs, bounded.
             connection.execute("""UPDATE spans SET status=CASE WHEN attempts>=3 THEN 'failed'
                 ELSE 'pending' END, error='delivery_interrupted' WHERE status='sending'""")
             if self.enabled and self.cloud_enabled and self._key:
                 connection.execute("UPDATE spans SET status='pending' WHERE status='disabled'")
+        try:
+            self.traces.initialize()
+            self.traces.project_batch()
+        except Exception:
+            self.traces.warning = "Trace index initialization failed; original collection remains available."
         self._ready = True
-        if self.enabled:
-            self._thread = threading.Thread(target=self._worker, daemon=True)
-            self._thread.start()
+        # Index retained evidence even when new collection is disabled.
+        self._thread = threading.Thread(target=self._worker, daemon=True)
+        self._thread.start()
 
     def close(self):
         self._stop.set()
@@ -224,6 +236,7 @@ class TelemetryService:
                     if (
                         len(span.trace_id) != 16
                         or len(span.span_id) != 8
+                        or len(span.parent_span_id) not in {0, 8}
                         or not any(span.trace_id)
                         or not any(span.span_id)
                         or span.end_time_unix_nano < span.start_time_unix_nano
@@ -273,30 +286,71 @@ class TelemetryService:
                             original.SerializeToString(),
                         )
                     )
-        # The whole request is validated before persistence; immutable IDs make SDK retries safe.
-        for record, payload, original in pending:
-            self._save(record, payload, original=original)
+        # Check the complete batch under the write lock before inserting any new spans.
+        conflicts, unique = [], {}
+        with closing(self._connect()) as connection, connection:
+            connection.execute("BEGIN IMMEDIATE")
+            for record, payload, original in pending:
+                identity = record["source_id"]
+                previous = connection.execute(
+                    "SELECT local_source,cloud_payload,native_event_id FROM spans WHERE identity=?",
+                    (identity,),
+                ).fetchone()
+                prior = unique.get(identity)
+                if prior is None and previous is not None:
+                    prior = previous["local_source"] or previous["cloud_payload"]
+                if prior is not None and not self._same_source(prior, original):
+                    if previous is None:
+                        # A collision inside a new batch must retain both versions.
+                        conflicts.append((identity, prior))
+                    conflicts.append((identity, original))
+                else:
+                    unique.setdefault(identity, original)
+            for identity, original in conflicts:
+                connection.execute(
+                    "INSERT OR IGNORE INTO span_conflicts VALUES(?,?,?,?)",
+                    (identity, hashlib.sha256(original).hexdigest(), original,
+                     datetime.now(UTC).isoformat()),
+                )
+            if not conflicts:
+                for record, payload, original in pending:
+                    self._insert(connection, record, payload, original=original)
+        if conflicts:
+            raise TelemetryError(
+                "span_conflict", "Span identity was reused with different content. "
+                "The batch was rejected; original evidence and conflicting payloads are retained.", 409
+            )
+        self.traces.project_batch()
         self._deliver_evidence()
         return ExportTraceServiceResponse().SerializeToString()
 
+    @staticmethod
+    def _same_source(left, right):
+        if left == right:
+            return True
+        return MessageToDict(ExportTraceServiceRequest.FromString(left)) == MessageToDict(
+            ExportTraceServiceRequest.FromString(right)
+        )
+
     def _save(self, record, payload, *, native=False, original=None):
         with closing(self._connect()) as connection, connection:
-            connection.execute(
-                """INSERT OR IGNORE INTO spans
+            self._insert(connection, record, payload, native=native, original=original)
+
+    def _insert(self, connection, record, payload, *, native=False, original=None):
+        connection.execute(
+            """INSERT OR IGNORE INTO spans
                 (identity,native_event_id,record_json,cloud_payload,status,evidence_ingested,
                  local_source) VALUES (?,?,?,?,?,?,?)""",
-                (
-                    record["source_id"],
-                    record.get("native_event_id"),
-                    json.dumps(record),
-                    payload,
-                    "pending" if self.cloud_enabled and self._key else "disabled",
-                    int(native),
-                    original,
-                ),
-            )
+            (
+                record["source_id"], record.get("native_event_id"), json.dumps(record), payload,
+                "pending" if self.cloud_enabled and self._key else "disabled",
+                int(native), original,
+            ),
+        )
 
     def _deliver_evidence(self):
+        if self.incidents is None:
+            return
         with closing(self._connect()) as connection:
             rows = connection.execute(
                 "SELECT identity,record_json FROM spans WHERE evidence_ingested=0 LIMIT 1000"
@@ -391,6 +445,9 @@ class TelemetryService:
     def _worker(self):
         while not self._stop.wait(1):
             try:
+                self.traces.project_batch(self._stop)
+                if not self.enabled:
+                    continue
                 self._deliver_evidence()
                 if self.cloud_enabled and self._key:
                     self._export_one()
@@ -492,6 +549,7 @@ class TelemetryService:
     def runtime_info(self):
         counts = {}
         evidence_failed = 0
+        conflicts = 0
         if self._ready:
             with closing(self._connect()) as connection:
                 counts = dict(
@@ -500,6 +558,7 @@ class TelemetryService:
                 evidence_failed = connection.execute(
                     "SELECT count(*) FROM spans WHERE evidence_ingested=-1"
                 ).fetchone()[0]
+                conflicts = connection.execute("SELECT count(*) FROM span_conflicts").fetchone()[0]
         warnings = []
         if evidence_failed:
             warnings.append(
@@ -513,6 +572,10 @@ class TelemetryService:
             warnings.append("Some cloud exports failed; records are retained locally.")
         if self._warning:
             warnings.append(self._warning)
+        if conflicts:
+            warnings.append("Conflicting span submissions were rejected; original evidence is unchanged.")
+        index = self.traces.runtime_info()
+        warnings.extend(index["warnings"])
         execution = getattr(self.incidents, "execution", None)
         warnings.extend(getattr(execution, "observation_warnings", []))
         return {
@@ -524,6 +587,8 @@ class TelemetryService:
             "cloud_readback_verified": False,
             "stored_spans": sum(counts.values()),
             "evidence_failed": evidence_failed,
+            "conflicting_payloads": conflicts,
+            "trace_index": index,
             "queued": counts.get("pending", 0) + counts.get("sending", 0),
             "delivered": counts.get("delivered", 0),
             "failed": counts.get("failed", 0),
