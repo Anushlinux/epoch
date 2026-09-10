@@ -1,5 +1,6 @@
 """Host-owned policy contracts; local model findings cannot authorize activation."""
 
+from copy import deepcopy
 from typing import Annotated, Literal
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
@@ -9,6 +10,7 @@ Label = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, ma
 TraceID = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{32}$")]
 Rule = Literal["deduplicate", "prefer_current_approved", "match_topic"]
 Case = Literal["original", "fresh", "unaffected", "historical"]
+NOISE_SCHEMA_VERSION = "noise-outcome-rules-v1"
 
 
 class Strict(BaseModel):
@@ -35,6 +37,26 @@ class NoiseAnswer(Strict):
     findings: list[Finding] = Field(max_length=10)
     rules: list[Rule] = Field(max_length=3)
     missing_evidence: list[Text] = Field(max_length=8)
+
+
+def noise_response_schema(schema):
+    """Constrain outcome/rules together without changing the saved answer shape.
+
+    Use complete alternatives: an if/then annotation alone is not reliably enforced
+    by grammar converters. Keep shared definitions at the root so existing refs resolve.
+    The flat Pydantic contract and the service's cross-field check remain authoritative.
+    """
+    common = deepcopy(schema)
+    definitions = common.pop("$defs", {})
+    context_noise = deepcopy(common)
+    context_noise["properties"]["outcome"]["enum"] = ["context_noise"]
+    other = deepcopy(common)
+    other["properties"]["outcome"]["enum"] = [
+        outcome for outcome in common["properties"]["outcome"]["enum"] if outcome != "context_noise"
+    ]
+    # A literal [] avoids an empty-array repetition rule in the local grammar engine.
+    other["properties"]["rules"] = {"type": "array", "const": []}
+    return {"$defs": definitions, "anyOf": [context_noise, other]}
 
 
 class Draft(Strict):

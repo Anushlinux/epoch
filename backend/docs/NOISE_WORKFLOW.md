@@ -139,6 +139,59 @@ that every model call in Epoch is local.
 
 ## If the local investigation fails
 
+**Outcome/action consistency — September 11:** the next user result identified the
+specific failure: the model selected `tool_defect` while proposing context filters.
+The request schema now uses two complete `anyOf` alternatives. One permits only the
+`context_noise` outcome and its supported rule list; the other permits the remaining
+outcomes and constrains `rules` to the literal empty array. Shared definitions stay at
+the root. String-bound simplification and snapshot citation enums are still applied.
+This follows the converter's [union and constant handling](https://github.com/ggml-org/llama.cpp/blob/master/common/json-schema-to-grammar.cpp).
+
+The flat response contract still appears once in the prompt, with explicit outcome/rule
+instructions, to avoid doubling prompt content. The existing Pydantic, citation and
+cross-field checks still reject contradictory or malformed responses. No answer is
+silently edited to remove bad rules. This uses one model call with no automatic retry.
+New records identify `noise-analysis-v4` and `noise-outcome-rules-v1`.
+
+For a valid `tool_defect` finding, the UI displays the cited diagnosis and an **Open PDF
+debugger** link in document conversations. It opens the same conversation's saved
+evidence; review the available **Fix PDF tool** action there. Opening the link does not
+start repair or guarantee a particular repair is eligible. Insufficient-evidence and
+no-issue results have their own next-step notices, and no filter-draft form.
+
+Restart the normal backend, refresh the frontend, and click **Try investigation again**.
+Expected for this PDF case, if the model again identifies a tool defect: a saved cited
+answer with `rules: []`, no filter proposal and a Debugger link. Also manually confirm a
+real context-noise case can still propose supported rules. Existing failed analyses stay
+failed in history. No `.env` change, dependency or migration; implemented but unverified,
+with no tests, model calls, server runs or browser acceptance performed by the developer.
+
+**Rejected-answer follow-up — September 11:** the user's subsequent two requests returned
+HTTP 200 and produced output in the Ollama log. Their saved records only retained
+`invalid_model_answer`, not the failed check or answer text; the precise cause of those
+historical rejections cannot be reconstructed. HTTP success alone is not validated
+investigation success.
+
+New requests distinguish `ollama_output_limit`, `ollama_incomplete`, `ollama_empty_answer`,
+`invalid_answer_json`, `invalid_answer_shape`, `invalid_answer_schema`, `invalid_citation`
+and `invalid_policy_proposal`. **Failure details** shows bounded completion metadata,
+JSON line/column, schema field/type errors or citation IDs as appropriate. It does not
+save raw rejected model text or the model's thinking field. Errors identify the failing
+constraint; answers are not silently shortened, citations remapped or rules discarded.
+
+The parser accepts either a plain JSON object or one complete `json`/unlabeled Markdown
+code fence containing that object, because the installed runner permits that wrapper.
+Surrounding prose, partial JSON, extra objects and wrong field types remain rejected.
+The sampling schema now constrains citation choices to the current snapshot's actual
+IDs, with the existing host citation check retained. Full answer validation and policy
+publication gates remain unchanged. New requests use `noise-analysis-v3` or
+`trace-question-v3` and `ollama-scoped-citations-v2`.
+
+Restart the backend, refresh the frontend, and choose **Try investigation again** using
+the same trace; the PDF task need not be rerun. If it fails, inspect the specific message
+and **Failure details**. Keep the existing model and `.env`; no settings or migration are
+required. These changes were reviewed statically only, with no live model acceptance.
+
 **Grammar rejection fix — September 11:** the user's retry returned HTTP 400 with
 `Failed to initialize samplers: failed to parse grammar`. The desktop Ollama log shows
 a repetition-complexity rejection and generated `char{1,2000}` rules for summary,

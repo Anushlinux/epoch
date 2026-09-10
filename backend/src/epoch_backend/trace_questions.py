@@ -6,7 +6,7 @@ import sqlite3
 from contextlib import closing
 from datetime import UTC, datetime
 
-from epoch_backend.trace_ollama import PROMPT_VERSION, OllamaError, answer_question
+from epoch_backend.trace_ollama import PROMPT_VERSION, ModelAnswerError, OllamaError, answer_question
 from epoch_backend.trace_retrieval import build_snapshot, encoded
 from epoch_backend.trace_store import TraceError
 
@@ -120,7 +120,7 @@ class TraceQuestions:
                 "message": "The server stopped before this answer completed. Submit a new question to try again."})
         except TraceError as exc:
             record.update(state="failed", error={"code": exc.code, "message": exc.message})
-            if isinstance(exc, OllamaError):
+            if isinstance(exc, (OllamaError, ModelAnswerError)):
                 record["error"]["details"] = exc.details
         except Exception:
             record.update(state="failed", error={"code": "question_failed",

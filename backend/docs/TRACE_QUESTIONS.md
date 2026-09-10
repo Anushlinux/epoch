@@ -204,8 +204,13 @@ but retains surrounding trace context. Selection uses URL parameters `trace`, `s
   The Ollama sampling schema omits string-length bounds to avoid the observed grammar
   repetition failure. The full schema is still supplied in the prompt, and unchanged
   host validation enforces those lengths. Structural constraints and output budgets
-  remain. New requests use prompt version `trace-question-v2`; successful usage records
+  remain. New requests use prompt version `trace-question-v3`; successful usage records
   include `output_schema_version`. See the [grammar fix and manual retry](NOISE_WORKFLOW.md#if-the-local-investigation-fails).
+  Citation choices in the sampling schema are restricted to the supplied evidence IDs;
+  host citation checks remain authoritative. One complete JSON Markdown wrapper is
+  accepted without modifying its contents. Other malformed answers remain rejected.
+  Failed answers now expose specific completion/JSON/schema/citation errors and bounded
+  **Failure details**. Raw rejected text and model thinking are not saved by this path.
 - **Keep a durable snapshot.** The question, selected evidence, snapshot hash, prompt
   version, configured model, actual response usage (when reported), answer and errors
   are stored in SQLite. Later-arriving spans cannot silently rewrite an old answer.

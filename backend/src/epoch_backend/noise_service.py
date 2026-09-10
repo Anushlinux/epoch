@@ -9,8 +9,11 @@ from uuid import uuid4
 import httpx
 
 from epoch_backend.context_policy import ContextPolicyStore, digest, encoded, select_sources, source_catalog, source_labels, stamp
-from epoch_backend.noise_contracts import NoiseAnswer
-from epoch_backend.trace_ollama import OUTPUT_SCHEMA_VERSION, OllamaError, _read_json, sampling_schema
+from epoch_backend.noise_contracts import NOISE_SCHEMA_VERSION, NoiseAnswer, noise_response_schema
+from epoch_backend.trace_ollama import (
+    OUTPUT_SCHEMA_VERSION, ModelAnswerError, OllamaError, _read_json, parse_answer,
+    sampling_schema, validate_citations,
+)
 from epoch_backend.trace_retrieval import build_snapshot, excerpt
 from epoch_backend.trace_store import TraceError
 
@@ -25,7 +28,10 @@ not proof of causality. Suggest only applicable declarative rules: deduplicate e
 prefer_current_approved with explicit authority metadata, or match_topic when the request
 has a topic. Unknown metadata/conflicts are retained. No arbitrary content deletion,
 code, executor changes, permissions, automatic activation or future-success guarantee.
-For tool_defect, no_issue or insufficient_evidence return an empty rules list.
+Choose outcome from the evidence before choosing rules. The generation schema permits
+filters only with context_noise. For tool_defect, no_issue or insufficient_evidence,
+rules must be exactly []. Explain the finding and evidence gaps normally; an empty
+rules list is a valid investigation result. Do not change the diagnosis to obtain rules.
 Current source metadata is not proof of what was supplied in the historical run.
 Return JSON matching response_schema, including its string-length limits. Keep findings
 concise. Do not wrap JSON in Markdown."""
@@ -177,7 +183,8 @@ class NoiseService:
         snapshot["sha256"] = digest(snapshot)
         record = self.record(chat, "analysis", request, state="running", snapshot=snapshot,
                              answer=None, error=None, model=self.settings.trace_model,
-                             prompt_version="noise-analysis-v2", output_schema_version=OUTPUT_SCHEMA_VERSION)
+                             prompt_version="noise-analysis-v4", output_schema_version=OUTPUT_SCHEMA_VERSION,
+                             outcome_schema_version=NOISE_SCHEMA_VERSION)
         self.store.put(record)
         self.task = asyncio.create_task(self._analyze(record))
         return record
@@ -192,26 +199,30 @@ class NoiseService:
                     if not model or model.get("remote_host") or model.get("remote_model"):
                         raise TraceError("local_model_required", "The configured local model must be installed; cloud fallback is disabled.", 422)
                     schema = NoiseAnswer.model_json_schema()
+                    allowed = [e["id"] for e in record["snapshot"]["evidence"]]
                     response = await _read_json(client, "POST", "/api/chat", json={
-                        "model": self.settings.trace_model, "stream": False, "format": sampling_schema(schema),
+                        "model": self.settings.trace_model, "stream": False,
+                        "format": sampling_schema(noise_response_schema(schema), allowed),
                         "messages": [{"role": "system", "content": PROMPT}, {"role": "user", "content": encoded({
-                            "issue": record["request"]["issue"], "snapshot": record["snapshot"], "response_schema": schema})}],
+                            "issue": record["request"]["issue"], "snapshot": record["snapshot"],
+                            "response_schema": schema, "allowed_evidence_ids": allowed})}],
                         "options": {"temperature": 0, "num_ctx": 8192, "num_predict": 2000}, "keep_alive": "5m"})
-                    if response.get("done") is not True or response.get("done_reason") == "length" or response.get("message", {}).get("tool_calls"):
-                        raise ValueError("Incomplete or unsupported model response")
-                    answer = NoiseAnswer.model_validate_json(response["message"]["content"])
-                    allowed = {e["id"] for e in record["snapshot"]["evidence"]}
+                    answer, metadata = parse_answer(response, NoiseAnswer)
                     cited = set(answer.relevant_evidence_ids)
                     for finding in answer.findings:
                         cited.update(finding.evidence_ids)
-                    if cited - allowed or (answer.outcome != "context_noise" and answer.rules):
-                        raise ValueError("Unsupported policy or citation")
-                    record.update(state="answered", answer=answer.model_dump(), model_digest=model.get("digest"))
+                    validate_citations(cited, allowed, metadata)
+                    if answer.outcome != "context_noise" and answer.rules:
+                        raise ModelAnswerError("invalid_policy_proposal",
+                            f"The model proposed context filters for outcome '{answer.outcome}'. Only a context-noise finding can propose filters; no answer or policy was accepted.",
+                            {**metadata, "outcome": answer.outcome, "proposed_rules": answer.rules})
+                    record.update(state="answered", answer=answer.model_dump(), model_digest=model.get("digest"),
+                                  response_metadata=metadata)
         except asyncio.CancelledError:
             record.update(state="failed", error_code="interrupted", error="Analysis interrupted; no policy was activated.")
         except TraceError as exc:
             record.update(state="failed", error_code=exc.code, error=exc.message)
-            if isinstance(exc, OllamaError):
+            if isinstance(exc, (OllamaError, ModelAnswerError)):
                 record["error_details"] = exc.details
         except (TimeoutError, httpx.TimeoutException):
             record.update(state="failed", error_code="ollama_timeout",

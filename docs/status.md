@@ -1,5 +1,39 @@
 # Current implementation status
 
+## Noise outcome/action consistency — September 11, 2026
+
+The user's latest screenshot reports `invalid_policy_proposal`: the generated outcome
+was `tool_defect` but its rule list was nonempty. Implemented but unverified: complete
+generation-schema alternatives now couple context-noise outcomes to supported rules
+and all other outcomes to exactly an empty list. Root definitions, citation constraints
+and the earlier grammar workaround remain; prompt size is bounded by keeping the flat
+schema in the prompt. One request, no automatic retry or altered historical result.
+
+Existing host validation and publication checks remain intact. Valid tool-defect
+answers display cited findings plus a link to the conversation's existing Debugger;
+the link is read-only navigation and does not start repair. Other non-policy outcomes
+display appropriate evidence-gap/no-issue notices. Static source review and diff
+formatting only; no tests, syntax checks, servers, browser checks or model calls.
+No new environment setting, dependency or migration. See [manual retry](../backend/docs/NOISE_WORKFLOW.md#if-the-local-investigation-fails).
+
+## Local answer parsing and diagnostics — September 11, 2026
+
+The user's next screenshot showed `invalid_model_answer`. Read-only inspection of the
+two latest analysis records found no saved response or validation detail. Their matching
+Ollama log entries returned HTTP 200 with generation activity, so the prior grammar
+rejection was cleared for those requests; successful answer validation is still unproven.
+The precise old validation failures cannot be reconstructed from the retained evidence.
+
+Implemented but unverified: shared completion/JSON/Pydantic validation diagnostics,
+single JSON-code-fence handling, snapshot-specific citation enums and existing host
+citation checks, explicit invalid-policy-proposal errors, and Failure details in both
+local investigation interfaces. New failures retain structural metadata and failing
+field/type information, without raw rejected text or thinking. No silent answer repair,
+citation remapping, weakened acceptance, automatic retry or model/configuration change.
+No migration or dependency changes. Only read-only log/SQLite/source inspection and
+diff formatting; no tests, syntax checks, servers, browser acceptance or model calls.
+See [manual retry](../backend/docs/NOISE_WORKFLOW.md#if-the-local-investigation-fails).
+
 ## Ollama bounded-string grammar fix — September 11, 2026
 
 The user's retry supplied HTTP 400 with a sampler grammar parse error. The now-available

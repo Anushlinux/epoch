@@ -39,3 +39,22 @@ schema from host validation, omitting string-length bounds only from the former 
 noise analysis and trace questions. Supply the complete schema in the prompt, preserve
 all acceptance constraints and budgets, record the new schema/prompt version, and update
 the manual retry instructions. No installed runtime changes, tests or model calls.
+
+## Rejected-answer follow-up
+
+The user's next attempts reached HTTP 200 but failed host answer validation; the old
+record did not retain the precise check. Read existing logs/records only. Add distinct
+completion/JSON/schema/citation/policy diagnostics, accept only a single complete JSON
+Markdown wrapper, and bind citation choices to the supplied snapshot in the sampling
+schema. Keep every host validation gate, preserve failed records and display failure
+details. Do not guess the old rejection's cause or run tests/model calls.
+
+## Outcome and proposed-action consistency
+
+The user now supplied `invalid_policy_proposal`: a tool-defect answer also contained
+filter rules. Constrain generation to mutually exclusive complete response alternatives:
+context noise may suggest rules; every other outcome must contain exactly `rules: []`.
+Keep the existing post-generation rejection and draft/publication gates. A valid tool
+defect should show its cited explanation and open the conversation's existing Debugger
+without starting a repair. Use one inference request and existing settings; static review
+and diff formatting only. Preserve older failures.
