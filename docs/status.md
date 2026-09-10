@@ -1,5 +1,182 @@
 # Current implementation status
 
+## Ollama bounded-string grammar fix — September 11, 2026
+
+The user's retry supplied HTTP 400 with a sampler grammar parse error. The now-available
+desktop server log contains the repetition-complexity rejection and `char{1,2000}` rules
+generated from noise-answer string limits. This identifies the request's grammar failure;
+it is not evidence of PDF content noise or a model-memory shortage.
+
+Implemented but unverified: noise analysis and trace questions now pass a separate
+sampling schema without string-length bounds, while providing the full schema in the
+prompt and retaining unchanged Pydantic/citation/rule validation. Structural constraints,
+array limits, output budgets, the existing model and publication gates are preserved.
+Prompt/schema versions identify new requests. No automatic retries or provider fallback.
+No environment/dependency changes or migration. Static source/log review and diff
+formatting only; no tests, syntax checks, servers, browser acceptance or model calls.
+See [manual retry and rationale](../backend/docs/NOISE_WORKFLOW.md#if-the-local-investigation-fails).
+
+## Ollama rejection diagnostics — September 11, 2026
+
+The user reported a failed local noise investigation. Static inspection confirmed that
+the shared client discarded non-success response bodies and always displayed a generic
+memory hint. At that point, available desktop logs did not contain the reported failed
+request, so its cause was unknown. Older logs contain successful inference; they do not
+validate the reported request or the current integration.
+
+Implemented but unverified: bounded JSON provider diagnostics with status/endpoint,
+distinct noise transport/timeout/answer errors, persisted diagnostic fields for noise
+analysis and trace questions, and explicit retry of a failed noise investigation with a
+new request identity. Failed records remain intact; no automatic inference retry, model
+fallback, schema relaxation, configuration change or policy publication was added.
+Only source/log review and diff formatting were performed. No tests, syntax checks,
+servers, browser acceptance or model calls were run. The subsequent user retry identified
+the grammar failure addressed above. See [manual troubleshooting](../backend/docs/NOISE_WORKFLOW.md#if-the-local-investigation-fails).
+
+## Noise investigation and context policies — September 11, 2026
+
+**Implemented but unverified.** The user assigned the proposed noise workflow.
+Explicit local Ollama analysis now produces cited findings and bounded policy proposals.
+The UI presents relevant evidence, retains the full trace tree, and provides source
+annotations, draft previews, trial links, recorded assessments, activation and rollback.
+HTTP/CLI entrypoints support the same actions. The model does not authorize publication.
+
+The new declarative selector supports exact duplicate consolidation, explicit approved
+current-version preference and requested-topic filtering. Unknown metadata, conflicting
+approvals, protected sources and historical/explicit reads are preserved. No paragraph
+deletion, hard-coded source IDs, automatic root-cause proof or future-success guarantee.
+PDF and normal-chat runbook tool paths record the candidate sources, policy/revision,
+selection and actual delivered content. Existing generated runbook repair retains its
+own path; release/repair sessions without a chat policy pin remain separate.
+
+Four distinct preview-bound trial traces and user-recorded passing assessments gate
+activation, along with required-source retention, observed selection, actual exclusions
+in original/fresh cases, unchanged snapshots and an idle executor. This is manual
+acceptance evidence, not independently verified business-task correctness. Policies,
+annotations, decisions and rejected/failed assessments remain in a new SQLite database
+inside the existing data directory. Metadata changes deactivate the scope's policy;
+policy changes close the warm worker and revisions pin subsequent operations.
+
+No tests, syntax/lint checks, servers, SDK probes, browser acceptance or model calls
+were run. Only static source review and diff formatting were performed. Existing app-file
+values, model connections, original databases and direction bytes/hard breaks were
+preserved. No dependency or new environment setting was added. See [setup and manual
+checks](../backend/docs/NOISE_WORKFLOW.md) for unexecuted validation and scope limits.
+
+## Conversation workers and live answers — September 10, 2026
+
+**Implemented but unverified, at the user's request.** Normal chat retains at most
+one initialized Hermes worker per local workspace. Same-chat reuse requires matching
+workspace/project/environment, grants and version manifests, authoritative visible
+history, source/settings/model and credential identities. The worker is discarded on
+cancellation, failure, idle expiry, unavailable integrity evidence or uncertain final
+persistence. Cleanup uncertainty blocks further execution. Each new chat submission
+keeps its 20-request/600-second allowance; release and repair continuations retain their
+existing lifetime budget and integrity behavior. Installed Hermes source is unchanged.
+
+The installed public text callback now feeds a bounded operation-scoped SSE preview,
+with snapshot reconnect, response-block resets and actual stages. The frontend replaces
+provisional text with the canonical saved message. Chat reads render before independent
+runtime, list and PDF metadata requests finish; stream updates touch only live text/stage,
+and ordinary renders retain unchanged preview images. Polling remains the saved-result
+fallback. Existing per-message local Neatlogs capture remains additive.
+
+Optional `EPOCH_CHAT_WORKER_IDLE_SECONDS` defaults to 300; zero disables reuse. It is an
+app-file setting with process precedence. Existing app-file values, data, credentials and
+direction source were preserved; no dependency or manual database migration was added.
+The API remains local and unauthenticated; multi-user isolation is not claimed.
+
+Only static source review and diff formatting were performed. All tests, syntax/lint
+checks, servers, SDK probes, sample/browser/model executions, reuse and isolation
+acceptance, and performance measurements remain unexecuted. Original direction Markdown
+hard breaks are preserved. See [setup and manual checks](../backend/docs/CHAT_LATENCY.md).
+
+## Hermes chat to local traces — September 10, 2026
+
+**Implemented but unverified.** The user's screenshot shows `/traces` returning
+“Frontend resource not found.” Static inspection found an existing route plus a
+case-sensitive filesystem prefix check that can reject canonical Windows paths.
+The host now compares canonical paths using platform semantics, redirects page
+trailing slashes, and uses Node watch mode. An older running route table is another
+possible cause; no browser/server reproduction was attempted. Both processes need
+a restart to load the integration.
+
+Normal `ChatService.run` now observes public Hermes bridge callbacks using a private
+Neatlogs client, a workflow root per message and tool children paired by callback
+IDs. The SDK's local exporter writes through original OTLP collection into the
+existing SQLite database; background indexing preserves the existing cursor path.
+Chat span delivery is permanently `local_only`, including across cloud-setting
+changes. External HTTP token authorization and existing forwarding remain intact.
+Neatlogs moves to runtime dependencies at the existing locked version.
+
+Chat operations persist trace identities, capture states and warnings. Conversation
+and per-request links open filtered traces; the explorer retains context and links
+back. A read-only trace-context endpoint exposes capture summaries without message
+bodies. Restart marks interrupted capture incomplete. No historical runs are
+fabricated. Provider internals and unmatched callbacks remain explicit evidence gaps.
+
+No Hermes implementation, prompt, model configuration, discovery interface, repair
+behavior, app-file value or database was changed. The direction document and its
+original Markdown hard breaks remain unchanged. Development used static source
+review and diff formatting only; dependency sync, tests, lint/syntax checks, SDK
+probes, sample execution, browser acceptance and all model calls remain unexecuted.
+See [setup and manual acceptance](../backend/docs/CHAT_TRACES.md).
+
+## Combined workspace startup correction — September 10, 2026
+
+The user clarified that new Neatlogs/Ollama features must extend existing workflows.
+The normal application already registers chat, execution/debugger, incidents,
+telemetry, trace reads and trace questions together. The supplied startup command
+selected the separate trace-only profile, causing the user's `/api/chats` and
+`/api/runtime` requests to return 404. It also set a temporary `data/trace-explorer`
+override while the user's app file selected `data`. Neither observation proves
+deletion of chat code or the original database.
+
+Corrected setup guides, README entrypoints, CLI help/error hints and trace connection
+instructions to use normal `epoch-backend --env-file .env serve` with the original
+workspace directory. The optional standalone profile now prints a clear startup
+notice. Traces inherits the tab's chat API origin and shares explicit connection
+changes through the existing preference key. No chat/executor/repair behavior or
+data was rewritten; the app file itself was not edited. Recovery instructions remove
+only the terminal's temporary data-directory override; directories are not merged.
+
+The user's log demonstrates standalone server startup and the three 404 responses.
+Combined runtime behavior remains unverified. This correction used static source
+review and diff formatting only; no test, server, browser or model execution.
+The direction document and its original Markdown hard breaks remain unchanged.
+
+## Local trace questions, feature Phase 3 — September 10, 2026
+
+**Implemented but unverified, at the user's request.** The user assigned the next
+trace-debugger feature phase and supplied an installed Ollama model:
+`qwen3:4b-instruct-2507-q4_K_M`. The selected scope is questions over one trace, not
+the older repair Phase 3 or the different numbering in the attached source brief.
+See the [assignment plan](../backend/docs/TRACE_QA_PLAN.md) and
+[setup/manual acceptance guide](../backend/docs/TRACE_QUESTIONS.md).
+
+Added deterministic trace-scoped retrieval, bounded evidence snapshots, a local
+Ollama adapter, structured answer/citation-ID validation, durable question/result
+history, explicit asynchronous POST and read APIs, CLI submission/inspection, and
+an Ask about this trace panel. Model calls have a configured total deadline and
+one-request concurrency; repeated request IDs do not automatically regenerate.
+GET requests and page refreshes do not contact Ollama. No model download, code
+execution, repair, comparison, cross-run investigation or incident enhancement was
+implemented. Citation IDs are validated; factual correctness remains a human check.
+
+New optional app-file/process settings: `EPOCH_OLLAMA_BASE_URL`, `EPOCH_TRACE_MODEL`,
+`EPOCH_TRACE_QUESTION_TIMEOUT_SECONDS`. Defaults match the user's installed model
+and standard local Ollama port. Existing process-only `EPOCH_TELEMETRY_TOKEN` stays
+the SDK ingestion credential. No new secret is needed. Startup adds the question
+table/index in `telemetry.sqlite3`; reuse the existing data directory. HTTPX 0.28.1
+was declared directly using its already locked version; no package was upgraded.
+
+Development used source review and official Ollama API documentation. No test suite,
+syntax/lint check, local API probe, sample execution, model call, server startup or
+browser acceptance was run. The handoff supplies manual commands and expected
+results for the user. Runtime, answer quality and persistence acceptance are pending.
+The original direction and its three Markdown hard breaks remain unchanged.
+`git diff --check` passed; new files passed the same formatting check with `--no-index`.
+
 ## Neatlogs local trace explorer, feature Phases 1–2 — September 10, 2026
 
 **Implemented but unverified, by explicit user request.** This is a separate feature

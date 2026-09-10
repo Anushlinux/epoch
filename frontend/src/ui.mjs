@@ -65,9 +65,10 @@ export function shell({
   actions = "",
   locked = false,
   debuggerChatId = "",
+  tracesHref = "/traces",
   sessionsLabel = "",
 }) {
-  if (!demo) bottom = `<a class="nav-item ${page === 'traces' ? 'selected' : ''}" href="/traces" ${page === 'traces' ? 'aria-current="page"' : ''}>${icon('activity')}<span>Traces</span></a>` + bottom;
+  if (!demo) bottom = `<a class="nav-item ${page === 'traces' ? 'selected' : ''}" href="${escape(tracesHref)}" ${page === 'traces' ? 'aria-current="page"' : ''}>${icon('activity')}<span>Traces</span></a>` + bottom;
   const footerMessage = demo ? "No tools or tests execute" : page === "traces" ? "Trace explorer · read-only" : page === "chat" ? "Hermes chat · simulated tools" : "Debugger · runs on request";
   return `<aside class="sidebar" id="sidebar" aria-label="Workspace navigation"><div class="sidebar-brand"><a href="${urlFor(demo, "chat")}" data-route aria-label="Epoch chat"><span class="brand-mark">E</span><span>epoch</span></a><button class="icon-button mobile-close" data-action="close-nav" aria-label="Close navigation">${icon("close")}</button></div>
     <nav class="primary-nav"><button class="nav-item" data-action="new" ${locked ? "disabled" : ""}>${icon("plus")}<span>New chat</span><kbd>⌘ N</kbd></button>${debuggerChatId ? `<a data-route href="/debugger?chat=${encodeURIComponent(debuggerChatId)}" class="nav-item ${page === "debugger" ? "selected" : ""}" ${page === "debugger" ? 'aria-current="page"' : ""}>${icon("pipeline")}Debugger</a>` : routeLink(demo, "debugger", demo ? task : "", "Debugger", "pipeline", `class="nav-item ${page === "debugger" ? "selected" : ""}" ${page === "debugger" ? 'aria-current="page"' : ""}`)}${!demo ? routeLink(false, "incidents", "", "Incidents", "activity", `class="nav-item ${page === "incidents" ? "selected" : ""}" ${page === "incidents" ? 'aria-current="page"' : ""}`) : ""}</nav>
@@ -100,7 +101,7 @@ export class View {
       true,
     );
   }
-  render(html, key, { focus, bottom = false } = {}) {
+  render(html, key, { focus, bottom = false, preserveMedia = false } = {}) {
     const active = document.activeElement;
     const savedFocus = active?.id;
     const summaryKey = active?.matches("summary")
@@ -114,7 +115,16 @@ export class View {
     if (oldScroll && this.key)
       this.positions.set(this.key, oldScroll.scrollTop);
     const railScroll = $(".session-list")?.scrollTop || 0;
-    this.root.innerHTML = html;
+    if (preserveMedia && key === this.key) {
+      const template = document.createElement('template');
+      template.innerHTML = html;
+      const images = [...this.root.querySelectorAll('.pdf-preview img')];
+      for (const image of template.content.querySelectorAll('.pdf-preview img')) {
+        const previous = images.find(candidate => candidate.src === image.src && candidate.alt === image.alt);
+        if (previous) image.replaceWith(previous);
+      }
+      this.root.replaceChildren(template.content);
+    } else this.root.innerHTML = html;
     this.key = key;
     this.root.querySelectorAll("details[data-key]").forEach((el) => {
       const stored = this.disclosures.get(`${key}:${el.dataset.key}`);

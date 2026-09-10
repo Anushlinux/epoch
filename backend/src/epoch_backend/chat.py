@@ -14,6 +14,9 @@ from fastapi import APIRouter, Query, Response
 from pydantic import AwareDatetime, Field, StringConstraints
 
 from epoch_backend import debugger_bridge, hermes_bridge
+from epoch_backend.chat_traces import ChatTraceCapture
+from epoch_backend.chat_streams import ChatStreams
+from epoch_backend.chat_workers import ConversationWorker
 from epoch_backend.contracts import Contract
 from epoch_backend.csv_repair import CsvAnswer, CsvRepairs, executor_request
 from epoch_backend.csv_sandbox import SAMPLE_CSV, CsvSandbox
@@ -38,6 +41,7 @@ class ChatCreate(Contract):
 class MessageCreate(Contract):
     client_request_id: UUID
     content: Text
+    context_preview_id: UUID | None = None
 
 
 class CsvRollback(Contract):
@@ -66,6 +70,16 @@ class ChatOperation(Contract):
     error: dict | None = None
     created_at: AwareDatetime
     finished_at: AwareDatetime | None = None
+    trace_id: str | None = None
+    trace_span_id: str | None = None
+    trace_capture: Literal["recording", "stored", "incomplete", "unavailable"] | None = None
+    trace_warnings: list[str] = Field(default_factory=list)
+    stage: str = "starting"
+    worker_reused: bool | None = None
+    worker_warning: str | None = None
+    context_preview_id: UUID | None = None
+    context_policy_id: str | None = None
+    context_policy_revision: int | None = None
 
 
 class Conversation(Contract):
@@ -84,6 +98,8 @@ class ChatService:
     def __init__(self, execution: ExecutionService):
         self.execution = execution
         self.path = execution.settings.data_dir / "chats.sqlite3"
+        self.workers = ConversationWorker(execution.settings)
+        self.streams = ChatStreams()
         self.csv_repairs = None
         from epoch_backend.pdf_chat import PdfChat
         self.pdf = PdfChat(self)
@@ -111,6 +127,7 @@ class ChatService:
                 if operation.status not in TERMINAL:
                     operation.status = "interrupted"
                     operation.activity = "Interrupted"
+                    operation.stage = "interrupted"
                     operation.finished_at = datetime.now(UTC)
                     operation.error = {
                         "code": "server_restarted",
@@ -119,9 +136,24 @@ class ChatService:
                             "Nothing was replayed."
                         ),
                     }
+                    if operation.trace_capture == "recording":
+                        operation.trace_capture = "incomplete"
+                        operation.trace_warnings.append(
+                            "The server stopped during capture. Unfinished spans may be missing."
+                        )
                     changed = True
             if changed:
                 self.save(chat)
+        self.workers.initialize()
+
+    def close(self):
+        self.execution._cancel.set()
+        thread = self.execution._thread
+        if thread is not None:
+            thread.join(timeout=15)
+            if thread.is_alive():
+                raise RuntimeError("Chat execution has not stopped; retaining its worker and lease")
+        self.workers.close()
 
     def save(self, chat):
         chat.updated_at = datetime.now(UTC)
@@ -235,7 +267,7 @@ class ChatService:
                         for m in chat.messages
                         if m.operation_id == operation.id and m.role == "user"
                     )
-                    if original.content != request.content:
+                    if original.content != request.content or operation.context_preview_id != request.context_preview_id:
                         raise RequestConflict()
                     return operation, False
             if execution._unresolved_state:
@@ -249,9 +281,7 @@ class ChatService:
                     "executor_busy",
                     "Hermes is busy with another chat or evaluation. Wait or stop that operation.",
                 )
-            if not execution.settings.enable_hermes or not hermes_bridge.detect_installation().get(
-                "available"
-            ):
+            if not execution.settings.enable_hermes or hermes_bridge._installation_paths() is None:
                 raise ExecutionError(
                     "hermes_unavailable",
                     "Hermes is unavailable or disabled. Check the backend Hermes setup.",
@@ -272,9 +302,20 @@ class ChatService:
                 client_request_id=request.client_request_id,
                 status="running",
                 created_at=now,
+                context_preview_id=request.context_preview_id,
             )
+            context_pin = None
+            if getattr(self, "noise", None):
+                context_pin = (self.noise.trial_pin(chat, request.context_preview_id) if request.context_preview_id
+                               else self.noise.pin(chat))
+            elif request.context_preview_id:
+                raise ExecutionError("noise_unavailable", "Context-policy trials are unavailable in this runtime.", 503)
             if chat.environment == "pdf_workshop":
                 sandbox.pin(operation.id)
+            if context_pin:
+                sandbox.pin_context(context_pin, operation.id)
+                operation.context_policy_id = context_pin["policy_id"]
+                operation.context_policy_revision = context_pin["revision"]
             chat.messages.append(
                 ChatMessage(
                     id=uuid4(),
@@ -288,6 +329,7 @@ class ChatService:
             if len(chat.messages) == 1:
                 chat.title = request.content[:100]
             self.save(chat)
+            self.streams.start(chat.id, operation.id)
             execution.active_run_id = operation.id
             execution._cancel = threading.Event()
             execution._thread = threading.Thread(
@@ -297,36 +339,106 @@ class ChatService:
                 execution._thread.start()
             except Exception:
                 operation.status = "failed"
+                operation.stage = "failed"
+                operation.activity = "Failed"
                 operation.error = {
                     "code": "worker_start_failed",
                     "message": "The chat worker could not start.",
                 }
                 operation.finished_at = datetime.now(UTC)
                 self.save(chat)
+                self.streams.publish(chat.id, operation.id, "complete", status="failed", saved=True)
                 execution.active_run_id = None
                 raise
             return operation.model_copy(deep=True), True
 
     def run(self, chat, operation, sandbox, cancel):
         execution = self.execution
+        capture = ChatTraceCapture(execution.telemetry, chat, operation)
+        final = None
+        result = None
+        active_tools = {}
+
+        def stage(name, activity):
+            if (operation.stage, operation.activity) == (name, activity):
+                return
+            operation.stage, operation.activity = name, activity
+            self.streams.publish(chat.id, operation.id, "stage", stage=name, activity=activity)
+            try:
+                self.save(chat)
+            except Exception as exc:
+                capture.warn(f"Live progress could not be saved ({type(exc).__name__}).")
+
         try:
+            capture.start()
+            try:
+                self.save(chat)
+            except Exception as exc:
+                capture.warn(f"Trace linkage could not be saved yet ({type(exc).__name__}).")
 
             def on_event(event):
                 kind = str(event.get("type", "executor.event"))
+                data = event.get("data", {})
+                if kind == "executor.stream_delta":
+                    if not active_tools:
+                        stage("writing_answer", "Writing answer")
+                    self.streams.publish(chat.id, operation.id, "answer_delta", text=data["text"])
+                    return
+                if kind == "executor.stream_end":
+                    return
                 # Only the bridge's public event envelope; never its internal messages.
                 sandbox.record_event(
                     kind, {**event.get("data", {}), "chat_operation_id": str(operation.id)}
                 )
-                if kind in {"executor.tool_started", "executor.started", "executor.model_request"}:
-                    operation.activity = (
-                        "Hermes is using a tool"
-                        if kind == "executor.tool_started"
-                        else "Hermes is responding"
-                    )
-                    self.save(chat)
+                capture.event(event)
+                if kind == "executor.model_request":
+                    self.streams.publish(chat.id, operation.id, "answer_reset")
+                    stage("waiting_model", "Waiting for model")
+                elif kind == "executor.tool_started":
+                    name = str(data.get("name") or "Hermes tool")
+                    arguments = data.get("arguments")
+                    if isinstance(arguments, str):
+                        try:
+                            arguments = json.loads(arguments)
+                        except ValueError:
+                            arguments = None
+                    target = arguments.get("name") if isinstance(arguments, dict) else None
+                    activity = f"Running tool: {name}"
+                    if name.endswith("invoke_tool") and isinstance(target, str):
+                        activity = f"Running tool: {target}"
+                    elif name.endswith("describe_tool") and isinstance(target, str):
+                        activity = f"Reading tool definition: {target}"
+                    elif name.endswith("discover_tools"):
+                        activity = "Discovering available tools"
+                    active_tools[str(data.get("tool_call_id", ""))] = activity
+                    stage("running_tool", activity if len(active_tools) == 1
+                          else f"Running {len(active_tools)} tool calls")
+                elif kind == "executor.tool_completed":
+                    active_tools.pop(str(data.get("tool_call_id", "")), None)
+                    if active_tools:
+                        stage("running_tool", next(iter(active_tools.values())) if len(active_tools) == 1
+                              else f"Running {len(active_tools)} tool calls")
+                    else:
+                        stage("processing", "Processing tool result")
+                elif kind == "executor.connecting_tools":
+                    stage("connecting_tools", "Connecting tools")
+                elif kind == "executor.started":
+                    stage("preparing_model", "Preparing model")
+                elif kind == "executor.verifying":
+                    stage("verifying", "Checking executor integrity")
+                elif kind == "executor.checking_session":
+                    stage("checking_session", "Checking conversation setup")
+                elif kind == "executor.worker_reused":
+                    stage("reusing_worker", "Reusing Hermes for this conversation")
+                elif kind in {"executor.starting", "executor.worker_created"}:
+                    stage("starting", "Starting Hermes")
 
-            result = hermes_bridge.execute(
+            result = self.workers.execute(chat, operation, sandbox,
                 {
+                    "chat_worker": True,
+                    "chat_operation_id": str(operation.id),
+                    "chat_scope": {"chat": str(chat.id), "project": chat.project_id,
+                                   "environment": chat.environment},
                     "task_id": str(chat.id),
                     "run_id": str(chat.id),
                     "brief": chat.messages[-1].content,
@@ -361,6 +473,7 @@ class ChatService:
                 cancel,
             )
             final = result.get("final_response")
+            stage("finalizing", "Saving response")
             sandbox.record_event("executor.result", {"chat_operation_id": str(operation.id), "result": result})
             operation.status = (
                 "cancelled"
@@ -405,12 +518,28 @@ class ChatService:
             }
         finally:
             operation.activity = operation.status.capitalize()
+            operation.stage = operation.status
             operation.finished_at = datetime.now(UTC)
+            capture.finish(final)
             with execution._lock:
+                persisted = False
                 try:
                     self.save(chat)
+                    persisted = True
                 except Exception:
                     execution._unresolved_state = True
+                try:
+                    self.workers.finish(operation, result, chat, persisted=persisted)
+                except Exception:
+                    execution._unresolved_state = True
+                    operation.worker_warning = "Hermes worker cleanup is uncertain. Restart before more work."
+                    try:
+                        self.save(chat)
+                    except Exception:
+                        persisted = False
+                self.streams.publish(chat.id, operation.id, "complete", status=operation.status,
+                                     stage=operation.stage, activity=operation.activity,
+                                     saved=persisted, warning=operation.worker_warning)
                 if not execution._unresolved_state:
                     execution.active_run_id = None
 
@@ -917,6 +1046,30 @@ def chat_router(service):
         chat = service.get(chat_id)
         service.pdf.require_active(chat)
         return chat
+
+    @router.get("/{chat_id}/trace-context")
+    def trace_context(
+        chat_id: UUID,
+        trace_id: Annotated[str | None, Query(pattern=r"^[a-f0-9]{32}$")] = None,
+    ):
+        chat = service.get(chat_id)
+        operations = [op for op in chat.operations if op.kind == "chat"]
+
+        def summary(operation):
+            return operation.model_dump(mode="json", include={
+                "id", "status", "trace_id", "trace_span_id", "trace_capture", "trace_warnings",
+            }) if operation else None
+
+        selected = next((op for op in operations if op.trace_id == trace_id), None) if trace_id else None
+        return {
+            "chat_id": str(chat.id), "title": chat.title, "project_id": chat.project_id,
+            "requested_trace_id": trace_id,
+            "latest_operation": summary(operations[-1] if operations else None),
+            "selected_operation": summary(selected),
+            "uncaptured_operations": sum(
+                op.trace_capture is None and op.status in TERMINAL for op in operations
+            ),
+        }
 
     @router.get("/{chat_id}/environment")
     def environment(chat_id: UUID):

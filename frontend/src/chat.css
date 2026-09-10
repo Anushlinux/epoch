@@ -1,6 +1,9 @@
 .chat-transcript { max-width: 780px; padding-bottom: 32px; }
 .chat-transcript .message { margin-bottom: 32px; }
 .chat-speaker { display: block; font-size: 12px; font-weight: 600; color: var(--muted, #a0a5ab); margin-bottom: 9px; }
+.chat-trace-link { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px 12px; margin-top: 9px; font-size: 12px; color: var(--muted); }
+.chat-trace-link a { display: inline-flex; align-items: center; gap: 6px; }
+.chat-trace-link small { flex-basis: 100%; text-align: right; }
 .chat-transcript .message.user { display: block; margin-left: auto; max-width: 88%; }
 .chat-transcript .message.user .chat-speaker { text-align: right; }
 .chat-transcript .message.user .message-body { width: fit-content; margin-left: auto; }
@@ -120,6 +123,10 @@
 .conversation-debugger .debugger-other { border-bottom: 0; }
 .chat-transcript { padding-top: 12px; }
 .chat-prose { line-height: 1.65; }
+.chat-live-answer[hidden], .chat-stream-issue[hidden] { display: none; }
+.chat-live-answer .chat-prose { white-space: pre-wrap; overflow-wrap: anywhere; }
+.chat-live-label, .chat-live-note, .chat-stream-issue, .chat-aux-notice { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.chat-live-note, .chat-stream-issue { margin-top: 10px; }
 .example-button, .primary-action, .composer-options summary, .file-result button { touch-action: manipulation; transition: transform 120ms cubic-bezier(.23,1,.32,1), background-color 120ms ease; }
 .example-button:active, .primary-action:active, .file-result button:active { transform: scale(.98); }
 button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px solid #a9cbb7; outline-offset: 3px; }

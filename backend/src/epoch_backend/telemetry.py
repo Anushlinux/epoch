@@ -208,7 +208,17 @@ class TelemetryService:
         if not hmac.compare_digest(str(token or ""), self._token):
             raise TelemetryError("unauthorized", "Invalid local telemetry token.", 401)
 
-    def ingest(self, body, encoding="identity"):
+    @property
+    def local_capture_ready(self):
+        return self.enabled and self._ready
+
+    def ingest_local(self, body):
+        """Trusted SDK exporter entrypoint; external ingestion still requires authorization."""
+        if not self.local_capture_ready:
+            raise TelemetryError("telemetry_disabled", "Local trace capture is unavailable.", 503)
+        return self.ingest(body, local_only=True, defer_projection=True)
+
+    def ingest(self, body, encoding="identity", *, local_only=False, defer_projection=False):
         if len(body) > MAX_BYTES:
             raise TelemetryError("trace_too_large", "Trace request exceeds 4 MiB.", 413)
         if encoding == "gzip":
@@ -314,14 +324,16 @@ class TelemetryService:
                 )
             if not conflicts:
                 for record, payload, original in pending:
-                    self._insert(connection, record, payload, original=original)
+                    self._insert(connection, record, payload, original=original,
+                                 local_only=local_only)
         if conflicts:
             raise TelemetryError(
                 "span_conflict", "Span identity was reused with different content. "
                 "The batch was rejected; original evidence and conflicting payloads are retained.", 409
             )
-        self.traces.project_batch()
-        self._deliver_evidence()
+        if not defer_projection:
+            self.traces.project_batch()
+            self._deliver_evidence()
         return ExportTraceServiceResponse().SerializeToString()
 
     @staticmethod
@@ -336,14 +348,17 @@ class TelemetryService:
         with closing(self._connect()) as connection, connection:
             self._insert(connection, record, payload, native=native, original=original)
 
-    def _insert(self, connection, record, payload, *, native=False, original=None):
+    def _insert(self, connection, record, payload, *, native=False, original=None,
+                local_only=False):
         connection.execute(
             """INSERT OR IGNORE INTO spans
                 (identity,native_event_id,record_json,cloud_payload,status,evidence_ingested,
                  local_source) VALUES (?,?,?,?,?,?,?)""",
             (
                 record["source_id"], record.get("native_event_id"), json.dumps(record), payload,
-                "pending" if self.cloud_enabled and self._key else "disabled",
+                "local_only" if local_only else (
+                    "pending" if self.cloud_enabled and self._key else "disabled"
+                ),
                 int(native), original,
             ),
         )
@@ -565,7 +580,10 @@ class TelemetryService:
                 "Some traces could not be normalized for incidents; original sources are retained."
             )
         if self.enabled and not self._token:
-            warnings.append("Set process EPOCH_TELEMETRY_TOKEN to accept local SDK traces.")
+            warnings.append(
+                "External SDK ingestion needs process EPOCH_TELEMETRY_TOKEN. "
+                "Built-in Hermes chat capture does not require this token."
+            )
         if self.cloud_enabled and not self._key:
             warnings.append("Cloud export is enabled but NEATLOGS_API_KEY is missing.")
         if counts.get("failed", 0):
@@ -581,6 +599,8 @@ class TelemetryService:
         return {
             "enabled": self.enabled,
             "collector_ready": self.enabled and self._ready and bool(self._token),
+            "local_capture_ready": self.local_capture_ready,
+            "local_only_spans": counts.get("local_only", 0),
             "cloud_enabled": self.cloud_enabled,
             "cloud_configured": self.cloud_enabled and bool(self._key),
             "cloud_export_accepted": bool(counts.get("delivered")),

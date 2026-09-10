@@ -94,6 +94,12 @@ class Sandbox:
         with closing(self._connect()) as connection:
             return self._metadata(connection)
 
+    def pin_context(self, policy, operation_id):
+        with closing(self._connect()) as connection, connection:
+            meta = self._metadata(connection)
+            meta.update(context_policy=policy, operation_id=str(operation_id))
+            connection.execute("UPDATE sandbox_metadata SET record_json=? WHERE id=1", (_json(meta),))
+
     def select_environment(self, manifest: dict, *, expected_version: str | None = None):
         """Host-only version activation. Executors cannot call this through MCP."""
         from epoch_backend.candidate_runner import RUNNER_VERSION, digest

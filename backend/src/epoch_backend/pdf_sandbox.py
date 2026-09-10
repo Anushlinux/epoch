@@ -17,6 +17,7 @@ from epoch_backend.pdf_contracts import (
     MergePdf,
     NoArguments,
     ReadAsset,
+    DocumentQuery,
     verify_document,
     verify_merge,
 )
@@ -67,6 +68,12 @@ class PdfSandbox:
                 db.execute("SELECT value FROM meta WHERE key='context'").fetchone()[0]
             )
         return value
+
+    def pin_context(self, policy, operation_id):
+        with closing(self.connect()) as db, db:
+            meta = json.loads(db.execute("SELECT value FROM meta WHERE key='context'").fetchone()[0])
+            meta.update(context_policy=policy, operation_id=str(operation_id))
+            db.execute("UPDATE meta SET value=? WHERE key='context'", (json.dumps(meta),))
 
     def versions(self):
         store = EnvironmentStore(Path(self.metadata()["data_dir"]) / "pdf" / "environments.sqlite3")
@@ -313,7 +320,9 @@ class PdfSandbox:
 
 
 DEFINITIONS = {
-    "documents.list": ("List granted files and source briefs in this conversation.", NoArguments),
+    "documents.list": ("List granted files and source briefs. Context policies can filter current guidance. "
+                       "Use purpose=historical/all or a version for historical or explicit-version requests; "
+                       "topic selects declared source topics. Explicit document IDs remain readable.", DocumentQuery),
     "documents.read": (
         (
             "Read a source brief, a saved document input or bounded PDF text. "
@@ -414,13 +423,16 @@ class PdfRegistry:
 
             def execute():
                 if name == "documents.list":
-                    return {
-                        "ok": True,
-                        "result": [
-                            {k: a[k] for k in ("id", "name", "kind", "size")}
-                            for a in sandbox.assets()
-                        ],
-                    }
+                    from epoch_backend.context_policy import select_sources, source_catalog, record_selection
+                    pin = sandbox.metadata().get("context_policy", {})
+                    sources = source_catalog(sandbox, "pdf_workshop")
+                    selected = select_sources(sources, pin.get("rules", []), pin.get("labels", {}), **args)
+                    result = [
+                            {**{k: a[k] for k in ("id", "name", "kind", "size")},
+                             "source_metadata": pin.get("labels", {}).get(a["id"], {}), "sha256": a["sha256"]}
+                            for a in sandbox.assets() if a["id"] in selected["retained_ids"]]
+                    reference = record_selection(sandbox, sources, selected, tool=name, delivered=result, query=args)
+                    return {"ok": True, "result": result, "context_selection": reference}
                 if name in {"documents.read", "documents.inspect"}:
                     asset = sandbox.asset(args["asset_id"])
                     sandbox.raw(asset)
@@ -440,7 +452,15 @@ class PdfRegistry:
                             > 20000,
                         }
                     )
-                    return {"ok": True, "result": result}
+                    from epoch_backend.context_policy import record_selection, source_catalog
+                    if name == "documents.read":
+                        result["source_metadata"] = sandbox.metadata().get("context_policy", {}).get("labels", {}).get(asset["id"], {})
+                    sources = [s for s in source_catalog(sandbox, "pdf_workshop") if s["id"] == asset["id"]]
+                    selected = {"retained_ids": [asset["id"]], "decisions": [{
+                        "source_id": asset["id"], "sha256": asset["sha256"], "retained": True,
+                        "reason": "explicit_source_read_preserved"}], "warnings": []}
+                    reference = record_selection(sandbox, sources, selected, tool=name, delivered=result, query={"asset_id": asset["id"]})
+                    return {"ok": True, "result": result, "context_selection": reference}
                 if name == "capabilities.request":
                     if "pdf.merge" in {t["name"] for t in self.definitions()}:
                         raise CandidateError(

@@ -1,9 +1,35 @@
 # Epoch backend
 
+**Noise workflow:** [setup and manual checks](docs/NOISE_WORKFLOW.md) covers local
+issue analysis, source metadata, bounded context policies, preview-bound trials,
+manual acceptance, activation/rollback and tool-boundary evidence. Restart normal
+`serve`; existing settings and databases stay in use. A new SQLite policy store is
+created within the existing data directory. No new dependency or credential.
+Implemented but unverified; current Ollama settings serve noise analysis while Hermes
+retains its configured inference provider.
+
+**Conversation workers and live answers:** normal chat retains one initialized worker
+for the same conversation and unchanged authorized environment, with default five-minute
+idle cleanup. Public answer text is available over operation-scoped SSE; final saved
+messages remain authoritative. Optional `EPOCH_CHAT_WORKER_IDLE_SECONDS` is an app-file
+setting (process values override it); no credential/data-directory change or manual
+migration is required. See [setup, lifecycle and manual checks](docs/CHAT_LATENCY.md).
+Implemented but unverified. Restart normal `serve` and the frontend.
+
+**Real chat tracing:** normal Hermes messages now use the Neatlogs SDK automatically
+and retain original OTLP in the existing local telemetry database. No new token,
+data folder or model setting is required for built-in capture. Synchronize locked
+dependencies and restart normal `serve`. See [setup and manual
+acceptance](docs/CHAT_TRACES.md). Implemented but unverified.
+
 **Local trace explorer:** [setup and usage](docs/TRACE_EXPLORER.md) covers Neatlogs
-capture, persistent original spans, search and the standalone `trace-debugger`
-server profile. Phases 1–2 are implemented but unverified; testing was explicitly
-skipped. No model is required and later feature phases are outside this delivery.
+capture, persistent original spans and search in the existing workspace. Use
+`epoch-backend --env-file .env serve` for chat, the debugger and traces together.
+Keep the existing data directory; the separate `trace-debugger` profile is optional
+and omits chat/workflow endpoints. Phases 1–2 are implemented but unverified; testing was explicitly
+skipped. Capture and browsing need no model. [Feature Phase 3 questions](docs/TRACE_QUESTIONS.md)
+now use the installed local Ollama model after an explicit submission; that addition
+is also unverified. The guide includes configuration and manual test instructions.
 
 **Current code: Phase 7, with Phase 6/7 additions untested by explicit user request.** See [the development/integration handoff](docs/PHASES_6_7_HANDOFF.md). Earlier validation below applies to the recorded earlier code. Incident and Neatlogs integration adds optional telemetry flags and process-only credentials; see [incident setup](docs/INCIDENTS_SETUP.md).
 
@@ -51,8 +77,12 @@ The normal frontend uses `/api/chats`, separate from release tasks and runs.
 Create a conversation with `client_request_id` and optional `project_id`, then
 POST `{client_request_id, content}` to `/api/chats/{chat_id}/messages` to start
 Hermes. Read the conversation or its operation endpoint for saved results.
-Follow-up messages retain visible user/Hermes history. Chat uses the existing
-Hermes configuration and authorized simulated tools.
+Follow-up messages retain visible user/Hermes history. An eligible warm worker also
+retains its private history and initialized tools within that conversation. Changed
+scope, cancellation, failure or uncertain state discards it. Chat uses the existing
+Hermes configuration and authorized simulated tools. Subscribe to
+`GET /api/chats/{chat_id}/operations/{operation_id}/events` for provisional public
+answer text and stages; read the saved conversation for the final message.
 
 POST `{client_request_id, question}` to `/api/chats/{chat_id}/debugger` only when
 an investigation is requested; `question` is optional. This starts one bounded

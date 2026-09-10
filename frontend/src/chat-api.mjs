@@ -1,4 +1,5 @@
 import { IntakeAPI, IntakeError, apiOrigin, ORIGIN_KEY } from './intake-api.mjs';
+import { ChatStream } from './chat-stream.mjs';
 export const CHAT_PENDING_KEY = 'epoch.chat.pending.v1';
 export const CHAT_ENVIRONMENTS = ['default', 'pdf_workshop'];
 const uuid = value => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
@@ -12,12 +13,16 @@ function conversation(value) {
   return value;
 }
 export class ChatWorkspace {
-  constructor({ storage, onChange = () => {}, apiFactory = origin => new IntakeAPI(origin), pollMs = 1500 }) {
-    Object.assign(this, { storage, onChange, apiFactory, pollMs });
+  constructor({ storage, onChange = () => {}, onStreamChange = onChange,
+    apiFactory = origin => new IntakeAPI(origin), pollMs = 1500, streamFactory } = {}) {
+    Object.assign(this, { storage, onChange, onStreamChange, apiFactory, pollMs, streamFactory });
     this.generation = 0;
     this.visible = true;
     this.readFailures = 0;
+    this.auxiliary = new Map();
+    this.environmentUpdated = 0;
     this.state = { origin: 'http://127.0.0.1:8000', connected: false, busy: false, loading: false, chat: null, selected: '', list: [], total: 0, offset: 0, pending: null, rejected: false, recovery: false, error: '', runtime: null, environment: null, environmentError: '' };
+    Object.assign(this.state, { stream: null, streamError: '', runtimeError: '', listError: '', environmentLoading: false });
     try {
       this.state.origin = apiOrigin(storage.getItem(ORIGIN_KEY) || this.state.origin);
       const raw = storage.getItem(CHAT_PENDING_KEY);
@@ -41,7 +46,12 @@ export class ChatWorkspace {
     } catch { this.state.recovery = true; this.state.error = 'Browser recovery storage is unavailable or unreadable. New messages are blocked; saved conversations remain readable.'; }
   }
   emit() { this.onChange(this.state); }
-  stop() { clearTimeout(this.timer); this.timer = null; this.generation++; }
+  stop() {
+    clearTimeout(this.timer); clearTimeout(this.streamTimer); this.timer = null;
+    this.streamTimer = null;
+    this.streamReader?.close(); this.streamReader = null; this.streamFinished = '';
+    this.generation++;
+  }
   async setVisible(visible) {
     if (visible === this.visible) return;
     this.visible = visible;
@@ -54,7 +64,7 @@ export class ChatWorkspace {
       origin = apiOrigin(origin);
       if (this.state.pending && origin !== this.state.pending.origin) throw new Error('Resolve the pending message on its original server first.');
       this.stop();
-      if (origin !== this.state.origin) Object.assign(this.state, { chat: null, list: [], runtime: null, environment: null, environmentError: '' });
+      if (origin !== this.state.origin) Object.assign(this.state, { chat: null, list: [], runtime: null, environment: null, environmentError: '', stream: null, streamError: '', runtimeError: '', listError: '' });
       Object.assign(this.state, { origin, connected: false, loading: true });
       this.api = this.apiFactory(origin);
       this.emit();
@@ -71,6 +81,9 @@ export class ChatWorkspace {
     this.state.chat = null;
     this.state.environment = null;
     this.state.environmentError = '';
+    this.state.stream = null;
+    this.state.streamError = '';
+    this.environmentUpdated = 0;
     if (id && !uuid(id)) { this.state.error = 'Invalid conversation ID.'; this.emit(); return; }
     this.emit();
     if (this.state.connected) await this.refresh();
@@ -95,50 +108,124 @@ export class ChatWorkspace {
     this.timer = null;
     const generation = this.generation, id = this.state.selected, api = this.api;
     const full = !poll || !activeOperation(this.state.chat);
+    const wasRunning = !!activeOperation(this.state.chat);
+    if (full) this.refreshWorkspaceInfo();
     try {
-      const [list, detail, runtime] = await Promise.all([
-        full ? api.call(`/api/chats?limit=20&offset=${this.state.offset}`) : null,
-        id ? api.call(`/api/chats/${id}`) : null,
-        full ? api.call('/api/runtime') : null,
-      ]);
-      if (generation !== this.generation) return;
-      if (list) ensure(Array.isArray(list.body.items) && list.body.items.every(c => uuid(c.id) && typeof c.title === 'string'));
+      const detail = id ? await api.call(`/api/chats/${id}`) : null;
+      if (generation !== this.generation || id !== this.state.selected || api !== this.api) return;
       const chat = detail ? conversation(detail.body) : null;
       if (chat) ensure(chat.id === id);
-      // Once an operation ends, update shared availability once, then stop polling.
-      let nextRuntime = runtime?.body;
-      if (!full && !activeOperation(chat)) {
-        nextRuntime = (await api.call('/api/runtime')).body;
-        if (generation !== this.generation) return;
-      }
-      Object.assign(this.state, { chat, ...(list ? { list: list.body.items, total: list.body.total } : {}), ...(nextRuntime ? { runtime: nextRuntime } : {}) });
-      if (chat?.environment && chat.environment !== 'default') {
-        try {
-          const { body } = await api.call(`/api/chats/${id}/environment`);
-          if (generation !== this.generation) return;
-          ensure(body.environment === 'pdf_workshop' && body.local === true && Array.isArray(body.assets) && Array.isArray(body.tools) && Array.isArray(body.actions));
-          this.state.environment = body;
-          this.state.environmentError = '';
-        } catch (error) {
-          if (generation !== this.generation) return;
-          this.state.environment = null;
-          this.state.environmentError = `PDF environment evidence is unavailable. ${error.message}`;
-        }
-      } else { this.state.environment = null; this.state.environmentError = ''; }
+      this.state.chat = chat;
       this.readFailures = 0;
       if (!this.state.recovery) this.state.error = '';
+      this.reconcileStream();
+      this.emit(); // The answer is usable before any runtime, file or preview refresh.
+      this.watchStream();
+      if (wasRunning && !activeOperation(chat)) this.refreshWorkspaceInfo();
+      if (chat?.environment === 'pdf_workshop') this.refreshEnvironment(full || (wasRunning && !activeOperation(chat)));
+      else { this.state.environment = null; this.state.environmentError = ''; this.state.environmentLoading = false; }
     } catch (error) {
-      if (generation === this.generation) { this.state.error = error.message; this.readFailures++; }
+      if (generation === this.generation && id === this.state.selected) { this.state.error = error.message; this.readFailures++; }
     } finally {
-      if (generation === this.generation) {
+      if (generation === this.generation && id === this.state.selected) {
         this.emit();
-        if (this.visible && (activeOperation(this.state.chat) || this.state.runtime?.active_run_id)) {
-          const interval = activeOperation(this.state.chat) ? this.pollMs : Math.max(5000, this.pollMs);
-          const delay = this.readFailures ? Math.min(30000, Math.max(5000, interval) * 2 ** Math.min(this.readFailures - 1, 3)) : interval;
-          this.timer = setTimeout(() => this.refresh({ poll: true }), delay);
-        }
+        this.scheduleRead();
       }
     }
+  }
+  scheduleRead() {
+    clearTimeout(this.timer); this.timer = null;
+    if (!this.visible || !this.state.connected || !(activeOperation(this.state.chat) || this.state.runtime?.active_run_id)) return;
+    const interval = activeOperation(this.state.chat) ? this.pollMs : Math.max(5000, this.pollMs);
+    const delay = this.readFailures ? Math.min(30000, Math.max(5000, interval) * 2 ** Math.min(this.readFailures - 1, 3)) : interval;
+    this.timer = setTimeout(() => { void this.refresh({ poll: true }); }, delay);
+  }
+  refreshAuxiliary(name, path, accept, assign, repeat = false) {
+    const generation = this.generation, id = this.state.selected, api = this.api;
+    const valid = () => generation === this.generation && id === this.state.selected && api === this.api;
+    const current = this.auxiliary.get(name);
+    if (current?.generation === generation && current.id === id) {
+      if (repeat) current.again = () => this.refreshAuxiliary(name, path, accept, assign);
+      return;
+    }
+    const job = { generation, id };
+    this.auxiliary.set(name, job);
+    if (name === 'environment') this.state.environmentLoading = true;
+    void (async () => {
+      try {
+        const { body } = await api.call(path);
+        if (!valid()) return;
+        accept(body); assign(body); this.state[`${name}Error`] = '';
+      } catch (error) {
+        if (valid()) this.state[`${name}Error`] = `${name === 'environment' ? 'Files and tool information' : name === 'runtime' ? 'Runtime information' : 'Conversation list'} could not be refreshed. ${error.message}`;
+      } finally {
+        if (this.auxiliary.get(name) === job) this.auxiliary.delete(name);
+        if (valid()) {
+          if (name === 'environment') this.state.environmentLoading = false;
+          this.emit();
+          if (name === 'runtime') this.scheduleRead();
+          job.again?.();
+        }
+      }
+    })();
+  }
+  refreshWorkspaceInfo() {
+    if (!this.api || !this.visible || !this.state.connected) return;
+    this.refreshAuxiliary('list', `/api/chats?limit=20&offset=${this.state.offset}`,
+      body => ensure(Array.isArray(body.items) && body.items.every(c => uuid(c.id) && typeof c.title === 'string')),
+      body => Object.assign(this.state, { list: body.items, total: body.total }), true);
+    this.refreshAuxiliary('runtime', '/api/runtime', body => ensure(typeof body.execution_enabled === 'boolean'),
+      body => { this.state.runtime = body; }, true);
+  }
+  refreshEnvironment(force = false) {
+    if (this.state.chat?.environment !== 'pdf_workshop' || (!force && Date.now() - this.environmentUpdated < 5000)) return;
+    this.environmentUpdated = Date.now(); this.state.environmentLoading = true;
+    this.refreshAuxiliary('environment', `/api/chats/${this.state.selected}/environment`,
+      body => ensure(body.environment === 'pdf_workshop' && body.local === true && Array.isArray(body.assets) && Array.isArray(body.tools) && Array.isArray(body.actions)),
+      body => { this.state.environment = body; }, force);
+  }
+  reconcileStream() {
+    const stream = this.state.stream, chat = this.state.chat;
+    if (!stream || !chat) return;
+    const operation = chat.operations.find(op => op.id === stream.operation_id);
+    if (!operation || chat.messages.some(m => m.operation_id === stream.operation_id && m.role === 'assistant')) {
+      this.state.stream = null; this.state.streamError = '';
+    } else if (operation.status !== 'running') {
+      Object.assign(stream, { status: operation.status, activity: operation.activity });
+    }
+  }
+  watchStream() {
+    const operation = activeOperation(this.state.chat);
+    if (!operation || operation.kind === 'debugger' || !this.visible) {
+      this.streamReader?.close(); this.streamReader = null; return;
+    }
+    if (this.streamReader?.operation === operation.id || this.streamFinished === operation.id) return;
+    if (!this.streamFactory && typeof EventSource === 'undefined') return; // Polling remains available.
+    this.streamReader?.close();
+    const generation = this.generation, id = this.state.selected;
+    const valid = () => generation === this.generation && id === this.state.selected;
+    try {
+      this.streamReader = new ChatStream({ origin: this.state.origin, chat: id, operation: operation.id,
+        ...(this.streamFactory ? { factory: this.streamFactory } : {}),
+        onUpdate: state => {
+          if (!valid()) return;
+          this.state.stream = state; this.state.streamError = '';
+          if (!this.streamTimer) this.streamTimer = setTimeout(() => {
+            this.streamTimer = null;
+            if (valid()) this.onStreamChange(this.state);
+          }, 40);
+        },
+        onIssue: message => { if (valid()) { this.state.streamError = message; this.onStreamChange(this.state); } },
+        onFinish: state => {
+          if (!valid()) return;
+          this.streamFinished = operation.id;
+          if (state?.saved === false) this.state.streamError = 'The final response could not be saved. Inspect storage and restart before more work.';
+          if (state?.warning) this.state.streamError = state.warning;
+          this.onStreamChange(this.state);
+          void this.refresh();
+        },
+      });
+    } catch (error) { this.state.streamError = `Live preview unavailable. ${error.message}`; }
   }
   async send(content, project = 'demo', environment = 'default') {
     const s = this.state;
@@ -148,7 +235,8 @@ export class ChatWorkspace {
       if (!content || [...content].length > 16000) throw new Error('Enter a message of 1–16,000 characters.');
       if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$/.test(project)) throw new Error('Use a project label with letters, numbers, underscores or hyphens.');
       ensure(CHAT_ENVIRONMENTS.includes(environment));
-      const pending = { version: 2, origin: s.origin, chatId: s.selected || null, create: { client_request_id: crypto.randomUUID(), project_id: project, ...(environment !== 'default' ? { environment } : {}) }, message: { client_request_id: crypto.randomUUID(), content } };
+      const pending = { version: 2, origin: s.origin, chatId: s.selected || null, create: { client_request_id: crypto.randomUUID(), project_id: project, ...(environment !== 'default' ? { environment } : {}) }, message: { client_request_id: crypto.randomUUID(), content,
+        ...(s.contextPreview ? { context_preview_id: s.contextPreview } : {}) } };
       this.storage.setItem(CHAT_PENDING_KEY, JSON.stringify(pending));
       s.pending = pending;
     } catch (error) { s.error = error.message; this.emit(); return false; }
@@ -245,8 +333,11 @@ export class ChatWorkspace {
       const {body} = await this.api.call(p.endpoint, p.payload);
       ensure(uuid(body.id) && body.chat_id === p.chatId && body.client_request_id === p.message.client_request_id);
       this.storage.removeItem(CHAT_PENDING_KEY);
+      this.stop();
       s.pending = null;
+      s.contextPreview = null;
       s.selected = p.chatId;
+      s.stream = null; s.streamError = '';
       return true;
     } catch (error) {
       s.rejected = [403, 404, 409, 410, 422].includes(error.status);

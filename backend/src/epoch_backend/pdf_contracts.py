@@ -73,6 +73,12 @@ class NoArguments(Strict):
     pass
 
 
+class DocumentQuery(Strict):
+    purpose: Literal["current", "historical", "all"] = "current"
+    version: str | None = Field(default=None, min_length=1, max_length=120)
+    topic: str | None = Field(default=None, min_length=1, max_length=120)
+
+
 class EnvironmentAction(Strict):
     client_request_id: UUID
     action: Literal["repair_tool", "create_tool"]

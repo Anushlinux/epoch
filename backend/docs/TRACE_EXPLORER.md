@@ -1,41 +1,63 @@
 # Local Neatlogs trace explorer — Phases 1 and 2
 
+The subsequently assigned [Phase 3](TRACE_QUESTIONS.md) adds explicit local Ollama
+questions to this explorer. This guide covers its capture and browsing foundation.
+The user's later clarification makes the normal combined workspace the primary
+startup path: retain chat/workflows and add trace features alongside them.
+
+Normal Hermes messages now capture automatically through the Neatlogs SDK. Use
+**Conversation traces** or **View trace** in Chat; no example script is needed.
+See [the chat integration](CHAT_TRACES.md) for capture boundaries and manual checks.
+
 **Implemented but unverified.** The user explicitly requested development without
 tests, SDK probes, example execution, browser acceptance or model calls. The commands
 below are usage instructions, not a record of successful runtime acceptance.
 
-Epoch receives Neatlogs SDK spans over local HTTP and retains their original OTLP
+Epoch receives external Neatlogs SDK spans over local HTTP and built-in chat spans
+through the same collector's in-process entrypoint, retaining their original OTLP
 payloads in SQLite. A separate projection makes names, inputs, outputs and errors
 searchable. The browser shows traces, their recorded hierarchy and original evidence.
 Raindrop Workshop is a workflow reference; no Raindrop installation or API is used.
-AI investigation and all later feature phases are outside this delivery.
+The separate Phase 3 guide covers local questions; other later features remain out of scope.
 
 ## Required setup
 
-Python 3.12, uv and Node.js are required. Neatlogs is already declared in the backend
-development dependency group; synchronize the existing lock without upgrading it.
+Python 3.12, uv and Node.js 22 or newer are required. Neatlogs is now a backend
+runtime dependency; synchronize the existing lock without upgrading it.
 In a PowerShell terminal, from `backend/`:
 
 ```powershell
 $env:UV_CACHE_DIR = "$PWD/.uv-cache"
 uv sync --frozen
-$env:EPOCH_TELEMETRY_TOKEN = Read-Host "Choose a local collector token"
-$env:EPOCH_DATA_DIR = "data/trace-explorer"
+# Optional, only when receiving traces from a separate SDK application:
+# $env:EPOCH_TELEMETRY_TOKEN = Read-Host "Choose a local collector token"
 $env:EPOCH_NEATLOGS_CLOUD_ENABLED = "false"
-uv run --frozen epoch-backend serve --profile trace-debugger
+uv run --frozen epoch-backend --env-file .env serve
 ```
 
-The token is a local SDK-to-collector credential. Choose a nonempty value and use
-that same value in the example terminal. Do not put it in a committed file or the
-browser. No Neatlogs cloud credential, Hermes setup, Docker or local model is needed.
+Use the existing app file and data directory so original chats, files and workflow
+state stay in the same workspace. If the earlier trace-only instructions set
+`$env:EPOCH_DATA_DIR = "data/trace-explorer"`, remove that terminal override with
+`Remove-Item Env:EPOCH_DATA_DIR -ErrorAction SilentlyContinue` before startup to use
+the app-file value. This deletes no data. See [the recovery steps](TRACE_QUESTIONS.md#start-it-yourself).
+Without an app file, omit `--env-file .env` and retain your existing process settings.
 
-The profile starts telemetry and its index without initializing task execution,
+Built-in Hermes capture needs no token. For external ingestion, the token is a local
+SDK-to-collector credential: choose a nonempty value and use the same value in the
+collector and example terminals. Do not put it in a committed file or the browser.
+Capture/browsing requires no Neatlogs cloud credential or local model;
+existing workflows retain their established Hermes/Docker setup requirements.
+
+The normal server exposes chat, debugger, incidents and the new trace APIs together.
+It honors the existing cloud-forwarding setting; keep that setting false for local
+storage for external/native telemetry. Built-in chat SDK spans always stay local,
+including after future setting changes. The browser reports forwarding state.
+
+The optional `serve --profile trace-debugger` starts telemetry and its index without initializing task execution,
 incidents, chat or repairs. It uses the existing exclusive server lease, so two
 profiles cannot write the same data directory simultaneously. It rejects
 `EPOCH_NEATLOGS_CLOUD_ENABLED=true`, even when inherited from a process or app file.
-Run the regular `serve` command to retain Epoch's complete chat/repair API; it also
-exposes the trace read endpoints, with its existing separately configured cloud
-forwarding behavior. The browser reports that behavior explicitly.
+Use it only for deliberate standalone trace collection, not as the main workspace.
 
 ## Open the interface
 
@@ -54,6 +76,10 @@ connect the browser to `http://127.0.0.1:8001`. Pass that same endpoint to the e
 An alternate frontend port must appear in the backend's allowed CORS origins.
 
 ## Run the supplied SDK example yourself
+
+This is an optional external-ingestion demo. For normal usage, send a message in
+Chat instead. To use this script, first set process `EPOCH_TELEMETRY_TOKEN` in the
+collector terminal and restart the backend; then use that same token below.
 
 In another PowerShell terminal, from `backend/`:
 
@@ -116,6 +142,7 @@ remains unverified.
 | `GET /api/telemetry/traces/{trace_id}/spans/{span_id}` | Preserved original OTLP source and prior structural evidence |
 | `GET /api/telemetry/runtime` | Existing collection/export status plus `trace_index` readiness, backlog, failures and conflict count |
 | `POST /v1/traces` | Existing token-authenticated SDK ingestion |
+| `GET /api/chats/{chat_id}/trace-context?trace_id=...` | Chat title/ID/project and latest/selected capture summaries; combined server only |
 
 List filters: `project_id`, `workflow`, `session_id`, `q`, `started_after`,
 `started_before`. Dates require an ISO timestamp with timezone. Bounds are inclusive

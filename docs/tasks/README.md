@@ -1,5 +1,36 @@
 # Implementation tasks: Anushrut and Rajdeep
 
+**Latest assigned work — September 11:** implement the discussed noise workflow,
+including local diagnosis, context-policy drafts, source metadata, previews, explicit
+trials, manual acceptance, activation/rollback and normal tool integration. Backend,
+frontend and CLI are assigned. See [plan](../../backend/docs/NOISE_PLAN.md) and
+[handoff](../../backend/docs/NOISE_WORKFLOW.md). Development testing remains explicitly
+skipped; no model calls, automatic publication or later unrelated features are assigned.
+
+**Preceding assigned work:** retain conversation-scoped Hermes workers with explicit
+invalidation/idle cleanup, connect public text streaming and actual execution stages,
+and render saved answers independently of runtime/PDF refreshes. Backend and frontend
+are included. See the [plan](../../backend/docs/CHAT_LATENCY_PLAN.md) and
+[handoff/manual checks](../../backend/docs/CHAT_LATENCY.md). Testing is explicitly skipped;
+no later trace phases or multi-user deployment are assigned.
+
+**Preceding assigned integration:** automatically capture actual Hermes chat messages
+using Neatlogs, link each conversation/request to local traces, and fix the frontend
+resource-not-found issue. Both backend and UI are in scope. See the [short
+plan](../../backend/docs/CHAT_TRACES_PLAN.md) and [handoff](../../backend/docs/CHAT_TRACES.md).
+Testing remains explicitly skipped. Existing execution and repair behavior stays intact.
+
+**Later interaction clarification:** the user requires trace features to extend the
+existing workflow. The main setup uses normal `serve` with the original app file/data
+directory. Chat, its debugger, existing workflows and trace questions share one server;
+the trace-only profile is optional. No workflow functionality is to be removed.
+
+**Current trace-debugger assignment:** the user subsequently assigned feature Phase 3,
+local questions over selected traces with installed Ollama Qwen. Backend, CLI and
+the existing trace UI are included. See the [bounded plan](../../backend/docs/TRACE_QA_PLAN.md)
+and [setup/manual acceptance](../../backend/docs/TRACE_QUESTIONS.md). Development is
+unverified; the user will perform testing. No later trace phases are assigned.
+
 **September 10 feature assignment:** the user assigned Rajdeep both backend and UI
 for [Neatlogs trace explorer Phases 1–2](../../backend/docs/TRACE_EXPLORER_PLAN.md),
 with testing explicitly skipped. This scope is local SDK capture/storage and trace

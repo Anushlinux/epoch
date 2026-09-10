@@ -1,10 +1,32 @@
 # Epoch
 
-**New, unverified:** [Neatlogs trace explorer Phases 1–2](backend/docs/TRACE_EXPLORER.md)
-adds local SDK capture, persistent original spans, searchable inputs/outputs and a
-read-only `/traces` interface. `serve --profile trace-debugger` runs collection and
-browsing without task execution or repairs. Testing was explicitly skipped; AI
-questions and later feature phases remain unimplemented.
+**Noise investigation and prevention:** local issue analysis now proposes evidence-linked
+context policies. Review source metadata, preview exclusions, run explicit trials and
+record acceptance before activation. Ordinary document tools apply the active policy;
+original evidence and historical reads remain available. See [setup and manual
+checks](backend/docs/NOISE_WORKFLOW.md). Implemented but unverified.
+
+**Live chat and worker reuse:** normal conversations now reuse a scoped Hermes worker,
+stream provisional answer text and show actual execution stages. Saved answers render
+independently of runtime/files/PDF refreshes. Keep your existing settings; the optional
+idle timeout defaults to five minutes. See [setup and manual checks](backend/docs/CHAT_LATENCY.md).
+Implemented but unverified; restart both processes.
+
+**Chat → Traces:** new Hermes messages now produce their own local Neatlogs traces.
+Open **Conversation traces** or **View trace** beside a request to inspect its
+actual run, then return to the same chat. Existing workflows remain available.
+See [setup and manual acceptance](backend/docs/CHAT_TRACES.md). Restart both backend
+and frontend to load the changes. Implemented but unverified.
+
+**New, unverified:** [Neatlogs trace explorer](backend/docs/TRACE_EXPLORER.md) includes
+local SDK capture, preserved spans and search. [Feature Phase 3](backend/docs/TRACE_QUESTIONS.md)
+adds explicit questions over a selected trace using local Ollama, cited answers and
+saved evidence snapshots in `/traces`. Run `epoch-backend --env-file .env serve` to
+use these additions alongside existing chat, debugger and workflow functionality
+in the same data directory. The optional `trace-debugger` profile is trace-only.
+Testing was explicitly skipped; manual acceptance
+instructions are provided. Cross-run investigation, comparison and later feature
+phases remain outside this delivery.
 
 **Current integration:** the frontend connects to the Phase 7 backend. Incident grouping, on-demand Luna investigation, JSON evidence imports and local Neatlogs ingestion with optional cloud export extend the existing repair flow. See [setup](backend/docs/INCIDENTS_SETUP.md) and [validation status](docs/status.md). Full Phase 6/7 model-backed repair acceptance remains pending; the API still reports phase 7.
 
@@ -30,7 +52,7 @@ See [current validation](docs/status.md) before making live acceptance claims.
 ## User flow
 
 1. **Chat:** send a message to Hermes and continue the saved conversation. Sending does not create a release task or start debugger analysis.
-2. **Inspect:** select **Debugger** to open the current conversation's investigation view. Opening it only reads saved records.
+2. **Inspect:** open **Conversation traces** or a message's **View trace** to inspect captured tool inputs, outputs and errors. Optionally ask about the trace using local Ollama. The existing **Debugger** opens the conversation's separate investigation view. Opening either page only reads saved records.
 3. **Investigate:** explicitly start an investigation, optionally describing what went wrong. Luna compares the original requests with visible responses, recorded errors and tool evidence. It reports supported findings, hypotheses and missing evidence.
 4. **Apply:** click **Verify and apply fix** for a supported CSV sample mapping failure. This separate action verifies and publishes a proposed adapter repair, then lets Hermes retry. Investigation alone remains diagnosis-only. Later CSV chats in the same project discover the saved mapping. Original requirements stay unchanged. See [CSV repair setup](backend/fixtures/csv/README.md).
 5. **Supported evaluation:** separately open the release example to exercise its existing sourced checkpoints, trusted checks and opt-in generated repairs. Those checks cover that workflow; they do not certify arbitrary chat outcomes.

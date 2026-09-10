@@ -57,12 +57,20 @@ export function createDevServer() {
     try {
       const url = new URL(request.url, "http://127.0.0.1:5173");
       const requested = decodeURIComponent(url.pathname);
+      const canonical = requested.length > 1 ? requested.replace(/\/+$/, "") : requested;
+      if (requested !== canonical && routes.has(canonical)) {
+        response.writeHead(308, { Location: canonical + url.search, "Cache-Control": "no-store" });
+        return response.end();
+      }
       const pathname = routes.get(requested) || requested;
       const source = /^\/src\/[a-zA-Z0-9_-]+\.(mjs|css)$/.test(pathname);
       if (!entries.has(pathname) && !source)
         return reply(404, "Frontend resource not found.");
       const file = await realpath(path.resolve(frontendRoot, `.${pathname}`));
-      if (!file.startsWith(frontendRoot))
+      // Windows realpath may normalize drive casing or resolve a junction. Compare
+      // canonical paths using platform semantics, not a case-sensitive prefix.
+      const relative = path.relative(await realpath(frontendRoot), file);
+      if (relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative))
         return reply(404, "Frontend resource not found.");
       return reply(200, await readFile(file), types[path.extname(file)]);
     } catch {
@@ -85,7 +93,7 @@ if (
   });
   server.listen(port, "127.0.0.1", () =>
     console.log(
-      `Epoch frontend: http://127.0.0.1:${port} — connect to your local API in the app.`,
+      `Epoch frontend: http://127.0.0.1:${port}/chat — Traces: http://127.0.0.1:${port}/traces`,
     ),
   );
   for (const signal of ["SIGINT", "SIGTERM"])

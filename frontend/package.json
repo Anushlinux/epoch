@@ -7,7 +7,7 @@
     "test:browser": "playwright test",
     "test:all": "npm test && npm run test:browser",
     "test:integration": "node tests/run-intake-integration.mjs",
-    "dev": "node scripts/dev.mjs",
+    "dev": "node --watch scripts/dev.mjs",
     "test:execution": "node tests/run-intake-integration.mjs --execution"
   },
   "devDependencies": {

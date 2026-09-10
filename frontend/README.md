@@ -1,15 +1,41 @@
 # Epoch frontend
 
+**Context quality:** open Traces from a chat to investigate noise, inspect relevant
+evidence, annotate source versions/approvals, preview a draft policy and submit explicit
+trial messages. Record trial assessments before activating a policy; rollback and actual
+selection evidence stay visible. See [setup/manual checks](../backend/docs/NOISE_WORKFLOW.md).
+Implemented but unverified. Browsing never starts analysis or publishes a policy.
+
+**Live answers:** ordinary Hermes chat now receives public text and actual stages over
+SSE, then replaces the preview with the saved message. Returned chats render immediately;
+runtime information, file lists and PDF previews refresh independently. See [lifecycle,
+setup and manual checks](../backend/docs/CHAT_LATENCY.md). Implemented but unverified.
+
+**Chat → Traces:** the sidebar and **Conversation traces** open the current chat's
+recorded runs; each new request also has a **View trace** link. The explorer keeps
+conversation/selection context in its URL and links back to the chat. Earlier
+messages without capture and incomplete runs are labeled. See [the integration
+handoff](../backend/docs/CHAT_TRACES.md). Implemented but unverified.
+
 The new [local trace explorer](../backend/docs/TRACE_EXPLORER.md) at `/traces`
 shows captured Neatlogs executions, searchable inputs/outputs and original evidence.
-It supports the standalone collector profile. This addition is implemented but
-unverified; browser and unit testing were explicitly skipped.
+Use the normal backend `serve` command and the existing data directory to keep chat,
+debugger and traces together. Traces inherits this tab's saved chat API connection.
+The optional standalone collector profile supports trace pages only. This addition is implemented but
+unverified; browser and unit testing were explicitly skipped. [Phase 3](../backend/docs/TRACE_QUESTIONS.md)
+adds an Ask about this trace panel, local Ollama answers, clickable span references,
+saved evidence snapshots and question history. Opening or refreshing never calls a model.
 
 Epoch opens with a normal Hermes conversation. The debugger investigates a selected conversation only after an explicit action. Release execution and the interactive Atlas fixture remain separate, clearly labeled examples. The incident workspace supports broader imported evidence.
 
 ## Run
 
 From the repository root:
+
+Use Node.js 22 or newer. Restart an already-running frontend once to load the
+updated route/path handling. `npm run dev` now watches the host source and restarts
+when its route table changes. `/traces/` redirects to `/traces`; the allowlisted
+host compares canonical paths using Windows-aware filesystem semantics.
 
 ```sh
 npm run dev --prefix frontend
@@ -28,7 +54,7 @@ The host uses Node's built-in HTTP server and binds to loopback. It serves only 
 | `/debugger?mode=release` | Separate release evaluation example using local simulated services |
 | `/debugger?task=UUID` | Actual run history, sourced checkpoints, activity and simulated state |
 | `/incidents` | Incident list, source evidence, related runs, recurrence and explicit Luna analysis |
-| `/traces` | Local trace search, expandable span hierarchy and original evidence; no model calls |
+| `/traces` | Local trace search, span hierarchy and explicit Ollama questions with saved cited answers |
 | `/demo/chat` | Existing Atlas 2.4 release fixture as a conversation |
 | `/demo/debugger` | The same demo's failure, candidate, checks, publication and continuation |
 | `/`, `/index.html` | Compatibility aliases for real chat |
@@ -42,12 +68,15 @@ Send a message to start Hermes and continue the same saved conversation with
 follow-up messages. The chat API stores visible messages and operation status
 separately from release tasks. Requests use exact retry identities saved before
 submission; uncertain acknowledgements require an explicit retry. Reloading and
-reconnecting do not replay work. While the selected operation runs, the UI polls
-its conversation every 1.5 seconds. It refreshes runtime availability once when
-the operation ends, then stops polling while idle, including after a failure.
-Hidden tabs pause polling; returning to the tab or refreshing the list performs a
-read-only refresh. When another operation occupies Hermes, availability checks
-run at most every five seconds. Failed active reads back off up to 30 seconds.
+reconnecting do not replay work. While the selected operation runs, SSE provides
+provisional text/stages and the UI polls its saved conversation every 1.5 seconds.
+Runtime/list refreshes run independently on full reads and completion; PDF metadata
+refreshes independently during work and at completion. Separate notices preserve an
+available answer when a panel fails. Live text updates do not rebuild PDF previews.
+Polling stops while idle after runtime becomes available, including after a failure.
+Hidden tabs close SSE and pause polling; returning performs a read-only refresh and
+reconnects to the current snapshot. When another operation occupies Hermes, availability
+checks run at most every five seconds. Failed active reads back off up to 30 seconds.
 
 Open **Debugger** from a conversation to inspect it. Starting an investigation
 explicitly requests Luna analysis of original user requirements, visible responses,

@@ -13,6 +13,8 @@ from epoch_backend.execution import ServerLease
 from epoch_backend.telemetry import TelemetryService
 from epoch_backend.telemetry_api import telemetry_router
 from epoch_backend.trace_api import trace_router
+from epoch_backend.trace_question_api import trace_question_router
+from epoch_backend.trace_questions import TraceQuestions
 
 
 def create_trace_app(settings: Settings):
@@ -20,6 +22,7 @@ def create_trace_app(settings: Settings):
     if settings.neatlogs_cloud_enabled:
         raise ValueError("trace-debugger requires EPOCH_NEATLOGS_CLOUD_ENABLED=false")
     service = TelemetryService(settings)
+    questions = TraceQuestions(settings, service.traces)
     lease = ServerLease(settings.data_dir / "execution.lock")
 
     @asynccontextmanager
@@ -27,16 +30,20 @@ def create_trace_app(settings: Settings):
         lease.acquire()
         try:
             service.initialize()
+            questions.initialize()
             yield
         finally:
+            await questions.close()
             service.close()
             lease.release()
 
     app = FastAPI(title="Epoch local trace explorer", version="0.1.0", lifespan=lifespan)
     app.state.telemetry = service
     app.state.settings = settings
+    app.state.trace_questions = questions
     app.include_router(telemetry_router(service))
     app.include_router(trace_router(service.traces))
+    app.include_router(trace_question_router(questions))
     app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins,
                        allow_methods=["GET", "POST"], allow_headers=["Content-Type"],
                        allow_credentials=False)

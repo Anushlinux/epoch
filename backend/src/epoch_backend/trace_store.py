@@ -93,6 +93,8 @@ def _normalize(raw):
     trace_id, span_id = span.trace_id.hex(), span.span_id.hex()
     start_us, end_us = span.start_time_unix_nano // 1000, span.end_time_unix_nano // 1000
     warnings = []
+    if isinstance(local.get("epoch.capture.warning"), str):
+        warnings.append(local["epoch.capture.warning"])
     if not has_input:
         warnings.append("Input was not captured for this span.")
     if not has_output:
@@ -351,3 +353,53 @@ class TraceStore:
         if record["parent_missing"]:
             record["warnings"].append("The parent span has not been received or indexed.")
         return record
+
+    def question_candidates(self, trace_id, question, focus=None):
+        """Select inside one SQLite snapshot; the model never constructs SQL."""
+        self._require_ready()
+        self._ids(trace_id, focus)
+        stopwords = {"a", "an", "the", "why", "what", "how", "did", "does", "this", "that",
+                     "is", "was", "are", "were", "to", "in", "of", "and", "or", "it", "for",
+                     "me", "my", "can", "you", "please", "about", "trace", "agent", "run"}
+        terms = list(dict.fromkeys(word.lower() for word in re.findall(r"\w+", question)
+                                  if word.lower() not in stopwords))[:24]
+        with closing(self._connect()) as db:
+            db.execute("BEGIN")
+            summary = self._summary(db, trace_id)
+            selected = {}
+
+            def add(rows):
+                for row in rows:
+                    selected.setdefault(row["span_id"], row)
+
+            if focus:
+                add(db.execute("SELECT span_id,parent_span_id,start_us,record_json FROM trace_spans "
+                               "WHERE trace_id=? AND span_id=?", (trace_id, focus)))
+                if focus not in selected:
+                    raise TraceError("trace_not_found", "Selected span is not in this trace.", 404)
+            columns = "span_id,parent_span_id,start_us,record_json"
+            add(db.execute(f"SELECT {columns} FROM trace_spans WHERE trace_id=? "
+                           "AND parent_span_id IS NULL ORDER BY start_us,span_id LIMIT 2", (trace_id,)))
+            if terms:
+                match = " OR ".join('"' + term + '"' for term in terms)
+                add(db.execute("SELECT s.span_id,s.parent_span_id,s.start_us,s.record_json "
+                               "FROM trace_span_fts JOIN trace_spans s ON s.identity=trace_span_fts.identity "
+                               "WHERE s.trace_id=? AND trace_span_fts MATCH ? "
+                               "ORDER BY bm25(trace_span_fts),s.start_us,s.span_id LIMIT 12", (trace_id, match)))
+            add(db.execute(f"SELECT {columns} FROM trace_spans WHERE trace_id=? AND is_error=1 "
+                           "ORDER BY start_us,span_id LIMIT 4", (trace_id,)))
+            # Restore causal context around the strongest candidates, within this trace only.
+            for row in list(selected.values())[:5]:
+                if row["parent_span_id"]:
+                    add(db.execute(f"SELECT {columns} FROM trace_spans WHERE trace_id=? AND span_id=?",
+                                   (trace_id, row["parent_span_id"])))
+                add(db.execute(f"SELECT {columns} FROM trace_spans WHERE trace_id=? AND start_us<? "
+                               "ORDER BY start_us DESC,span_id DESC LIMIT 1", (trace_id, row["start_us"])))
+                add(db.execute(f"SELECT {columns} FROM trace_spans WHERE trace_id=? AND start_us>? "
+                               "ORDER BY start_us,span_id LIMIT 1", (trace_id, row["start_us"])))
+            add(db.execute(f"SELECT {columns} FROM trace_spans WHERE trace_id=? "
+                           "ORDER BY start_us,span_id LIMIT 6", (trace_id,)))
+            add(db.execute(f"SELECT {columns} FROM trace_spans WHERE trace_id=? "
+                           "ORDER BY start_us DESC,span_id DESC LIMIT 2", (trace_id,)))
+            candidates = [json.loads(row["record_json"]) for row in list(selected.values())[:32]]
+        return summary, candidates, terms

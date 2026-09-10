@@ -231,7 +231,7 @@ class Session:
         self.before_model_request = before_model_request
         self.process: subprocess.Popen[str] | None = None
         self.reader: threading.Thread | None = None
-        self.output: queue.Queue[str | None] = queue.Queue()
+        self.output: queue.Queue[str | None] = queue.Queue(maxsize=2048)
         self.baseline: dict = {}
         self.turns_used = 0
         self.max_turns = request.get("max_turns", 20)
@@ -243,6 +243,25 @@ class Session:
         self.segment = 0
         self.verification_pause = 0.0
         self.pending_pause = 0.0
+        self.chat_operation_id: str | None = None
+
+    def run_chat_message(self, request, on_event, cancel_event):
+        """A new user message has its own grant; repair continuations never use this."""
+        if not self.request.get("chat_worker") or not request.get("chat_worker"):
+            raise ValueError("Only a conversation worker accepts independent message grants")
+        for key in ("task_id", "run_id", "mcp_command", "mcp_args", "chat_scope",
+                    "max_turns", "timeout_seconds"):
+            if self.request.get(key) != request.get(key):
+                self.close()
+                raise ValueError("Conversation worker scope changed")
+        operation_id = request.get("chat_operation_id")
+        if not isinstance(operation_id, str) or operation_id == self.chat_operation_id:
+            raise ValueError("A worker requires a new admitted message identity")
+        self.chat_operation_id = operation_id
+        self.on_event, self.cancel_event = on_event, cancel_event
+        self.turns_used = 0
+        self.deadline = time.monotonic() + self.timeout_seconds
+        return self.run(request["brief"])
 
     def account_verification_pause(self, seconds: float):
         """Host-only idle verification time; never reset request counts."""
@@ -274,6 +293,7 @@ class Session:
     def _launch(self) -> dict | None:
         if self.cancel_event.is_set():
             return self._failure("cancelled", "Execution cancelled before startup")
+        self.on_event({"type": "executor.starting", "data": {}})
         installation = detect_installation()
         if not installation.get("available"):
             return self._failure(
@@ -331,12 +351,23 @@ class Session:
 
         def read_output() -> None:
             assert self.process is not None and self.process.stdout is not None
+
+            def enqueue(value):
+                while not self.closed:
+                    try:
+                        self.output.put(value, timeout=0.1)
+                        return
+                    except queue.Full:
+                        continue
+
             try:
                 for line in self.process.stdout:
                     if line.startswith(_PREFIX):
-                        self.output.put(line[len(_PREFIX) :])
+                        enqueue(line[len(_PREFIX) :])
+            except (OSError, ValueError):
+                pass
             finally:
-                self.output.put(None)
+                enqueue(None)
 
         self.reader = threading.Thread(target=read_output, daemon=True)
         self.reader.start()
@@ -389,6 +420,8 @@ class Session:
                     "timeout_seconds": seconds,
                     "segment": self.segment,
                     "verification_pause_seconds": self.pending_pause,
+                    **({"chat_operation_id": self.chat_operation_id}
+                       if self.request.get("chat_worker") else {}),
                 }
             )
             self.pending_pause = 0.0
@@ -418,6 +451,10 @@ class Session:
                     item = json.loads(line)
                 except json.JSONDecodeError:
                     continue
+                if (self.request.get("chat_worker")
+                        and item.get("operation_id") != self.chat_operation_id):
+                    self.close()
+                    return self._failure("protocol_error", "Worker message identity changed", started)
                 if item.get("kind") == "result":
                     result = item["data"]
                     self.baseline = result.get("baseline", self.baseline)
@@ -473,7 +510,7 @@ class Session:
             )
 
     def close(self) -> None:
-        if self.closed:
+        if self.closed and (self.process is None or self.process.poll() is not None):
             return
         self.closed = True
         if self.process is not None:
@@ -631,12 +668,38 @@ def _settings_identity(home: Path) -> dict:
     }
 
 
+class _StreamRedactor:
+    """Retain secret prefixes between deltas so splitting a token cannot bypass masking."""
+
+    def __init__(self, secrets):
+        self.secrets = [value for value in secrets if value]
+        self.pending = ""
+
+    def push(self, text, *, final=False):
+        value = self.pending + text
+        for secret in self.secrets:
+            value = value.replace(secret, "[redacted]")
+        tail = 0
+        for secret in self.secrets:
+            for length in range(min(len(value), len(secret) - 1), tail, -1):
+                if value.endswith(secret[:length]):
+                    tail = length
+                    break
+        self.pending = value[-tail:] if tail else ""
+        visible = value[:-tail] if tail else value
+        if final and self.pending:
+            visible += "[redacted]"
+            self.pending = ""
+        return visible
+
+
 def _worker(request: dict) -> int:
     """Existing-Hermes-interpreter entry point. No credentials are written to disk."""
     import logging
 
     write_lock = threading.Lock()
     secrets: list[str] = []
+    operation_id = request.get("chat_operation_id")
 
     def clean(value: Any) -> Any:
         if isinstance(value, dict):
@@ -653,7 +716,9 @@ def _worker(request: dict) -> int:
     def emit(kind: str, data: dict) -> None:
         with write_lock:
             print(
-                _PREFIX + json.dumps({"kind": kind, "data": clean(data)}, default=str), flush=True
+                _PREFIX + json.dumps({"kind": kind, "data": clean(data),
+                    **({"operation_id": operation_id} if request.get("chat_worker") else {})},
+                    default=str), flush=True
             )
 
     def event(event_type: str, **data: Any) -> None:
@@ -671,6 +736,37 @@ def _worker(request: dict) -> int:
     segment_requests = 0
     session_deadline = time.monotonic() + request.get("timeout_seconds", 600)
     segment_deadline = session_deadline
+    stream_redactor = None
+    stream_think = stream_context = None
+    stream_pending = ""
+    stream_last_sent = 0.0
+
+    def flush_stream(*, final=False):
+        nonlocal stream_pending, stream_last_sent
+        if stream_redactor is not None and final:
+            if stream_think is not None:
+                tail = stream_context.feed(stream_think.flush()) + stream_context.flush()
+                stream_pending += stream_redactor.push(tail)
+            stream_pending += stream_redactor.push("", final=True)
+        if stream_pending:
+            for offset in range(0, len(stream_pending), 2048):
+                event("executor.stream_delta", text=stream_pending[offset:offset + 2048])
+            stream_pending = ""
+            stream_last_sent = time.monotonic()
+
+    def on_stream_delta(text):
+        nonlocal stream_pending
+        if not active_segment or stream_redactor is None:
+            return
+        if text is None:
+            flush_stream(final=True)
+            event("executor.stream_end")
+        elif isinstance(text, str):
+            if stream_think is not None:
+                text = stream_context.feed(stream_think.feed(text))
+            stream_pending += stream_redactor.push(text)
+            if len(stream_pending) >= 512 or time.monotonic() - stream_last_sent >= 0.05:
+                flush_stream()
 
     def admit_request() -> None:
         nonlocal requests_sent, segment_requests
@@ -689,6 +785,10 @@ def _worker(request: dict) -> int:
                 if expected and _digest(prompt) != expected:
                     raise ValueError("Hermes system prompt changed before provider request")
             if request.get("session_mode"):
+                flush_stream(final=True)
+                if stream_think is not None:
+                    stream_think.reset()
+                    stream_context.reset()
                 emit("request_admission", {"request": requests_sent + 1})
                 line = sys.stdin.readline()
                 if not line:
@@ -738,6 +838,8 @@ def _worker(request: dict) -> int:
         if not token:
             raise ValueError("Selected Hermes route has no existing access credential")
         secrets.append(token)
+        if request.get("chat_worker"):
+            stream_redactor = _StreamRedactor(secrets)
         minimal_model = {
             key: model_config[key]
             for key in (
@@ -795,7 +897,15 @@ def _worker(request: dict) -> int:
         restore_gate = _install_request_gate(admit_request)
         from run_agent import AIAgent
         from tools.mcp_tool_discovery import discover_mcp_tools
+        if request.get("chat_worker"):
+            # Some Hermes tool-round paths call the text callback directly. Keep
+            # reasoning/memory tags filtered even when split across those deltas.
+            from agent.memory_manager import StreamingContextScrubber
+            from agent.think_scrubber import StreamingThinkScrubber
 
+            stream_think, stream_context = StreamingThinkScrubber(), StreamingContextScrubber()
+
+        event("executor.connecting_tools")
         names = discover_mcp_tools(allowed_mcp_names=["epoch"])
         if not names:
             raise ValueError("Hermes could not discover Epoch MCP tools")
@@ -831,6 +941,7 @@ def _worker(request: dict) -> int:
                 else None
             ),
             service_tier=inference_options.get("service_tier"),
+            stream_delta_callback=on_stream_delta if request.get("chat_worker") else None,
             tool_start_callback=lambda call_id, name, arguments: event(
                 "executor.tool_started", tool_call_id=call_id, name=name, arguments=arguments
             ),
@@ -905,6 +1016,7 @@ def _worker(request: dict) -> int:
         history = _visible_history(request.get("visible_history"))
         segment_number = 0
         verification_pause = 0.0
+        chat_operations = set()
         while True:
             if request.get("session_mode"):
                 line = sys.stdin.readline()
@@ -922,6 +1034,25 @@ def _worker(request: dict) -> int:
                     "timeout_seconds": request["timeout_seconds"],
                 }
             segment_number += 1
+            if request.get("chat_worker"):
+                next_operation = command.get("chat_operation_id")
+                if (not isinstance(next_operation, str) or not next_operation
+                        or next_operation in chat_operations):
+                    raise ValueError("Expected a new admitted chat message")
+                chat_operations.add(next_operation)
+                operation_id = next_operation
+                # Independent user message grants; never reset repair-session budgets.
+                requests_sent = 0
+                session_deadline = time.monotonic() + request["timeout_seconds"]
+                stream_redactor = _StreamRedactor(secrets)
+                stream_pending = ""
+                stream_last_sent = 0.0
+                stream_think.reset()
+                stream_context.reset()
+                baseline["memory_state"] = (
+                    "same_conversation_worker_history_retained" if segment_number > 1
+                    else "fresh_empty_home_memory_disabled"
+                )
             pause = command.get("verification_pause_seconds", 0)
             if (
                 type(pause) not in (int, float)
@@ -943,6 +1074,8 @@ def _worker(request: dict) -> int:
             instruction = command.get("instruction")
             if not isinstance(instruction, str) or not instruction.strip():
                 raise ValueError("Continuation requires an instruction")
+            if request.get("chat_worker"):
+                baseline["brief_sha256"] = hashlib.sha256(instruction.encode()).hexdigest()
             if segment_number > 1 and history is None:
                 raise ValueError("Hermes did not retain conversation history for continuation")
             if (
@@ -974,7 +1107,10 @@ def _worker(request: dict) -> int:
                     kwargs["conversation_history"] = history
                 result = agent.run_conversation(instruction, **kwargs)
             finally:
+                flush_stream(final=True)
                 active_segment = False
+            if request.get("chat_worker"):
+                event("executor.verifying")
             # This is the only copy of the full conversation; never serialize it to
             # the parent, API events, debugger context, request files or evidence.
             history = result.get("messages")

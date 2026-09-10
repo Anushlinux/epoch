@@ -388,8 +388,12 @@ class ToolRegistry:
             return self._error("invalid_arguments", problems, **correlation)
 
         operation: Callable[..., Any] = getattr(self.sandbox, tool.operation)
+        context_reference = None
         try:
             result = operation(**validated.model_dump())
+            if name == "runbooks.read":
+                from epoch_backend.context_policy import runbook_context
+                result, context_reference = runbook_context(self.sandbox, validated.model_dump(), result)
         except SandboxError as exc:
             return self._error(exc.code, exc.message, **correlation)
         except Exception:
@@ -411,7 +415,7 @@ class ToolRegistry:
                 "context.supplied",
                 {**correlation, "source": result, "requested": validated.model_dump()},
             )
-        return {"ok": True, "result": result}
+        return {"ok": True, "result": result, **({"context_selection": context_reference} if context_reference else {})}
 
 
 def facade_identity() -> dict[str, Any]:

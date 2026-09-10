@@ -1,5 +1,20 @@
 # Integration verification and remaining checks
 
+**September 11 noise workflow — implemented but unverified:** local Ollama now has an
+explicit issue-analysis path with evidence citations and bounded policy proposals.
+Source selection integrates with ordinary PDF/runbook tools and records actual supplied
+context. Publication requires explicit preview trials and user assessments; these are
+not new automated acceptance results. SDK/model/browser and recurrence checks remain
+unexecuted. Existing cloud Hermes/Luna routes were not changed. See the [handoff](../backend/docs/NOISE_WORKFLOW.md).
+
+**September 10 chat lifecycle addition — implemented but unverified:** source inspection
+of the installed Hermes `stream_delta_callback` informed operation-scoped public SSE.
+Normal chat can now retain its initialized agent/history/MCP connection within a single
+conversation and unchanged environment. Scope checks, idle disposal, cancellation and
+integrity checks govern reuse. No new installed-version execution, streaming acceptance,
+cross-chat isolation or latency measurements were performed. Previous release/repair
+evidence below does not validate this addition. See [manual checks](../backend/docs/CHAT_LATENCY.md).
+
 **Local sandbox services, MCP, actual Hermes and opt-in OpenAI Luna supervision are implemented.** Installed Hermes has executed both the healthy release workflow and the deliberately broken checklist workflow. Trusted checks inspect simulated application state independently of Hermes's completion message. The [status record](status.md) records final acceptance, run identifiers and remaining limitations; checked items below describe only demonstrated scope.
 
 Neatlogs local ingestion and opt-in structural cloud forwarding are implemented in the current integration; actual validation is recorded in [status](status.md). Authenticated cloud delivery remains unverified. Raindrop Workshop and live Jira/Notion/Slack connections remain unimplemented. Phase 5 generated checklist repair uses the local Linux Docker runner; see [repair setup](../backend/docs/REPAIR_SETUP.md) and [validation](status.md). Anushrut owns the separate UI. Backend setup, simulation commands and execution entrypoints are in the [backend README](../backend/README.md); provider isolation and installed-source verification are in [Hermes setup](../backend/docs/HERMES_SETUP.md).
@@ -90,7 +105,31 @@ Live business-service checks require a separately authorized scope and are not n
 
 ## Completion rule
 
+The [chat-to-traces integration](../backend/docs/CHAT_TRACES.md) uses the installed
+Neatlogs 1.4.21 public Client/tracer API and OTLP encoder with a local exporter.
+It observes existing Hermes callbacks without modifying Hermes. Private model
+internals are unavailable; only explicitly recorded errors become error status.
+Chat SDK spans never enter the cloud queue. External SDK authentication, original
+evidence and the current data directory remain in use. This extension is implemented
+but unverified; real chat capture, SDK normalization, interruption handling, Windows
+direct routes and conversation navigation require the user's manual acceptance.
+
 Only checked items with reproducible execution evidence can support runtime compatibility claims. Partial integrations stay partial in [status](status.md). Preserve the complete verified local loop if integration breadth must shrink, and state exactly what was omitted.
+
+## Trace debugger feature Phase 3: local Ollama
+
+The user supplied installed model `qwen3:4b-instruct-2507-q4_K_M`. The new integration
+uses Ollama's documented `/api/tags` and `/api/chat` with structured output, only
+after an explicit trace question. A saved selection of local evidence goes to the
+configured loopback endpoint. No model pulls, automatic retries, tools or cloud
+fallback are enabled. Citation references are checked against that saved snapshot;
+this does not establish factual correctness. Official references, exact settings,
+limits and manual acceptance cases are in [the handoff](../backend/docs/TRACE_QUESTIONS.md).
+
+**Unverified:** Ollama reachability, installed-version API compatibility, answer
+quality, timeout/cancellation, UI behavior and persistence were not exercised.
+Testing and model calls were explicitly skipped. Other existing integration
+evidence below and above retains its historical scope.
 
 ## Phase 6/7 development status
 

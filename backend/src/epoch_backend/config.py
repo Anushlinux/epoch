@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     port: int = Field(default=8000, ge=1, le=65535)
     log_level: Literal["critical", "error", "warning", "info", "debug", "trace"] = "info"
     enable_hermes: bool = True
+    chat_worker_idle_seconds: int = Field(default=300, ge=0, le=3600)
     pdf_image_id: str = ""
 
     @field_validator("pdf_image_id")
@@ -28,6 +29,33 @@ class Settings(BaseSettings):
             raise ValueError("PDF image must be an immutable sha256 image ID")
         return value
     telemetry_enabled: bool = True
+    ollama_base_url: str = "http://127.0.0.1:11434"
+    trace_model: str = Field(default="qwen3:4b-instruct-2507-q4_K_M", min_length=1, max_length=200)
+    trace_question_timeout_seconds: int = Field(default=180, ge=15, le=600)
+
+    @field_validator("ollama_base_url")
+    @classmethod
+    def validate_ollama_url(cls, value: str) -> str:
+        parsed = urlsplit(value)
+        if (parsed.scheme != "http" or parsed.hostname not in {"127.0.0.1", "localhost", "::1"}
+                or parsed.username is not None or parsed.password is not None
+                or parsed.path not in {"", "/"} or parsed.query or parsed.fragment):
+            raise ValueError("Ollama must use a loopback HTTP origin without credentials or a path")
+        port = parsed.port if parsed.port is not None else 11434
+        if port == 0:
+            raise ValueError("Ollama port must be between 1 and 65535")
+        # Resolve the localhost spelling ourselves; requests never use a DNS name.
+        host = "[::1]" if parsed.hostname == "::1" else "127.0.0.1"
+        return f"http://{host}:{port}"
+
+    @field_validator("trace_model")
+    @classmethod
+    def validate_trace_model(cls, value: str) -> str:
+        value = value.strip()
+        if not value or any(char.isspace() for char in value) or "cloud" in value.lower() or "://" in value:
+            raise ValueError("Use the exact name of an installed local Ollama model")
+        return value
+
     neatlogs_cloud_enabled: bool = False
     neatlogs_api_key: SecretStr = Field(
         default=SecretStr(""), validation_alias="NEATLOGS_API_KEY", exclude=True, repr=False

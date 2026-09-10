@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from epoch_backend.chat import ChatService, chat_router
+from epoch_backend.chat_streams import chat_stream_router
 from epoch_backend.candidate_runner import CandidateError
 from epoch_backend.config import Settings
 from epoch_backend.contracts import ErrorEnvelope, HealthResponse, Task, TaskCreate, TaskList
@@ -23,6 +24,11 @@ from epoch_backend.sandbox import SandboxError
 from epoch_backend.storage import RequestConflict, SQLiteStore
 from epoch_backend.telemetry_api import telemetry_router
 from epoch_backend.trace_api import trace_router
+from epoch_backend.trace_question_api import trace_question_router
+from epoch_backend.trace_questions import TraceQuestions
+from epoch_backend.noise_service import NoiseService
+from epoch_backend.noise_api import noise_router
+from epoch_backend.trace_store import TraceError
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +45,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     store = SQLiteStore(config.database_path)
     execution = ExecutionService(config, store)
     chats = ChatService(execution)
+    trace_questions = TraceQuestions(config, execution.telemetry.traces)
+    noise = NoiseService(chats, trace_questions)
+    chats.noise = noise
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -46,8 +55,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         execution.initialize()
         try:
             chats.initialize()
+            noise.initialize()
+            trace_questions.initialize()
             yield
         finally:
+            await noise.close()
+            await trace_questions.close()
+            chats.close()
             execution.close()
 
     app = FastAPI(
@@ -64,15 +78,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = config
     app.state.execution = execution
     app.state.chats = chats
+    app.state.trace_questions = trace_questions
+    app.state.noise = noise
     app.include_router(chat_router(chats))
+    app.include_router(chat_stream_router(chats))
+    app.include_router(noise_router(noise))
     app.include_router(execution_router(execution))
     app.include_router(incident_router(execution.incidents))
     app.include_router(telemetry_router(execution.telemetry))
     app.include_router(trace_router(execution.telemetry.traces))
+    app.include_router(trace_question_router(trace_questions))
 
     @app.exception_handler(CandidateError)
     async def pdf_error(request: Request, exc: CandidateError):
         return error_response(404 if exc.code == "asset_not_found" else 422, exc.code, exc.message)
+
+    @app.exception_handler(TraceError)
+    async def trace_error(request: Request, exc: TraceError):
+        return error_response(exc.status, exc.code, exc.message)
 
     @app.middleware("http")
     async def require_allowed_origin(request: Request, call_next):
