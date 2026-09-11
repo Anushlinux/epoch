@@ -43,6 +43,14 @@ def noise_router(service):
     def draft(chat_id: UUID, payload: c.Draft):
         return invoke(service.draft, chat_id, payload)
 
+    @router.post("/cleanup-reviews")
+    def review_cleanup(chat_id: UUID, payload: c.CleanupReview):
+        return invoke(service.review_cleanup, chat_id, payload)
+
+    @router.post("/cleanup-reviews/{review_id}/apply")
+    def apply_cleanup(chat_id: UUID, review_id: UUID, payload: c.ApplyCleanup):
+        return invoke(service.apply_cleanup, chat_id, review_id, payload)
+
     @router.post("/policies/{policy_id}/previews")
     def preview(chat_id: UUID, policy_id: UUID, payload: c.Preview):
         return invoke(service.preview, chat_id, policy_id, payload)

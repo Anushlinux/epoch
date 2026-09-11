@@ -106,6 +106,20 @@ class Activate(Strict):
     validation_ids: list[UUID] = Field(min_length=4, max_length=4)
 
 
+class CleanupReview(Strict):
+    client_request_id: UUID
+    analysis_id: UUID
+    expected_revision: int = Field(ge=0)
+    title: Label
+    rules: list[Rule] = Field(min_length=1, max_length=3)
+    topic: Label | None = None
+
+
+class ApplyCleanup(Strict):
+    client_request_id: UUID
+    expected_revision: int = Field(ge=0)
+
+
 class Rollback(Strict):
     client_request_id: UUID
     expected_revision: int = Field(ge=0)

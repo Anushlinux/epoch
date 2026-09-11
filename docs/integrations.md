@@ -3,8 +3,10 @@
 **September 11 noise workflow — implemented but unverified:** local Ollama now has an
 explicit issue-analysis path with evidence citations and bounded policy proposals.
 Source selection integrates with ordinary PDF/runbook tools and records actual supplied
-context. Publication requires explicit preview trials and user assessments; these are
-not new automated acceptance results. SDK/model/browser and recurrence checks remain
+context. Documents now supports source review followed by explicit Apply filter and Undo;
+these activations record user approval without requiring trials. The existing four-trial
+route and generated-code repair gates remain intact. These are not new automated
+acceptance results. SDK/model/browser and recurrence checks remain
 unexecuted. Existing cloud Hermes/Luna routes were not changed. See the [handoff](../backend/docs/NOISE_WORKFLOW.md).
 
 **September 10 chat lifecycle addition — implemented but unverified:** source inspection

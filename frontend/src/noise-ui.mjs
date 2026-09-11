@@ -7,7 +7,7 @@ const json = value => `<pre class="trace-json">${escape(JSON.stringify(value, nu
 export class NoisePanel {
   constructor(root, context, render, url) {
     Object.assign(this, { root, context, render, url });
-    this.key = ''; this.data = null; this.error = ''; this.busy = false;
+    this.key = ''; this.data = null; this.error = ''; this.notice = ''; this.busy = false;
     this.values = new Map(); this.revisions = new Map();
     this.loadedDecisions = new Map();
     root.addEventListener('input', event => {
@@ -32,7 +32,7 @@ export class NoisePanel {
   sync() {
     const { origin, chat } = this.context(), key = `${origin}:${chat}`;
     if (key === this.key) return;
-    this.key = key; this.data = null; this.error = ''; this.busy = false; this.pending = null;
+    this.key = key; this.data = null; this.error = ''; this.notice = ''; this.busy = false; this.pending = null;
     this.loadedDecisions.clear();
     this.base = `/api/chats/${encodeURIComponent(chat)}/noise`;
     try {
@@ -67,12 +67,15 @@ export class NoisePanel {
     this.pending ||= { path, payload: { client_request_id: crypto.randomUUID(), ...payload } };
     const request = this.pending;
     try { sessionStorage.setItem(`epoch.noise.pending:${key}`, JSON.stringify(request)); } catch { /* Preserve exact request in memory. */ }
-    this.busy = true; this.error = ''; this.render();
+    this.busy = true; this.error = ''; this.notice = ''; this.render();
     try {
       const { body } = await api.call(request.path, request.payload);
       if (key !== this.key) return;
       if (body.id !== request.payload.client_request_id || body.chat_id !== this.context().chat) throw new Error('Action acknowledgement could not be confirmed. Retry the exact action.');
       this.clearPending();
+      if (body.kind === 'activation' && body.review_id) this.notice = 'Filter applied. New current document retrievals will use it.';
+      if (body.kind === 'rollback') this.notice = 'Filter undone. New retrievals will use the previous policy, or no filter if none was active.';
+      if (body.kind === 'cleanup_review') this.notice = body.ready ? 'Review ready. Inspect the sources below before applying.' : 'Review saved. Address the notices below; no filter has been applied.';
       if (formId) { this.values.delete(`${key}:${formId}`); this.revisions.delete(`${key}:${formId}`); }
       await this.refresh(true);
     } catch (error) {
@@ -88,6 +91,9 @@ export class NoisePanel {
     const val = name => String(f.get(name) || '').trim();
     const revision = this.revisions.get(`${this.key}:${form.id}`) ?? this.data.revision;
     const policy = form.dataset.policy;
+    if (['draft', 'cleanup-review'].includes(action) && !f.getAll('rules').length) {
+      this.error = 'Select at least one suggested rule to continue.'; this.render(); return;
+    }
     if (action === 'analyze') return this.write(this.base + '/analyses', { trace_id: this.context().trace, issue: val('issue') }, form.id);
     if (action === 'metadata') {
       const source = this.data.sources.find(s => s.id === form.dataset.source);
@@ -96,6 +102,9 @@ export class NoisePanel {
           topics: val('topics').split(',').map(v => v.trim()).filter(Boolean) } }, form.id);
     }
     if (action === 'draft') return this.write(this.base + '/policies', { analysis_id: form.dataset.analysis, title: val('title'), rules: f.getAll('rules') }, form.id);
+    if (action === 'cleanup-review') return this.write(this.base + '/cleanup-reviews', {
+      analysis_id: form.dataset.analysis, expected_revision: this.data.revision, title: val('title'),
+      rules: f.getAll('rules'), topic: val('topic') || null }, form.id);
     if (action === 'preview') return this.write(`${this.base}/policies/${policy}/previews`, {
       case: val('case'), purpose: val('purpose'), version: val('version') || null, topic: val('topic') || null,
       required_ids: f.getAll('required_ids') }, form.id);
@@ -127,6 +136,11 @@ export class NoisePanel {
       const validations = cases.map(c => this.records('validation').find(v => v.policy_id === policy && v.case === c && v.passed));
       if (validations.some(v => !v)) return;
       return this.write(`${this.base}/policies/${policy}/activate`, { expected_revision: this.data.revision, validation_ids: validations.map(v => v.id) });
+    }
+    if (button.dataset.noiseAction === 'apply-cleanup') {
+      const review = this.records('cleanup_review').find(r => r.id === button.dataset.review);
+      if (!review || !review.ready || this.reviewStale(review)) return;
+      return this.write(`${this.base}/cleanup-reviews/${review.id}/apply`, { expected_revision: review.snapshot.revision });
     }
     if (button.dataset.noiseAction === 'rollback') return this.write(this.base + '/rollback', { expected_revision: this.data.revision, activation_id: button.dataset.activation });
   }
@@ -176,8 +190,8 @@ export class NoisePanel {
     const validations = this.records('validation').filter(v => v.policy_id === policy.id);
     const ready = cases.every(c => validations.some(v => v.case === c && v.passed));
     const active = this.data.active_id === policy.id;
-    const activation = this.records('activation').find(a => a.policy_id === policy.id && a.revision === this.data.revision);
-    return `<details class="noise-policy" data-key="noise-policy-${policy.id}"><summary>${escape(policy.title)} · ${active ? 'Active · manual acceptance recorded' : 'Inactive policy'}</summary>
+    const activation = this.data.active_activation?.policy_id === policy.id ? this.data.active_activation : this.records('activation').find(a => a.policy_id === policy.id && a.revision === this.data.revision);
+    return `<details class="noise-policy" data-key="noise-policy-${policy.id}"><summary>${escape(policy.title)} · ${active ? (activation?.acceptance === 'user_approved_filter' ? 'Active · applied after user review' : 'Active policy') : 'Inactive policy'}</summary>
       <p>${policy.rules.map(r => escape(ruleNames[r])).join(' · ')}</p><small>Policy ${escape(policy.id)} · project ${escape(policy.project)}</small>
       <form id="${fid}" data-noise="preview" data-policy="${policy.id}"><fieldset ${this.busy || this.pending || this.data.busy ? 'disabled' : ''}><legend>Preview a case before trial</legend>
       <div class="noise-fields">${this.select(fid,'case','Case',cases.map(v => [v,v]),'original')}${this.select(fid,'purpose','Request purpose',['current','historical','all'].filter(v => this.data.environment === 'pdf_workshop' || v !== 'all').map(v => [v,v]),'current')}${this.input(fid,'version','Explicit version (optional)')}${this.data.environment === 'pdf_workshop' ? this.input(fid,'topic','Requested topic (optional)') : ''}</div>
@@ -193,6 +207,61 @@ export class NoisePanel {
       <button type="button" data-noise-action="activate" data-policy="${policy.id}" ${active || !ready || this.busy || this.pending || this.data.busy ? 'disabled' : ''}>Activate reviewed policy</button>
       ${active && activation ? `<button type="button" data-noise-action="rollback" data-activation="${activation.id}" ${this.busy || this.pending || this.data.busy ? 'disabled' : ''}>Roll back this activation</button>` : ''}
       <details data-key="noise-validation-history-${policy.id}"><summary>Recorded assessments and provenance</summary>${json(validations)}</details></details>`;
+  }
+
+  reviewStale(review) {
+    const fields = ['id', 'sha256', 'kind', 'name', 'size', 'project_id'];
+    const signature = sources => JSON.stringify(sources.map(s => fields.map(f => s[f])));
+    return review.snapshot.revision !== this.data.revision || review.previous_active_id !== this.data.active_id
+      || signature(review.snapshot.sources) !== signature(this.data.sources);
+  }
+
+  cleanupFormView(analysis) {
+    const direct = this.data.supports_cleanup_review, fid = `noise-cleanup-${analysis.id}`;
+    const draftId = `noise-draft-${analysis.id}`;
+    const draft = `<form id="${draftId}" data-noise="draft" data-analysis="${analysis.id}"><fieldset ${this.busy || this.pending ? 'disabled' : ''}>${this.input(draftId,'title','Policy name')}${analysis.answer.rules.map(r => this.toggle(draftId,'rules',r,ruleNames[r],true)).join('')}<button>Save selected rules as draft</button></fieldset></form>`;
+    if (!direct) return draft;
+    const review = this.records('cleanup_review').find(r => r.analysis_id === analysis.id);
+    return `<form id="${fid}" data-noise="cleanup-review" data-analysis="${analysis.id}"><fieldset ${this.busy || this.pending || this.data.busy ? 'disabled' : ''}><legend>Review suggested cleanup</legend>
+      <p>Choose which suggestions to review. Nothing changes until you press Apply filter.</p>
+      ${this.input(fid,'title','Filter name','Reviewed document cleanup')}
+      ${analysis.answer.rules.map(r => this.toggle(fid,'rules',r,ruleNames[r],true)).join('')}
+      ${analysis.answer.rules.includes('match_topic') ? this.input(fid,'topic','Requested topic (needed when reviewing topic matching)') : ''}
+      <button>${review ? 'Create new cleanup review' : 'Review cleanup'}</button>
+      <small>Existing active rules are carried forward. Version/topic filters retain sources with unknown metadata. Protected sources stay.</small>
+      </fieldset></form>${review ? this.cleanupReviewView(review) : ''}
+      <details data-key="noise-trial-option-${analysis.id}"><summary>Optional: evaluate a draft with four trial runs first</summary>${draft}</details>`;
+  }
+
+  cleanupReviewView(review) {
+    const applied = this.data.active_activation?.review_id === review.id;
+    const stale = !applied && this.reviewStale(review);
+    const sources = new Map(review.snapshot.sources.map(s => [s.id, s]));
+    const newlyExcluded = new Set(review.newly_excluded_ids);
+    const decisions = [...review.selection.decisions].sort((a, b) => Number(newlyExcluded.has(b.source_id)) - Number(newlyExcluded.has(a.source_id)));
+    return `<section class="noise-cleanup-review" aria-labelledby="cleanup-heading-${review.id}"><h3 id="cleanup-heading-${review.id}">${escape(review.title)}</h3>
+      <p><strong>${review.newly_excluded_ids.length} additional source${review.newly_excluded_ids.length === 1 ? '' : 's'} ${applied ? 'excluded' : 'to exclude'}</strong> · ${review.selection.retained_ids.length} of ${review.snapshot.sources.length} retained in this preview.</p>
+      <p class="trace-muted">Scope: project ${escape(review.project)} · Documents. Applies to future current retrievals in all conversations in this scope.${review.query.topic ? ` Preview topic: ${escape(review.query.topic)}. Future topic matching uses each tool request’s topic.` : ''}</p>
+      <p>${review.rules.map(r => escape(ruleNames[r])).join(' · ')}</p>
+      ${review.inherited_rules.length ? `<small>Carried forward from the active filter: ${review.inherited_rules.map(r => escape(ruleNames[r])).join(' · ')}.</small>` : ''}
+      <div class="noise-source-table" tabindex="0" role="region" aria-label="Reviewed source selection"><table><thead><tr><th scope="col">Source</th><th scope="col">After applying</th><th scope="col">Reason and retained replacement</th></tr></thead><tbody>
+      ${decisions.map(d => { const source = sources.get(d.source_id), replacement = sources.get(d.replacement_id); return `<tr><td>${escape(source?.name || d.source_id)}<small>ID ${escape(d.source_id)}</small><details data-key="cleanup-source-${review.id}-${escape(d.source_id)}"><summary>Content hash</summary><small>${escape(d.sha256)}</small></details></td><td>${d.retained ? 'Retained' : newlyExcluded.has(d.source_id) ? 'Excluded from current retrieval' : 'Already excluded'}</td><td>${escape(d.reason.replaceAll('_',' '))}${replacement ? `<small>Retained equivalent/current source: ${escape(replacement.name)} · ${escape(replacement.id)}</small>` : ''}</td></tr>`; }).join('')}
+      </tbody></table></div>
+      ${[...review.blocked, ...review.selection.warnings].map(w => `<p class="trace-notice">${escape(w)}</p>`).join('')}
+      <p>Original files, direct source reads, historical retrievals and saved messages remain available. This filters future context; it does not erase data or repair tools.</p>
+      ${applied ? '<p class="trace-ready">Applied after your review. Use Undo filter above to restore the previous policy.</p>' : `${stale ? '<p class="trace-notice">The sources, metadata or active filter have changed. Create a new cleanup review before applying.</p>' : ''}
+      <button class="noise-apply" type="button" data-noise-action="apply-cleanup" data-review="${review.id}" ${!review.ready || stale || this.busy || this.pending || this.data.busy ? 'disabled' : ''}>${this.busy && this.pending?.path.endsWith(`/${review.id}/apply`) ? 'Applying…' : 'Apply filter'}</button>
+      <small>Pressing Apply filter approves the reviewed rules. Trial runs are optional for this Documents action; it does not establish that the task will succeed.</small>`}
+      </section>`;
+  }
+
+  activeFilterView() {
+    if (!this.data.active_id) return '';
+    const policy = this.records('policy').find(p => p.id === this.data.active_id), activation = this.data.active_activation;
+    return `<section class="noise-active-filter" aria-label="Active context filter"><h3>Filter active${policy ? `: ${escape(policy.title)}` : ''}</h3>
+      <p>New current retrievals use this filter in project ${escape(this.data.project)} · ${this.data.environment === 'pdf_workshop' ? 'Documents' : escape(this.data.environment)}. Original documents and logs are preserved.</p>
+      ${activation?.acceptance === 'user_approved_filter' ? '<small>Applied after user review. This approval does not establish task success.</small>' : activation?.acceptance === 'manual_trials_recorded' ? '<small>Four user-assessed trial runs were recorded for this activation.</small>' : '<small>Policy restored or active; inspect its recorded history for approval details.</small>'}
+      ${activation ? `<button type="button" data-noise-action="rollback" data-activation="${activation.id}" ${this.busy || this.pending || this.data.busy ? 'disabled' : ''}>Undo filter</button><small>Restores the previous policy, or no filter if none was active.</small>` : ''}</section>`;
   }
 
   nextStepView(answer) {
@@ -212,15 +281,18 @@ export class NoisePanel {
     if (!chat) return '<p class="trace-notice">Open traces from a conversation to investigate noise and manage its context policy.</p>';
     const analysis = this.latest(), fid = `noise-analysis-${trace}`;
     return `<section class="trace-questions noise-panel" id="noise-workspace"><header class="trace-question-heading"><div><p class="trace-eyebrow">CONTEXT QUALITY</p><h2>Investigate noise and prevent recurrence</h2></div><button type="button" data-noise-action="refresh">Refresh</button></header>
-      <p class="trace-muted">Find relevant evidence, preview a scoped filter, then record trial results before activation. Original traces and sources remain available.</p>
+      <p class="trace-muted">Investigate the evidence, review a suggested filter, then choose whether to apply it. Original traces and sources remain available.</p>
+      ${this.notice ? `<p class="trace-ready" role="status">${escape(this.notice)}</p>` : ''}
       ${this.error ? `<p class="trace-question-error" role="alert">${escape(this.error)}</p>` : ''}${this.data?.warning ? `<p class="trace-question-error" role="alert">${escape(this.data.warning)}</p>` : ''}${this.pending ? `<p class="trace-notice">Submission acknowledgement pending. <button type="button" data-noise-action="retry" ${this.busy ? 'disabled' : ''}>Confirm or retry exact action</button></p>` : ''}
       ${!this.data ? '<p>Loading noise workspace…</p>' : `<p>Project ${escape(this.data.project)} · revision ${this.data.revision} · ${this.data.active_id ? 'A context policy is active' : 'No active context policy'}</p>
+      ${this.activeFilterView()}
       ${trace ? `<form id="${fid}" data-noise="analyze"><fieldset ${this.busy || this.pending || this.data.model_busy ? 'disabled' : ''}>${this.input(fid,'issue','What went wrong?','', 'textarea')}<button>Investigate with local model</button><small>Uses ${escape(this.data.model)} through local Ollama.</small></fieldset></form>` : '<p>Select a trace to report an issue.</p>'}
       ${analysis ? `<article class="trace-answer"><h3>${escape(analysis.request.issue)}</h3>${analysis.state === 'running' ? '<p role="status">Local model is investigating…</p>' : analysis.error ? `<p class="trace-question-error" role="alert">${escape(analysis.error)}</p>${analysis.error_code ? `<p class="trace-muted">Error code: ${escape(analysis.error_code)}</p>` : ''}${analysis.error_details ? `<details data-key="noise-failure-${escape(analysis.id)}"><summary>Failure details</summary>${json(analysis.error_details)}</details>` : ''}<button type="button" data-noise-action="retry-analysis" data-analysis="${escape(analysis.id)}" ${this.busy || this.pending || this.data.model_busy ? 'disabled' : ''}>Try investigation again</button><p class="trace-muted">Runs a new local analysis of this trace with the same issue. The failed attempt stays in history.</p>` : `<p>${escape(analysis.answer.summary)}</p><p>Finding: ${escape(analysis.answer.outcome.replaceAll('_',' '))}. Model conclusions require review.</p>
       ${analysis.answer.findings.map(f => `<p><strong>${escape(f.kind)} · ${escape(f.confidence)} confidence</strong> ${escape(f.explanation)}</p><div>${f.evidence_ids.map(id => { const e = analysis.snapshot.evidence.find(v => v.id === id); return e ? `<a data-route class="trace-citation" href="${escape(this.url({span:e.span_id}) + '#trace-selected-span')}">${escape(id)} · ${escape(e.name)}</a>` : ''; }).join('')}</div>`).join('')}
       ${[...analysis.answer.missing_evidence, ...analysis.snapshot.warnings].map(w => `<p class="trace-notice">${escape(w)}</p>`).join('')}
-      ${analysis.answer.outcome === 'context_noise' && analysis.answer.rules.length ? `<form id="noise-draft-${analysis.id}" data-noise="draft" data-analysis="${analysis.id}"><fieldset ${this.busy || this.pending ? 'disabled' : ''}>${this.input(`noise-draft-${analysis.id}`,'title','Policy name')}${analysis.answer.rules.map(r => this.toggle(`noise-draft-${analysis.id}`,'rules',r,ruleNames[r],true)).join('')}<button>Save selected rules as draft</button></fieldset></form>` : this.nextStepView(analysis.answer)}`}</article>` : ''}
-      ${this.metadataView()}${this.records('policy').slice(0,10).map(p => this.policyView(p)).join('')}
+      ${analysis.answer.outcome === 'context_noise' && analysis.answer.rules.length ? this.cleanupFormView(analysis) : this.nextStepView(analysis.answer)}`}</article>` : ''}
+      ${this.data.supports_cleanup_review ? '<details data-key="noise-demo-help"><summary>Try a data-noise example</summary><p>Upload the exact same PDF twice. Ask Hermes to list current documents and read both copies, then investigate whether identical content was supplied twice. A duplicate finding can suggest consolidation without changing the PDF tool.</p><p>After applying, ask for a new current document list and inspect Actual context delivered below. One equivalent copy should remain. Historical retrieval still exposes both copies.</p></details>' : ''}
+      ${this.metadataView()}<details data-key="noise-policies"><summary>Policies and optional trial workflow</summary>${this.records('policy').slice(0,10).map(p => this.policyView(p)).join('') || '<p>No policies saved yet.</p>'}</details>
       <details data-key="noise-decisions"><summary>Actual context delivered · recent decisions</summary>${this.data.decisions.length ? this.data.decisions.map(d => `<details data-key="noise-decision-${d.id}"><summary>${escape(d.tool)} · ${escape(d.created_at)} · ${escape(d.policy_id || 'no policy')}</summary>${this.loadedDecisions.has(d.id) ? json(this.loadedDecisions.get(d.id)) : `<button type="button" data-noise-action="decision" data-decision="${d.id}">Load supplied context and selection</button>${json(d)}`}</details>`).join('') : '<p>No recorded context selection yet. New document reads create evidence here.</p>'}</details>
       <details data-key="noise-history"><summary>Recent investigation and policy history (up to ${this.data.history_limit})</summary>${this.data.records.map(r => `<details data-key="noise-record-${r.id}"><summary>${escape(r.kind)} · ${escape(r.title || r.request.issue || r.created_at)}</summary>${json(r)}</details>`).join('')}</details>`}
     </section>`;

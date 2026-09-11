@@ -1,5 +1,34 @@
 # Current implementation status
 
+## User-reviewed document cleanup — September 11, 2026
+
+The user reported a working, cited tool-defect investigation and requested a genuine
+data-noise example plus an Apply button. They explicitly selected application after
+source review rather than requiring four trials. The screenshot demonstrates a returned
+investigation result; it does not independently prove the diagnosis or noise prevention.
+
+**Implemented but unverified:** Documents now has Review cleanup, a source-selection
+table, Apply filter and Undo filter. New HTTP/CLI actions record the review, retained
+replacements, new exclusions and project/environment scope. Apply rechecks the exact
+source/metadata snapshot and revision, requires idle execution, invalidates the warm
+worker, merges existing rules, and atomically writes policy/activation/revision records.
+Exact retries return the original receipt. Empty/no-effect reviews and changed snapshots
+cannot be applied. Active activation receipts remain available beyond recent-history
+limits. Approvals are labeled `user_approved_filter`, not verified task acceptance.
+
+The original four-trial policy route remains available; generated-code repair gates,
+Hermes prompts/configuration, original sources/logs, historical/explicit reads and old
+chat messages are unchanged. Filtering affects new current retrievals across the same
+project and Documents environment; existing chat history can still contain prior noise.
+No automatic task replay or model call accompanies review, apply or undo.
+
+Only static source review and diff formatting were performed. No tests, syntax/lint
+checks, servers, model/SDK calls, sample execution or browser acceptance. No new setting,
+dependency, credential or migration; existing app-file and process-only settings remain.
+See [setup and API](../backend/docs/NOISE_WORKFLOW.md) and the unexecuted
+[duplicate-PDF walkthrough](../backend/docs/DATA_NOISE_DEMO.md). Original direction
+bytes and its three Markdown hard breaks remain preserved.
+
 ## Noise outcome/action consistency — September 11, 2026
 
 The user's latest screenshot reports `invalid_policy_proposal`: the generated outcome
@@ -83,8 +112,8 @@ PDF and normal-chat runbook tool paths record the candidate sources, policy/revi
 selection and actual delivered content. Existing generated runbook repair retains its
 own path; release/repair sessions without a chat policy pin remain separate.
 
-Four distinct preview-bound trial traces and user-recorded passing assessments gate
-activation, along with required-source retention, observed selection, actual exclusions
+In the original trial route, four distinct preview-bound trial traces and user-recorded
+passing assessments gate activation, along with required-source retention, observed selection, actual exclusions
 in original/fresh cases, unchanged snapshots and an idle executor. This is manual
 acceptance evidence, not independently verified business-task correctness. Policies,
 annotations, decisions and rejected/failed assessments remain in a new SQLite database

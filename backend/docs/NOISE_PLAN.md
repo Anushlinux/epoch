@@ -58,3 +58,17 @@ Keep the existing post-generation rejection and draft/publication gates. A valid
 defect should show its cited explanation and open the conversation's existing Debugger
 without starting a repair. Use one inference request and existing settings; static review
 and diff formatting only. Preserve older failures.
+
+## User-reviewed data-noise cleanup
+
+The user requests a data-noise example and an explicit button to remove suggested noise.
+They explicitly chose Apply after source review, without requiring four trial runs.
+For the current Documents environment, implement review of a suggested filter followed
+by manual Apply and existing rollback. Label it user-approved, without claiming four-trial
+acceptance. Preserve the existing trial-based activation route for other use and keep
+generated-code repair gates intact. Apply changes future retrieval; source files, logs,
+historical/explicit reads and saved chat history remain preserved. Review snapshots,
+source hashes, project/environment scope, revision checks, exact retry receipts and idle
+worker invalidation bind the explicit approval. Merge existing rules rather than silently
+replace them. No automatic model calls or activation. Provide a duplicate-PDF walkthrough;
+development remains static review and diff formatting only.

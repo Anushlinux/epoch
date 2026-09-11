@@ -1,9 +1,11 @@
 # Epoch frontend
 
 **Context quality:** open Traces from a chat to investigate noise, inspect relevant
-evidence, annotate source versions/approvals, preview a draft policy and submit explicit
-trial messages. Record trial assessments before activating a policy; rollback and actual
-selection evidence stay visible. See [setup/manual checks](../backend/docs/NOISE_WORKFLOW.md).
+evidence and annotate source versions/approvals. Documents now offers **Review cleanup →
+Apply filter → Undo filter**, showing affected sources before explicit user approval.
+Trial runs remain optional for this action; the separate draft/trial activation route
+is preserved. Actual selection evidence stays visible. See [setup/manual checks](../backend/docs/NOISE_WORKFLOW.md)
+and the [duplicate-PDF walkthrough](../backend/docs/DATA_NOISE_DEMO.md).
 Implemented but unverified. Browsing never starts analysis or publishes a policy.
 
 **Live answers:** ordinary Hermes chat now receives public text and actual stages over

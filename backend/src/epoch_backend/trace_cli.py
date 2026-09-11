@@ -34,9 +34,10 @@ def add_trace_arguments(subparsers):
     subparsers.add_parser("trace-model-info", help="Read local model configuration; no Ollama request")
     noise = subparsers.add_parser("noise", help="Inspect noise findings or explicitly submit a context-policy action")
     noise.add_argument("chat_id")
-    noise.add_argument("action", choices=["workspace", "record", "analyze", "metadata", "draft", "preview", "validate", "activate", "rollback"])
+    noise.add_argument("action", choices=["workspace", "record", "analyze", "metadata", "draft", "review", "apply", "preview", "validate", "activate", "rollback"])
     noise.add_argument("--record-id")
     noise.add_argument("--policy-id")
+    noise.add_argument("--review-id")
     noise.add_argument("--json-file", type=Path, help="Exact request JSON, including client_request_id; preserve for safe retries")
 
 
@@ -58,8 +59,12 @@ def handle_trace_command(args, settings):
                 if not args.policy_id:
                     raise ValueError("--policy-id is required")
                 path += "/policies/" + quote(args.policy_id, safe="") + {"preview": "/previews", "validate": "/validations", "activate": "/activate"}[args.action]
+            elif args.action == "apply":
+                if not args.review_id:
+                    raise ValueError("--review-id is required")
+                path += "/cleanup-reviews/" + quote(args.review_id, safe="") + "/apply"
             else:
-                path += {"analyze": "/analyses", "metadata": "/sources/metadata", "draft": "/policies", "rollback": "/rollback"}[args.action]
+                path += {"analyze": "/analyses", "metadata": "/sources/metadata", "draft": "/policies", "review": "/cleanup-reviews", "rollback": "/rollback"}[args.action]
     elif args.command == "trace-model-info":
         path = "/api/trace-questions/runtime"
     elif args.command in {"ask-trace", "trace-questions"}:

@@ -169,3 +169,12 @@
 .noise-panel td, .noise-panel th { text-align: left; padding: .5rem; border-bottom: 1px solid var(--border, #383a3e); overflow-wrap: anywhere; }
 .noise-panel textarea, .noise-panel select { width: 100%; box-sizing: border-box; color: inherit; background: var(--surface, #242629); border: 1px solid var(--border, #383a3e); padding: .65rem; border-radius: 6px; }
 .noise-focus { padding: 1rem 0; }
+.noise-cleanup-review, .noise-active-filter { padding: 1rem; margin: 1rem 0; border: 1px solid var(--line); border-radius: 8px; overflow-wrap: anywhere; }
+.noise-cleanup-review h3, .noise-active-filter h3 { margin: 0 0 .6rem; }
+.noise-cleanup-review p, .noise-active-filter p { margin: .6rem 0; }
+.noise-active-filter { border-left: 3px solid var(--accent); background: var(--accent-soft); }
+.noise-source-table { overflow-x: auto; margin: 1rem 0; }
+.noise-source-table table { min-width: 520px; }
+.noise-panel .noise-apply { background: var(--accent); color: var(--canvas); border-color: var(--accent); font-weight: 600; }
+.noise-panel button:disabled { opacity: .5; cursor: not-allowed; }
+.noise-source-table:focus-visible, .noise-panel button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }

@@ -1,8 +1,9 @@
 # Epoch backend
 
 **Noise workflow:** [setup and manual checks](docs/NOISE_WORKFLOW.md) covers local
-issue analysis, source metadata, bounded context policies, preview-bound trials,
-manual acceptance, activation/rollback and tool-boundary evidence. Restart normal
+issue analysis, source metadata, Documents **Review cleanup → Apply filter → Undo filter**,
+optional preview-bound trials and tool-boundary evidence. See the [data-noise example](docs/DATA_NOISE_DEMO.md).
+Direct application records user approval, not verified task success. Restart normal
 `serve`; existing settings and databases stay in use. A new SQLite policy store is
 created within the existing data directory. No new dependency or credential.
 Implemented but unverified; current Ollama settings serve noise analysis while Hermes

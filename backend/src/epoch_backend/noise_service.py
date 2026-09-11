@@ -129,8 +129,19 @@ class NoiseService:
             active = self.store.get(state["active_id"])
             if active:
                 records.insert(0, active)
+        active_activation = None
+        if state["active_id"]:
+            with closing(self.store.connect()) as db:
+                row = db.execute("SELECT body FROM noise_records WHERE kind='activation' "
+                    "AND json_extract(body,'$.project')=? AND json_extract(body,'$.environment')=? "
+                    "AND json_extract(body,'$.policy_id')=? AND json_extract(body,'$.revision')=? "
+                    "ORDER BY created_at DESC LIMIT 1",
+                    (chat.project_id, chat.environment, state["active_id"], state["revision"])).fetchone()
+                if row:
+                    active_activation = json.loads(row[0])
         return {"chat_id": str(chat.id), "project": chat.project_id, "environment": chat.environment,
                 "revision": state["revision"], "active_id": state["active_id"],
+                "active_activation": active_activation, "supports_cleanup_review": chat.environment == "pdf_workshop",
                 **self.snapshot(chat, state), "records": records[:100],
                 "decisions": [{k: d[k] for k in ("id", "tool", "operation_id", "created_at", "policy_id", "policy_revision", "delivered_sha256")} for d in decisions],
                 "busy": bool(self.execution.active_run_id), "model": self.settings.trace_model,
@@ -285,6 +296,85 @@ class NoiseService:
                 raise TraceError("unsupported_rule", "Only evidence-linked proposed rules can be drafted.", 422)
             return self.store.put(self.record(chat, "policy", request, title=request.title,
                 rules=sorted(set(request.rules)), analysis_id=analysis["id"], created_as="draft", policy_schema="context-v1"))
+
+    def review_cleanup(self, chat_id, request):
+        chat = self.chat(chat_id)
+        with self.execution._lock:
+            if existing := self.existing(chat, "cleanup_review", request):
+                return existing
+            self.idle()
+            if chat.environment != "pdf_workshop":
+                raise TraceError("cleanup_environment", "Direct review/apply is available for Documents. Use the existing trial workflow for standard tools.", 422)
+            analysis = self.scoped(chat, request.analysis_id, "analysis")
+            if analysis["chat_id"] != str(chat.id) or analysis["state"] != "answered" or analysis["answer"]["outcome"] != "context_noise":
+                raise TraceError("unsupported_policy", "A supported context-noise finding in this conversation is required.", 422)
+            if set(request.rules) - set(analysis["answer"]["rules"]):
+                raise TraceError("unsupported_rule", "Review only the rules proposed by this investigation.", 422)
+            if "match_topic" in request.rules and not request.topic:
+                raise TraceError("topic_required", "Enter the requested topic to preview the topic filter.", 422)
+            with closing(self.store.connect()) as db, db:
+                db.execute("BEGIN IMMEDIATE")
+                state = self.store.state(chat.project_id, chat.environment, db)
+                self.check_revision(state, request.expected_revision)
+                previous = self.scoped(chat, state["active_id"], "policy") if state["active_id"] else None
+                previous_rules = previous["rules"] if previous else []
+                rules = sorted(set(previous_rules) | set(request.rules))
+                snapshot = self.snapshot(chat, state)
+                query = {"purpose": "current", "version": None, "topic": request.topic}
+                baseline = select_sources(snapshot["sources"], previous_rules, snapshot["labels"], **query)
+                selection = select_sources(snapshot["sources"], rules, snapshot["labels"], **query)
+                newly_excluded = sorted(set(baseline["retained_ids"]) - set(selection["retained_ids"]))
+                newly_retained = sorted(set(selection["retained_ids"]) - set(baseline["retained_ids"]))
+                blocked = []
+                if not newly_excluded:
+                    blocked.append("This review removes no additional sources. Check the source metadata and proposed rules, or inspect the filter already active.")
+                if not selection["retained_ids"]:
+                    blocked.append("The review must retain source content.")
+                if newly_retained:
+                    blocked.append("Combining these rules would restore sources excluded by the current filter. Review the existing policy first.")
+                return self.store.put(self.record(chat, "cleanup_review", request,
+                    title=request.title, analysis_id=str(request.analysis_id), trace_id=analysis["request"]["trace_id"],
+                    rules=rules, proposed_rules=sorted(set(request.rules)), inherited_rules=previous_rules,
+                    previous_active_id=state["active_id"], snapshot=snapshot, snapshot_sha256=digest(snapshot),
+                    query=query, baseline=baseline, selection=selection, newly_excluded_ids=newly_excluded,
+                    ready=not blocked, blocked=blocked, approval_mode="user_review_required"), db)
+
+    def apply_cleanup(self, chat_id, review_id, request):
+        chat = self.chat(chat_id)
+        with self.execution._lock:
+            if existing := self.existing(chat, "activation", request):
+                if existing.get("review_id") != str(review_id):
+                    raise TraceError("request_conflict", "This approval belongs to another review.", 409)
+                return existing
+            self.idle()
+            review = self.scoped(chat, review_id, "cleanup_review")
+            if chat.environment != "pdf_workshop" or review["chat_id"] != str(chat.id):
+                raise TraceError("cleanup_environment", "Apply this review only in its original Documents conversation.", 422)
+            if not review["ready"]:
+                raise TraceError("cleanup_not_ready", "This review has no applicable cleanup. Create a new review after addressing its notices.", 422)
+            with closing(self.store.connect()) as db, db:
+                db.execute("BEGIN IMMEDIATE")
+                state = self.store.state(chat.project_id, chat.environment, db)
+                self.check_revision(state, request.expected_revision)
+                snapshot = self.snapshot(chat, state)
+                if state["active_id"] != review["previous_active_id"] or digest(snapshot) != review["snapshot_sha256"]:
+                    raise TraceError("cleanup_review_stale", "Sources, metadata or the active filter changed. Review the affected sources again before applying.", 409)
+                selection = select_sources(snapshot["sources"], review["rules"], snapshot["labels"], **review["query"])
+                if digest(selection) != digest(review["selection"]):
+                    raise TraceError("cleanup_review_stale", "Selection no longer matches the reviewed result. Create a new review.", 409)
+                self.invalidate_worker()
+                policy = self.record(chat, "policy", request, id=str(uuid4()),
+                    title=review["title"], rules=review["rules"], analysis_id=review["analysis_id"],
+                    review_id=review["id"], previous_active_id=state["active_id"],
+                    created_as="user_reviewed", policy_schema="context-v1")
+                self.store.put(policy, db)
+                previous = state["active_id"]
+                state.update(active_id=policy["id"], revision=state["revision"] + 1)
+                self.store.write_state(chat.project_id, chat.environment, state, db)
+                return self.store.put(self.record(chat, "activation", request,
+                    policy_id=policy["id"], review_id=review["id"], previous_active_id=previous,
+                    revision=state["revision"], acceptance="user_approved_filter",
+                    selection=selection, newly_excluded_ids=review["newly_excluded_ids"]), db)
 
     def preview(self, chat_id, policy_id, request):
         chat = self.chat(chat_id)
