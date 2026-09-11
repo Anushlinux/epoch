@@ -1,5 +1,10 @@
 # Integration verification and remaining checks
 
+**September 12 PDF uploads - implemented but unverified:** multi-file selection uses
+the existing per-file HTTP API, scoped receipts and new explicit cleanup reconciliation.
+Preflight checks the local Linux Docker engine/image before creation; no live Docker,
+HTTP/browser or model acceptance was run. See [manual recovery](../backend/docs/PDF_UPLOADS.md).
+
 **September 11 noise workflow — implemented but unverified:** local Ollama now has an
 explicit issue-analysis path with evidence citations and bounded policy proposals.
 Source selection integrates with ordinary PDF/runbook tools and records actual supplied

@@ -1,5 +1,11 @@
 # Epoch backend
 
+**PDF uploads:** the frontend accepts several PDFs in one selection, with serial
+per-file receipts and progress. Docker readiness is checked before container creation;
+an explicit recovery action handles eligible old cleanup failures. See
+[setup and manual checks](docs/PDF_UPLOADS.md). No settings or migration changes.
+Implemented but unverified; restart normal `serve` and refresh the frontend.
+
 **Noise workflow:** [setup and manual checks](docs/NOISE_WORKFLOW.md) covers local
 issue analysis, source metadata, Documents **Review cleanup → Apply filter → Undo filter**,
 optional preview-bound trials and tool-boundary evidence. See the [data-noise example](docs/DATA_NOISE_DEMO.md).

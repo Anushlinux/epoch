@@ -1,0 +1,84 @@
+{
+  "purpose": "Human evaluator reference. Do not upload this file to Epoch.",
+  "fictional": true,
+  "evaluation_date": "2026-09-12",
+  "original_budget_inr": 145000,
+  "required_quantity": 100,
+  "expected_current_supplier": "Malhar Workspace Solutions",
+  "expected_current_quote": "MWS/2026/214 Version 1",
+  "expected_total_inr": 130000,
+  "budget_headroom_inr": 15000,
+  "sahyadri_current_total_inr": 150000,
+  "sahyadri_current_over_budget_inr": 5000,
+  "superseded_total_inr": 110000,
+  "fresh_case": {
+    "budget_inr": 125000,
+    "expected": "No current supplier qualifies",
+    "cheapest_shortfall_inr": 5000
+  },
+  "selection_after_filter": {
+    "total_sources": 4,
+    "current_retained": 3,
+    "historical_retained": 4
+  },
+  "metadata": {
+    "01_Purchase_Brief_Kaveri_Analytics.pdf": {
+      "family": "kaveri-purchase-2026-017",
+      "version": "1",
+      "status": "current",
+      "approved": true,
+      "protected": true
+    },
+    "02_Sahyadri_Current_Quotation_v2.pdf": {
+      "family": "sahyadri-sof-ka-2026-091",
+      "version": "2",
+      "status": "current",
+      "approved": true,
+      "protected": false
+    },
+    "03_Malhar_Current_Quotation_v1.pdf": {
+      "family": "malhar-mws-2026-214",
+      "version": "1",
+      "status": "current",
+      "approved": true,
+      "protected": false
+    },
+    "04_Sahyadri_Previous_Quotation_v1.pdf": {
+      "family": "sahyadri-sof-ka-2026-091",
+      "version": "1",
+      "status": "superseded",
+      "approved": false,
+      "protected": false
+    }
+  },
+  "files": [
+    {
+      "filename": "01_Purchase_Brief_Kaveri_Analytics.pdf",
+      "sha256": "4d4a23fc65ff5be58a84cac9f69d9dcc8dfedad133ff566e02fb59c532966b13",
+      "bytes": 60885
+    },
+    {
+      "filename": "02_Sahyadri_Current_Quotation_v2.pdf",
+      "sha256": "4b1cc8df997152132641cf8892f570797b3431d7f4f505c6023d11de7b42a090",
+      "bytes": 61024
+    },
+    {
+      "filename": "03_Malhar_Current_Quotation_v1.pdf",
+      "sha256": "86cc64cb507d50264df419c12c1ef9f032ad0471e26cf3e43d33002e59ee71d4",
+      "bytes": 60992
+    },
+    {
+      "filename": "04_Sahyadri_Previous_Quotation_v1.pdf",
+      "sha256": "9633187826a49f661407dd0f919c3713e1e8da3be247b572b718dec023765d2b",
+      "bytes": 60972
+    }
+  ],
+  "warning": "A noisy input does not guarantee an incorrect model answer. Do not present a hypothetical failure as observed.",
+  "artifact_review": {
+    "pdfs": 4,
+    "pages_per_pdf": 1,
+    "rendered_pages_visually_reviewed": 4,
+    "text_extraction": "successful",
+    "epoch_application_or_model_execution": "not performed"
+  }
+}

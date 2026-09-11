@@ -10,10 +10,50 @@ import time
 from pathlib import Path
 from uuid import uuid4
 
-from epoch_backend.candidate_runner import CandidateError, _docker, _environment
+from epoch_backend.candidate_runner import CandidateError, _docker, _environment, _options
 
 RUNNER_VERSION = "pdf-tools-v1"
 MAX_WIRE = 40 * 1024 * 1024
+
+
+class PdfPreflightError(CandidateError):
+    """The runtime was rejected before any container could be created."""
+
+
+def local_engine():
+    """Read the selected local engine without creating or starting containers."""
+    try:
+        context = _docker(["context", "inspect", "--format", "{{.Endpoints.docker.Host}}"])
+        endpoint = context.stdout.strip()
+        if context.returncode or not endpoint.startswith(("unix://", "npipe://")):
+            raise PdfPreflightError(
+                "pdf_runtime_unavailable", "Select a local Linux Docker context for PDF tools."
+            )
+        info = _docker(["--host", endpoint, "info", "--format", "{{json .}}"])
+        if info.returncode:
+            raise PdfPreflightError(
+                "pdf_runtime_unavailable",
+                "Docker is not ready. Start Docker Desktop, wait for its Linux engine to "
+                "finish starting, then retry the upload. No PDF container was created.",
+            )
+        metadata = json.loads(info.stdout)
+        if metadata.get("OSType") != "linux":
+            raise PdfPreflightError(
+                "pdf_runtime_unavailable", "Switch Docker Desktop to Linux containers, then retry."
+            )
+        if not any("seccomp" in str(item) for item in metadata.get("SecurityOptions", [])):
+            raise PdfPreflightError(
+                "pdf_runtime_unavailable", "The local Docker engine must enable default seccomp."
+            )
+        return endpoint
+    except PdfPreflightError:
+        raise
+    except (CandidateError, ValueError, TypeError, AttributeError) as exc:
+        raise PdfPreflightError(
+            "pdf_runtime_unavailable",
+            "Docker readiness could not be checked. Start Docker Desktop with its Linux "
+            "engine, then retry. No PDF container was created.",
+        ) from exc
 
 
 def sha(value):
@@ -43,21 +83,37 @@ class PdfRuntime:
             raise CandidateError("invalid_image", "An immutable PDF image ID is required.")
         self.image, self.cancelled = image, cancelled or threading.Event()
 
+    def preflight(self):
+        endpoint = local_engine()
+        try:
+            found = _docker(["--host", endpoint, "image", "inspect", self.image, "--format", "{{.Id}}"])
+            if found.returncode or found.stdout.strip() != self.image:
+                raise PdfPreflightError(
+                    "pdf_runtime_unavailable",
+                    "The configured PDF runtime image is missing. Run the PDF runtime setup "
+                    "command with Docker running, then retry. No PDF container was created.",
+                )
+        except PdfPreflightError:
+            raise
+        except CandidateError as exc:
+            raise PdfPreflightError(
+                "pdf_runtime_unavailable",
+                "The PDF runtime image could not be checked. Wait for Docker to become "
+                "ready, then retry. No PDF container was created.",
+            ) from exc
+        return endpoint
+
     def run(self, payload, timeout=60):
         wire = json.dumps(payload).encode()
         if len(wire) > MAX_WIRE or self.cancelled.is_set():
             raise CandidateError(
                 "pdf_input_limit", "PDF input exceeds limits or operation was cancelled."
             )
-        context = _docker(["context", "inspect", "--format", "{{.Endpoints.docker.Host}}"])
-        endpoint = context.stdout.strip()
-        if context.returncode or not endpoint.startswith(("unix://", "npipe://")):
-            raise CandidateError(
-                "pdf_runtime_unavailable", "A local Linux Docker engine is required."
-            )
+        endpoint = self.preflight()
         name = "epoch-pdf-" + uuid4().hex
         proc = None
         attempted = False
+        failure = None
         deadline = time.monotonic() + min(60, timeout)
 
         def command(args):
@@ -122,6 +178,7 @@ class PdfRuntime:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 env=_environment(),
+                **_options(),
             )
             chunks = bytearray()
             overflow = threading.Event()
@@ -162,16 +219,37 @@ class PdfRuntime:
                 error = result.get("error", {})
                 raise CandidateError("pdf_tool_error", error.get("message", "PDF tool failed"))
             return result["result"]
+        except Exception as exc:
+            failure = exc
+            raise
         finally:
-            if attempted:
-                cleanup = _docker(["--host", endpoint, "rm", "--force", name])
-                if cleanup.returncode and "No such container" not in cleanup.stderr:
-                    raise CandidateError(
-                        "cleanup_unresolved", "PDF container cleanup could not be confirmed."
+            cleanup_failed = False
+            try:
+                if attempted:
+                    cleanup = _docker(["--host", endpoint, "rm", "--force", name])
+                    cleanup_failed = bool(
+                        cleanup.returncode and "No such container" not in cleanup.stderr
                     )
-            if proc and proc.poll() is None:
-                proc.kill()
-                proc.wait(timeout=5)
+            except CandidateError:
+                cleanup_failed = True
+            finally:
+                if proc and proc.poll() is None:
+                    try:
+                        proc.kill()
+                        proc.wait(timeout=5)
+                    except (OSError, subprocess.TimeoutExpired):
+                        cleanup_failed = True
+            if cleanup_failed:
+                message = (
+                    f"PDF container cleanup could not be confirmed for {name}. Start Docker "
+                    "and confirm that this container has been removed before retrying."
+                )
+                if failure is not None:
+                    message += f" Original failure: {str(failure)[:300]}"
+                error = CandidateError("cleanup_unresolved", message)
+                error.container_name = name
+                error.docker_endpoint = endpoint
+                raise error from failure
 
     def execute(self, source, target, **arguments):
         if not 0 < len(source.encode()) <= 20000:

@@ -2,7 +2,7 @@ import { activityView } from './chat-activity.mjs';
 import { repairView } from './chat-repair.mjs';
 import { ChatWorkspace, activeOperation } from './chat-api.mjs';
 import { tracesURL } from './trace-links.mjs';
-import { SAMPLE_PROMPT, FESTIVAL_PROMPT, environmentLabel, environmentPicker, environmentView } from './chat-environment.mjs';
+import { SAMPLE_PROMPT, FESTIVAL_PROMPT, environmentLabel, environmentPicker, environmentView, uploadControl, uploadView } from './chat-environment.mjs';
 import { $, escape, icon, shell, View, installNavigation } from './ui.mjs';
 const root = $('#intake'), view = new View(root);
 let storage;
@@ -13,7 +13,10 @@ const isDebugger = () => location.pathname === '/debugger';
 const debuggerURL = id => `/debugger${id ? `?chat=${encodeURIComponent(id)}` : ''}`;
 let draft = '', project = 'demo', environment = 'pdf_workshop', settings = false, originDraft = '', seenMessages = 0;
 const chatURL = id => `/chat${id ? `?chat=${encodeURIComponent(id)}` : ''}`;
-const workspace = new ChatWorkspace({ storage, onChange: render, onStreamChange: renderLive });
+const workspace = new ChatWorkspace({ storage, onChange: render, onStreamChange: renderLive, onUploadConversation: syncUploadLocation });
+function syncUploadLocation(batch) {
+  if (batch && workspace.uploadContext(batch) && batch.chatId) history.replaceState(null, '', (isDebugger() ? debuggerURL : chatURL)(batch.chatId));
+}
 environment = workspace.state.pending?.create.environment || 'pdf_workshop';
 workspace.state.selected = new URLSearchParams(location.search).get('chat') || '';
 workspace.state.contextPreview = new URLSearchParams(location.search).get('context_preview') || null;
@@ -93,8 +96,8 @@ function render() {
     ${last?.worker_warning ? `<p class="chat-aux-notice" role="status">${escape(last.worker_warning)}</p>` : ''}
     ${s.pending ? `<section class="pending-card"><h2>${s.rejected ? 'Request rejected' : 'Request awaiting confirmation'}</h2><p>${escape(s.pending.message.content)}</p><p>${s.pending.kind === 'environment' ? 'PDF tool change' : s.pending.kind === 'debugger' ? 'Debugger investigation' : 'Chat message'} · the original request identity is saved. No automatic resend occurs.</p>${s.pending.create.environment ? `<p>Environment: ${environmentLabel(s.pending.create.environment)}</p>` : ''}<button data-action="${s.rejected ? 'review' : 'retry'}" ${s.busy || !s.connected ? 'disabled' : ''}>${s.rejected ? 'Return to draft' : 'Retry exact request'}</button></section>` : ''}
     ${debuggerMode ? investigationView(s, blocked) : chat?.messages.length ? `<div class="conversation chat-transcript" aria-label="Conversation">${chat.messages.map(m => `<article class="message ${m.role}" data-message-id="${escape(m.id)}"><span class="chat-speaker">${m.role === 'user' ? 'You' : m.agent === 'hermes' ? 'Hermes' : m.agent === 'debugger' || chat.operations.find(operation => operation.id === m.operation_id)?.kind === 'debugger' ? 'Debugger' : 'Hermes'}</span><div class="message-body">${messageBody(m.content)}</div>${messageTrace(chat, m)}</article>`).join('')}${liveView(s)}${activityView(s)}</div>` : s.selected ? `<div class="empty-state"><h2>${s.loading ? 'Loading conversation…' : chat ? 'Start the conversation' : 'Conversation unavailable'}</h2><p>${chat ? (s.environment?.assets?.length ? 'Your files are ready. Send a message to begin.' : 'Send a message to begin.') : 'Reconnect or choose a saved conversation.'}</p></div>` : `<div class="welcome chat-welcome"><h1>EPOCH</h1><p>Give Hermes a task. Follow the work here.</p><button type="button" class="example-button" data-action="seed-retreat" ${!s.connected || s.busy || s.pending || s.recovery ? 'disabled' : ''}>${icon('plus')} Try Northstar example</button></div>`}`;
-  const files = !debuggerMode ? environmentView(s, { showResult: false }) : '';
-  const composer = `<div class="composer-dock"><form id="chat-form" class="composer-box"><label class="sr-only" for="chat-message">Message Hermes</label><textarea id="chat-message" data-autogrow data-submit rows="1" maxlength="16000" placeholder="Message Hermes…" ${s.busy || s.pending || s.recovery ? 'disabled' : ''}>${escape(draft)}</textarea><div class="composer-tools"><div class="composer-tools-left"><span class="chat-model">Hermes</span><details class="composer-options" data-key="composer-options"><summary aria-label="Chat options">${icon('plus')}</summary><div class="popover">${!s.selected ? `${environmentPicker(environment, s.busy || !!s.pending || s.recovery)}<label class="compact-field" for="chat-project">Project<input id="chat-project" value="${escape(project)}" pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,99}"></label>` : ''}${(chat?.environment || environment) === 'pdf_workshop' ? `<button type="button" data-action="seed-retreat" ${s.busy || s.pending || s.recovery || running ? 'disabled' : ''}>Northstar example</button><button type="button" data-action="seed-festival" ${s.busy || s.pending || s.recovery || running ? 'disabled' : ''}>Festival example</button>${!s.selected ? `<label class="pdf-upload">Upload PDF<input id="pdf-upload" type="file" accept="application/pdf,.pdf" ${s.busy || s.pending || s.recovery ? 'disabled' : ''}></label>` : ''}` : ''}</div></details></div><div class="composer-tools-right"><span class="composer-hint">Enter to send</span>${running ? `<button type="button" data-action="stop" class="chat-stop" ${s.busy ? 'disabled' : ''}>Stop</button>` : `<button class="send-button" aria-label="Send message" ${blocked ? 'disabled' : ''}>${icon('send')}</button>`}</div></div></form><p class="composer-caption">${!s.connected ? '<button class="text-button" data-action="settings">Connect to Hermes</button>' : !s.runtime?.execution_enabled ? 'Hermes is unavailable. Check the backend setup.' : s.runtime?.active_run_id && !running ? 'Hermes is busy with another chat or debugger evaluation.' : ''}</p></div>`;
+  const files = !debuggerMode ? (chat ? environmentView(s, { showResult: false }) : uploadView(s)) : '';
+  const composer = `<div class="composer-dock"><form id="chat-form" class="composer-box"><label class="sr-only" for="chat-message">Message Hermes</label><textarea id="chat-message" data-autogrow data-submit rows="1" maxlength="16000" placeholder="Message Hermes…" ${s.busy || s.pending || s.recovery ? 'disabled' : ''}>${escape(draft)}</textarea><div class="composer-tools"><div class="composer-tools-left"><span class="chat-model">Hermes</span><details class="composer-options" data-key="composer-options"><summary aria-label="Chat options">${icon('plus')}</summary><div class="popover">${!s.selected ? `${environmentPicker(environment, s.busy || !!s.pending || s.recovery)}<label class="compact-field" for="chat-project">Project<input id="chat-project" value="${escape(project)}" pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,99}"></label>` : ''}${(chat?.environment || environment) === 'pdf_workshop' ? `<button type="button" data-action="seed-retreat" ${s.busy || s.pending || s.recovery || running ? 'disabled' : ''}>Northstar example</button><button type="button" data-action="seed-festival" ${s.busy || s.pending || s.recovery || running ? 'disabled' : ''}>Festival example</button>${!s.selected ? uploadControl(s.busy || s.pending || s.recovery) : ''}` : ''}</div></details></div><div class="composer-tools-right"><span class="composer-hint">Enter to send</span>${running ? `<button type="button" data-action="stop" class="chat-stop" ${s.busy ? 'disabled' : ''}>Stop</button>` : `<button class="send-button" aria-label="Send message" ${blocked ? 'disabled' : ''}>${icon('send')}</button>`}</div></div></form><p class="composer-caption">${!s.connected ? '<button class="text-button" data-action="settings">Connect to Hermes</button>' : !s.runtime?.execution_enabled ? 'Hermes is unavailable. Check the backend setup.' : s.runtime?.active_run_id && !running ? 'Hermes is busy with another chat or debugger evaluation.' : ''}</p></div>`;
   const nav = s.list.length ? s.list.map(c => `<a data-route class="session-item" href="${debuggerMode ? debuggerURL(c.id) : chatURL(c.id)}" ${c.id === s.selected ? 'aria-current="page"' : ''}>${icon('chat')}<span><strong>${escape(c.title)}</strong><small>${escape(c.environment === 'pdf_workshop' ? 'Documents' : 'Chat')}</small></span></a>`).join('') : '<div class="sidebar-empty"><p>Your conversations appear here.</p></div>';
   const pagination = s.total > 20 ? `<div class="pagination"><button data-action="previous" ${s.offset === 0 ? 'disabled' : ''}>Newer</button><button data-action="next" ${s.offset + 20 >= s.total ? 'disabled' : ''}>Older</button></div>` : '';
   const html = shell({ page: debuggerMode ? 'debugger' : 'chat', title: chat?.title || 'New chat', nav: nav + (s.listError ? `<p class="chat-aux-notice">${escape(s.listError)}</p>` : '') + pagination, content: content + files, composer: debuggerMode ? '' : composer, debuggerChatId: s.selected, sessionsLabel: 'CHATS',
@@ -160,6 +163,10 @@ root.addEventListener('click', async event => {
     case 'previous-page': workspace.state.previewPage--; render(); break;
     case 'next-page': workspace.state.previewPage++; render(); break;
     case 'rollback-pdf': await workspace.rollback(); break;
+    case 'retry-pdf-uploads': {
+      const batch = workspace.state.uploads;
+      await workspace.retryUploads(); syncUploadLocation(batch); render(); break;
+    }
     case 'retry': if (await workspace.retry()) { draft = ''; history.replaceState(null, '', (isDebugger() ? debuggerURL : chatURL)(workspace.state.selected)); render(); } break;
     case 'review': { const kind = workspace.state.pending?.kind; const content = workspace.review(); if (kind === 'debugger') question = content ?? question; else draft = content ?? draft; render(); break; }
     case 'previous': workspace.state.offset = Math.max(0, workspace.state.offset - 20); await workspace.refresh(); break;
@@ -167,7 +174,16 @@ root.addEventListener('click', async event => {
   }
 });
 root.addEventListener('change', async event => {
-  if (event.target.id === 'pdf-upload' && event.target.files[0]) { if (await workspace.addFiles(project, null, event.target.files[0])) { history.replaceState(null, '', chatURL(workspace.state.selected)); render(); } }
+  if (event.target.id === 'pdf-upload' && event.target.files.length) {
+    const files = Array.from(event.target.files);
+    event.target.value = '';
+    const uploading = workspace.addFiles(project, null, files), batch = workspace.state.uploads;
+    await uploading;
+    syncUploadLocation(batch); render();
+  }
+  if (event.target.id === 'pdf-upload-confirm-engine' && workspace.state.uploads) {
+    workspace.state.uploads.confirmSameEngine = event.target.checked; render();
+  }
   if (event.target.id === 'chat-environment' && !workspace.state.selected && !workspace.state.pending) { environment = event.target.value; render(); }
 });
 document.addEventListener('visibilitychange', () => { void workspace.setVisible(!document.hidden); });

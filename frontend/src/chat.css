@@ -50,8 +50,19 @@
 .pdf-file-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 16px 0; }
 .pdf-file-controls > span { flex-basis: 100%; }
 .pdf-file-controls button, .pdf-upload, .pdf-file-actions button, .pdf-file-actions a { font-size: 13px; }
-.pdf-upload { display: flex; align-items: center; gap: 8px; max-width: 100%; }
-.pdf-upload input { max-width: 210px; font-size: 12px; }
+.pdf-upload { display: grid; gap: 6px; min-width: 0; max-width: 100%; }
+.pdf-upload input { width: 100%; max-width: 100%; box-sizing: border-box; font-size: 12px; }
+.pdf-upload small { color: var(--muted); font-size: 11px; }
+.pdf-upload-status { max-width: 780px; margin: 16px auto; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; overflow-wrap: anywhere; }
+.pdf-upload-status > p { margin: 0 0 10px; }
+.pdf-upload-status ol { list-style: none; padding: 0; margin: 0 0 10px; max-height: 260px; overflow: auto; }
+.pdf-upload-status li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 6px 16px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
+.pdf-upload-status li p { grid-column: 1 / -1; margin: 0; color: var(--amber); }
+.pdf-upload-status small { color: var(--muted); }
+.pdf-upload-confirm { display: flex; align-items: start; gap: 8px; margin: 12px 0; font-size: 12px; }
+.pdf-upload-confirm input { flex-shrink: 0; width: auto; margin: 3px 0 0; }
+.composer-options .popover > * { box-sizing: border-box; min-width: 0; max-width: 100%; }
+.composer-options .popover input:not([type="checkbox"]), .composer-options .popover select { box-sizing: border-box; min-width: 0; max-width: 100%; width: 100%; }
 .pdf-files { border-top: 1px solid #363a3e; }
 .pdf-file { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 0; border-bottom: 1px solid #363a3e; }
 .pdf-file > div:first-child { min-width: 0; flex: 1; }

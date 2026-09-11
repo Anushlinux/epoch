@@ -1,0 +1,16 @@
+EPOCH - INDIAN PROCUREMENT DEMO
+
+All organisations, people and offers in this pack are fictional.
+The PDFs are realistic, text-readable documents for a software demonstration.
+
+1. Open Guide_do_not_upload/STEP_BY_STEP.txt for exact current-Epoch instructions.
+2. Upload only the four PDF files in PDFs_to_upload to a new Documents conversation.
+3. Do not use the Northstar example button for this separate scenario.
+4. Establish source approvals before the first task; follow the guide's metadata table.
+5. Keep the guide, prompts and expected-results reference outside the agent's uploads.
+
+The old Sahyadri quote is obsolete context, not a damaged PDF.
+Noise may or may not make the model's answer wrong. Inspect actual traces and report
+what happened. Applying a filter changes future retrieval; it does not delete originals.
+
+PDF pages and text were checked. Epoch runs and model behaviour remain for you to assess.

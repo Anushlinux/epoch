@@ -1,5 +1,11 @@
 # Epoch frontend
 
+**PDF uploads:** select up to 20 PDFs at once (10 MiB each) through **Upload PDFs**.
+The queue saves into one conversation, shows per-file progress, stops on failure and
+offers explicit retry of remaining files. Completed receipts are preserved. Docker
+readiness and old cleanup recovery are described in [the upload guide](../backend/docs/PDF_UPLOADS.md).
+Implemented but unverified; refresh the frontend after restarting the updated backend.
+
 **Context quality:** open Traces from a chat to investigate noise, inspect relevant
 evidence and annotate source versions/approvals. Documents now offers **Review cleanup →
 Apply filter → Undo filter**, showing affected sources before explicit user approval.

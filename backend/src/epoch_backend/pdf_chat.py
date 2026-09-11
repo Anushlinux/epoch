@@ -7,7 +7,7 @@ from urllib.parse import quote
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException, Request, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, StrictBool
 
 from epoch_backend import debugger_bridge
 from epoch_backend.candidate_runner import CandidateError
@@ -38,6 +38,11 @@ from epoch_backend.storage import RequestConflict
 
 class BundleRequest(BaseModel):
     pack: str
+
+
+class UploadReconciliationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    confirm_same_engine: StrictBool = False
 
 
 class PdfChat:
@@ -622,6 +627,19 @@ class PdfChat:
         @router.get("/{chat_id}/assets")
         def assets(chat_id: UUID):
             return {"items": self.sandbox(chat_id).assets()}
+
+        @router.post("/{chat_id}/assets/uploads/{request_id}/reconcile")
+        def reconcile_upload(
+            chat_id: UUID, request_id: UUID, payload: UploadReconciliationRequest | None = None
+        ):
+            with self.chats.execution._lock:
+                idle()
+                try:
+                    return self.sandbox(chat_id).reconcile_upload(
+                        request_id, confirm_same_engine=bool(payload and payload.confirm_same_engine)
+                    )
+                except CandidateError as exc:
+                    return {"ok": False, "error": {"code": exc.code, "message": str(exc)}}
 
         @router.get("/{chat_id}/assets/{asset_id}/content")
         def content(chat_id: UUID, asset_id: UUID):

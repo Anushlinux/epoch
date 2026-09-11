@@ -14,8 +14,8 @@ function conversation(value) {
 }
 export class ChatWorkspace {
   constructor({ storage, onChange = () => {}, onStreamChange = onChange,
-    apiFactory = origin => new IntakeAPI(origin), pollMs = 1500, streamFactory } = {}) {
-    Object.assign(this, { storage, onChange, onStreamChange, apiFactory, pollMs, streamFactory });
+    onUploadConversation = () => {}, apiFactory = origin => new IntakeAPI(origin), pollMs = 1500, streamFactory } = {}) {
+    Object.assign(this, { storage, onChange, onStreamChange, onUploadConversation, apiFactory, pollMs, streamFactory });
     this.generation = 0;
     this.visible = true;
     this.readFailures = 0;
@@ -23,6 +23,7 @@ export class ChatWorkspace {
     this.environmentUpdated = 0;
     this.state = { origin: 'http://127.0.0.1:8000', connected: false, busy: false, loading: false, chat: null, selected: '', list: [], total: 0, offset: 0, pending: null, rejected: false, recovery: false, error: '', runtime: null, environment: null, environmentError: '' };
     Object.assign(this.state, { stream: null, streamError: '', runtimeError: '', listError: '', environmentLoading: false });
+    this.state.uploads = null;
     try {
       this.state.origin = apiOrigin(storage.getItem(ORIGIN_KEY) || this.state.origin);
       const raw = storage.getItem(CHAT_PENDING_KEY);
@@ -254,40 +255,134 @@ export class ChatWorkspace {
   }
   async ensurePdfChat(project) {
     if (this.state.selected) return this.state.selected;
+    if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$/.test(project)) throw new Error('Use a project label with letters, numbers, underscores or hyphens.');
+    const origin = this.state.origin;
     const key = `epoch.pdf.draft-create.v2.${this.state.origin}.${project}`;
     let payload = JSON.parse(this.storage.getItem(key) || 'null');
     if (!payload) { payload = {client_request_id: crypto.randomUUID(), project_id: project, environment: 'pdf_workshop'}; this.storage.setItem(key, JSON.stringify(payload)); }
     const {body} = await this.api.call('/api/chats', payload);
     const chat = conversation(body);
     ensure(chat.client_request_id === payload.client_request_id);
+    if (this.state.origin !== origin || this.state.selected) throw new Error('Conversation changed while files were being prepared. Select the intended conversation before uploading again.');
     this.state.selected = chat.id; this.state.chat = chat;
     this.storage.removeItem(key);
     return chat.id;
   }
-  async addFiles(project, pack, file) {
+  async addFiles(project, pack, input) {
     const s = this.state;
     if (!s.connected || s.busy || s.pending || s.recovery || activeOperation(s.chat)) return false;
+    if (!pack) {
+      const files = Array.isArray(input) ? input : [input];
+      try {
+        if (!files.length || files.length > 20) throw new Error('Choose between 1 and 20 PDFs at a time.');
+        for (const file of files) {
+          if (!file || typeof file.arrayBuffer !== 'function' || !/\.pdf$/i.test(file.name)) throw new Error('Choose PDF files only.');
+          if (!file.size || file.size > 10 * 1024 * 1024) throw new Error(`${file.name}: choose a non-empty PDF of at most 10 MiB.`);
+          if (file.name.length > 124 || /[/\\\x00-\x1f\x7f]/.test(file.name)) throw new Error(`${file.name}: use a filename of at most 124 characters without directory components.`);
+        }
+        if (s.selected && s.chat?.environment !== 'pdf_workshop') throw new Error('Open a Documents conversation before uploading PDFs.');
+      } catch (error) { s.error = error.message; this.emit(); return false; }
+      s.uploads = { project, origin: s.origin, chatId: s.selected || '', active: false,
+        confirmSameEngine: false, needsEngineConfirmation: false,
+        items: files.map(file => ({ file, name: file.name, status: 'queued', message: '', failure: null })) };
+      return this.runUploads(s.uploads);
+    }
     s.busy = true; s.error = ''; this.emit();
     try {
       const id = await this.ensurePdfChat(project);
-      let body;
-      if (pack) {
-        const api = new IntakeAPI(s.origin, undefined, 120000);
-        body = (await api.call(`/api/chats/${id}/assets/bundled`, {pack})).body;
-      } else {
-        if (!file || file.size > 10 * 1024 * 1024) throw new Error('Choose a PDF of at most 10 MB.');
-        const digest = [...new Uint8Array(await crypto.subtle.digest('SHA-256', await file.arrayBuffer()))].map(b => b.toString(16).padStart(2, '0')).join('');
-        const key = `epoch.pdf.upload.${id}.${digest}.${file.name}`;
-        let requestId = this.storage.getItem(key);
-        if (!requestId) { requestId = crypto.randomUUID(); this.storage.setItem(key, requestId); }
-        const response = await fetch(`${s.origin}/api/chats/${id}/assets?name=${encodeURIComponent(file.name)}&client_request_id=${requestId}`, {method:'POST', body:file, headers:{'Content-Type':'application/pdf'}, redirect:'error', credentials:'omit', signal:AbortSignal.timeout(120000)});
-        body = await response.json();
-        if (!response.ok) throw new Error(body.error?.message || 'Upload failed. Select the same file to retry safely.');
-      }
+      const api = new IntakeAPI(s.origin, undefined, 120000);
+      const { body } = await api.call(`/api/chats/${id}/assets/bundled`, {pack});
       if (!body.ok) throw new Error(body.error?.message || 'Files could not be added.');
       return true;
     } catch (error) { s.error = error.message; return false; }
     finally { const error = s.error; s.busy = false; this.emit(); await this.refresh(); if (error) { s.error = error; this.emit(); } }
+  }
+
+  uploadContext(batch) {
+    return this.state.uploads === batch && this.state.origin === batch.origin && (this.state.selected || '') === batch.chatId;
+  }
+
+  async retryUploads() {
+    const batch = this.state.uploads;
+    if (!batch || !this.uploadContext(batch)) return false;
+    return this.runUploads(batch, true);
+  }
+
+  async runUploads(batch, retry = false) {
+    const s = this.state;
+    if (!this.uploadContext(batch) || !s.connected || s.busy || s.pending || s.recovery || activeOperation(s.chat)) return false;
+    s.busy = true; s.error = ''; batch.active = true; this.emit();
+    let current;
+    try {
+      batch.chatId = await this.ensurePdfChat(batch.project);
+      if (!this.uploadContext(batch)) throw new Error('Upload paused because the conversation changed.');
+      this.onUploadConversation(batch);
+      this.emit();
+      for (const item of batch.items) {
+        if (item.status === 'saved') continue;
+        current = item;
+        if (!this.uploadContext(batch)) throw new Error('Upload paused because the conversation changed.');
+        if (!item.digest) item.digest = [...new Uint8Array(await crypto.subtle.digest('SHA-256', await item.file.arrayBuffer()))].map(b => b.toString(16).padStart(2, '0')).join('');
+        if (!this.uploadContext(batch)) throw new Error('Upload paused because the conversation changed.');
+        const key = `epoch.pdf.upload.${batch.chatId}.${item.digest}.${item.name}`;
+        item.requestId ||= this.storage.getItem(key);
+        if (retry && item.failure?.code === 'cleanup_unresolved') {
+          item.status = 'checking'; this.emit();
+          const response = await fetch(`${batch.origin}/api/chats/${batch.chatId}/assets/uploads/${item.requestId}/reconcile`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({confirm_same_engine: batch.confirmSameEngine}),
+            redirect: 'error', credentials: 'omit', signal: AbortSignal.timeout(120000) });
+          const body = await response.json();
+          if (!response.ok || !body.ok) {
+            if (body.error?.code === 'upload_engine_confirmation_required') batch.needsEngineConfirmation = true;
+            throw new Error(body.error?.message || (response.status === 404 ? 'Restart the updated backend before checking the earlier upload.' : 'Earlier container cleanup could not be confirmed.'));
+          }
+          if (body.chat_id !== batch.chatId || body.request_id !== item.requestId || body.safe_to_retry !== true || body.retry_mode !== 'new_request') throw new Error('Upload recovery acknowledgement could not be confirmed.');
+          item.requestId = crypto.randomUUID();
+          this.storage.setItem(key, item.requestId);
+          item.failure = null; batch.needsEngineConfirmation = false;
+        } else if (retry && item.failure?.retryable === true && item.failure?.retry_mode === 'new_request' && item.failure?.stage === 'preflight') {
+          item.requestId = crypto.randomUUID();
+          this.storage.setItem(key, item.requestId);
+          item.failure = null;
+        }
+        if (!item.requestId) { item.requestId = crypto.randomUUID(); this.storage.setItem(key, item.requestId); }
+        if (!uuid(item.requestId)) throw new Error('Saved upload identity is invalid. Do not submit until its recovery record is checked.');
+        this.storage.setItem(key, item.requestId);
+        if (!this.uploadContext(batch)) throw new Error('Upload paused because the conversation changed.');
+        item.status = 'uploading'; item.message = ''; this.emit();
+        let response, body;
+        try {
+          response = await fetch(`${batch.origin}/api/chats/${batch.chatId}/assets?name=${encodeURIComponent(item.name)}&client_request_id=${item.requestId}`, {
+            method: 'POST', body: item.file, headers: {'Content-Type': 'application/pdf'}, redirect: 'error', credentials: 'omit', signal: AbortSignal.timeout(120000) });
+          body = await response.json();
+        } catch (error) {
+          item.status = 'uncertain'; item.failure = null;
+          throw new Error('Upload acknowledgement was interrupted. Retry remaining PDFs to check the same request; do not assume the file was saved.');
+        }
+        if (!response.ok || !body.ok) {
+          item.failure = body.error || { code: 'upload_failed', message: 'Upload failed.' };
+          throw new Error(item.failure.message || 'Upload failed. Retry uses the same request unless the server confirms that a new attempt is safe.');
+        }
+        if (!uuid(body.asset?.id) || body.asset.chat_id !== batch.chatId || body.asset.sha256 !== item.digest) {
+          item.status = 'uncertain'; item.failure = null;
+          throw new Error('Saved file acknowledgement could not be confirmed. Retry to check the same request.');
+        }
+        item.status = 'saved'; item.message = ''; item.failure = null; item.file = null;
+        this.emit();
+      }
+      return this.uploadContext(batch);
+    } catch (error) {
+      if (current) { current.status = current.status === 'uncertain' ? 'uncertain' : 'failed'; current.message = error.message; }
+      if (this.uploadContext(batch)) s.error = error.message;
+      return false;
+    } finally {
+      batch.active = false; s.busy = false; this.emit();
+      if (this.uploadContext(batch)) {
+        const error = s.error;
+        await this.refresh();
+        if (error && this.uploadContext(batch)) { s.error = error; this.emit(); }
+      }
+    }
   }
   async rollback() {
     const s = this.state;

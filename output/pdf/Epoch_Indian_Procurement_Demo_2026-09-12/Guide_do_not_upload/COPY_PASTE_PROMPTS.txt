@@ -1,0 +1,18 @@
+EPOCH PROCUREMENT DEMO - COPY-PASTE PROMPTS
+
+Read STEP_BY_STEP first. These are not source documents to upload.
+
+PROMPT 1
+Evaluate these documents as of 12 September 2026. Call documents.list with purpose current, then use documents.read to read each returned source. Follow Kaveri Analytics' purchase brief: 100 standard stackable visitor chairs, maximum INR 145,000 including taxes and delivery to Pune, delivery within 10 calendar days, and a 12-month warranty. Compare the current approved quotations, calculate delivered totals, and recommend the cheapest qualifying supplier, or explain why none qualifies. Cite the PDF filename, source ID and quotation version supporting each supplier's figures. Show the decision and comparison in chat. Do not create a PDF, place an order or contact suppliers.
+
+PROMPT 2
+Investigate obsolete quotation context in this run. Compare Sahyadri quotation SOF/KA/2026/091 versions 1 and 2, the recorded documents.list/documents.read results, the source annotations and Hermes' recommendation. Was the superseded INR 110,000 offer supplied or used? Cite the evidence. Distinguish obsolete-source exposure from a proven wrong recommendation; do not claim causation if Hermes ignored it correctly. If supported, propose preferring the approved current version for current procurement requests while preserving historical access and the purchase brief. This is a source-selection investigation, not a PDF-renderer investigation.
+
+PROMPT 3
+For this request only, override the brief's budget with INR 125,000 inclusive of taxes and delivery. Call documents.list with purpose current again and read the returned current quotations. Keep every other requirement unchanged. Does any supplier qualify? Cite the current totals. Do not create a PDF or place an order.
+
+PROMPT 4
+Call documents.list with purpose historical. Read Sahyadri quotation SOF/KA/2026/091 version 1 and report its original delivered total and how it differs from version 2. This is a historical comparison, not permission to buy at the old price.
+
+PROMPT 5
+Create a purchase recommendation PDF from the current approved quotations and the original INR 145,000 budget. Include the comparison, arithmetic, selected supplier, delivery, warranty, budget headroom, and filename/quotation/version citations. Preserve every section in the output. Do not place an order or contact a supplier.

@@ -1,5 +1,33 @@
 # Current implementation status
 
+## PDF batch selection and Docker recovery - September 12, 2026
+
+The user reported a one-file picker and **PDF container cleanup could not be confirmed**
+while Docker may have been stopped. Static inspection found no `multiple` attribute,
+only the first selected file being handled, and cleanup errors masking failed container
+creation. Actual Docker state was not probed during this delivery.
+
+**Implemented but unverified:** up to 20 PDFs per selection, 10 MiB each, validated
+before submission; serial uploads to a fixed conversation with per-file progress;
+explicit remaining-file retries; saved chat URL as soon as the destination is known;
+and bounded file controls in the composer. Success acknowledgements check chat/asset
+identity and content hash. Completed uploads keep their receipts; uncertain responses
+reuse the original request identity.
+
+PDF runtime preflight checks the selected local Linux engine, seccomp and immutable
+image before container creation. Confirmed no-effect upload failures carry an explicit
+preflight retry hint. Uncertain cleanup retains the container name, endpoint and original
+failure where available. An idle-only upload reconciliation route checks absence of all
+tagged PDF containers and records separate audit evidence before permitting an explicit
+new request. Old records without an endpoint require user confirmation of the same Docker
+setup; recorded endpoint mismatches are refused. No containers or old receipts are deleted.
+
+Static source review and diff formatting only. No tests, syntax/lint checks, Docker
+probes, servers, browser acceptance, SDK or model calls. No dependencies, credentials,
+data-directory changes or migrations. Existing app-file and process-only settings,
+procurement PDF artifacts, chat/repair behaviour, and original direction bytes/hard
+breaks are preserved. See [setup and unexecuted manual checks](../backend/docs/PDF_UPLOADS.md).
+
 ## User-reviewed document cleanup — September 11, 2026
 
 The user reported a working, cited tool-defect investigation and requested a genuine

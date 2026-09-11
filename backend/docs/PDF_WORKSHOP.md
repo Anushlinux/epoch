@@ -1,5 +1,10 @@
 # Local PDF workshop
 
+**September 12 upload update:** **Upload PDFs** accepts up to 20 files per selection,
+10 MiB each, with per-file progress and explicit recovery. Start Docker Desktop's local
+Linux engine before uploading. See [Docker recovery and manual checks](PDF_UPLOADS.md)
+for the previously ambiguous cleanup error. Implemented but unverified; no new settings.
+
 The PDF workshop uses real PDFs and the existing Hermes/Luna connection. The initial
 renderer draws past the bottom of its first page. There is initially no merge tool.
 The PDF debugger opens directly on **Fix PDF tool** or **Create merge tool**, using

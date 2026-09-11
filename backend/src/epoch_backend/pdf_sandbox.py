@@ -21,7 +21,7 @@ from epoch_backend.pdf_contracts import (
     verify_document,
     verify_merge,
 )
-from epoch_backend.pdf_runtime import PdfRuntime, image_identity, sha
+from epoch_backend.pdf_runtime import PdfPreflightError, PdfRuntime, image_identity, sha
 from epoch_backend.repair_surfaces import artifacts
 from epoch_backend.storage import RequestConflict
 
@@ -189,6 +189,13 @@ class PdfSandbox:
                     "message": str(exc)[:1000],
                 },
             }
+            if key.startswith("upload:") and isinstance(exc, PdfPreflightError):
+                result["error"].update(
+                    retryable=True, retry_mode="new_request", stage="preflight"
+                )
+            if getattr(exc, "container_name", None):
+                result["error"]["container_name"] = exc.container_name
+                result["error"]["docker_endpoint"] = exc.docker_endpoint
         with closing(self.connect()) as db, db:
             db.execute("UPDATE requests SET result=? WHERE key=?", (json.dumps(result), key))
         return result
@@ -230,13 +237,89 @@ class PdfSandbox:
             )
 
         def create():
-            info = self.runtime().inspect(raw)
+            try:
+                runtime = self.runtime()
+            except CandidateError as exc:
+                # Image configuration is read before inspection or asset persistence.
+                raise PdfPreflightError(exc.code, str(exc)) from exc
+            info = runtime.inspect(raw)
             return {
                 "ok": True,
                 "asset": self.put(name, raw, inspection=info, page_count=info["page_count"]),
             }
 
         return self.request("upload:" + str(request_id), {"name": name, "sha256": sha(raw)}, create)
+
+    def reconcile_upload(self, request_id, *, confirm_same_engine=False):
+        """Check an unresolved inspection without removing containers or old receipts."""
+        from epoch_backend.candidate_runner import _docker
+
+        with closing(self.connect()) as db:
+            row = db.execute(
+                "SELECT digest,result FROM requests WHERE key=?",
+                ("upload:" + str(request_id),),
+            ).fetchone()
+        if not row or row[1] is None:
+            raise CandidateError(
+                "request_unresolved", "This upload has no completed failure receipt to reconcile."
+            )
+        result = json.loads(row[1])
+        error = result.get("error", {})
+        if result.get("ok") is not False or error.get("code") != "cleanup_unresolved":
+            raise CandidateError(
+                "upload_retry_ineligible", "Only an upload with unconfirmed cleanup can use this check."
+            )
+        legacy = not bool(error.get("docker_endpoint"))
+        if legacy and not confirm_same_engine:
+            raise CandidateError(
+                "upload_engine_confirmation_required",
+                "This older upload did not record its Docker endpoint. Confirm that Docker "
+                "Desktop uses the same local engine and context as the failed upload before "
+                "checking cleanup.",
+            )
+        endpoint = self.runtime().preflight()
+        if error.get("docker_endpoint") and error["docker_endpoint"] != endpoint:
+            raise CandidateError(
+                "cleanup_unresolved",
+                "The failed upload used a different Docker endpoint. Restore that local context "
+                "before checking cleanup; the saved failure remains unchanged.",
+            )
+        try:
+            found = _docker([
+                "--host", endpoint, "ps", "--all", "--filter", "label=epoch.pdf=true",
+                "--format", "{{.Names}}",
+            ])
+        except CandidateError as exc:
+            raise CandidateError(
+                "cleanup_unresolved", "Docker container cleanup could not be checked. "
+                "Wait for Docker Desktop to become ready, then try the check again."
+            ) from exc
+        if found.returncode:
+            raise CandidateError(
+                "cleanup_unresolved", "Docker container cleanup could not be checked. "
+                "The failed upload remains blocked."
+            )
+        if found.stdout.strip():
+            raise CandidateError(
+                "cleanup_unresolved",
+                "Epoch PDF containers still exist on the selected local Docker engine. "
+                "Inspect and resolve them in Docker Desktop before retrying. "
+                "This check does not remove containers.",
+            )
+        # Upload inspection precedes put(), so a cleanup exception cannot have committed
+        # an asset. Never apply this recovery rule to seed/render/merge request receipts.
+        evidence = self.record_event("pdf.upload_retry_checked", {
+            "request_id": str(request_id), "request_digest": row[0],
+            "docker_endpoint": endpoint, "epoch_pdf_containers": 0,
+            "legacy_endpoint_unrecorded": legacy,
+            "same_engine_confirmed_by_user": legacy and confirm_same_engine,
+            "safe_to_retry": True, "retry_mode": "new_request",
+        })
+        return {
+            "ok": True, "chat_id": self.task_id, "request_id": str(request_id),
+            "safe_to_retry": True, "retry_mode": "new_request",
+            "checked_at": evidence["emitted_at"], "recovery_id": evidence["id"],
+        }
 
     def merge_inputs(self, identities):
         if not 2 <= len(identities) <= 5:
