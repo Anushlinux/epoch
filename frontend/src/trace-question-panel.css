@@ -1,0 +1,45 @@
+.trace-questions.trace-question-panel { padding: 24px; }
+.trace-question-panel .trace-question-heading { margin-bottom: 20px; }
+.trace-question-panel .trace-question-heading > span { font-family: inherit; font-size: 12px; }
+.trace-question-panel .tq-conversation { padding: 0; font-size: 14px; line-height: 1.7; }
+.trace-question-panel .tq-question { background: var(--rail); border: 1px solid var(--line); border-radius: 10px; padding: 16px 20px; margin-bottom: 24px; }
+.trace-question-panel .tq-question h3 { font-size: 12px; font-weight: 600; color: var(--muted); margin: 0 0 8px; }
+.trace-question-panel .tq-question > p { margin: 0; white-space: pre-wrap; max-width: 78ch; }
+.trace-question-panel .tq-response { padding-left: 20px; border-left: 2px solid var(--accent); }
+.trace-question-panel .tq-response-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 14px; margin-bottom: 14px; }
+.trace-question-panel .tq-response-heading h3 { margin: 0; font-size: 16px; line-height: 1.5; color: var(--ink); }
+.trace-question-panel .tq-response-heading > span { font-size: 11px; color: var(--muted); }
+.trace-question-panel .tq-finding { margin-bottom: 18px; }
+.trace-question-panel .tq-finding > p { max-width: 78ch; margin: 0 0 8px; white-space: pre-wrap; }
+.trace-question-panel .trace-citations { margin-bottom: 0; }
+.trace-question-panel .trace-citation { line-height: 1.5; padding: 4px 7px; }
+.trace-question-panel .tq-disclosure { border-top: 1px solid var(--line); margin-top: 12px; padding: 0; font-size: 12px; }
+.trace-question-panel .tq-disclosure > summary { padding: 12px 2px; cursor: pointer; color: var(--muted); line-height: 1.5; }
+.trace-question-panel .tq-disclosure[open] > summary { margin-bottom: 8px; }
+.trace-question-panel .tq-disclosure ul { margin: 8px 0 14px; padding-left: 20px; }
+.trace-question-panel .tq-disclosure li { margin-bottom: 8px; max-width: 85ch; }
+.trace-question-panel .tq-disclosure h4 { font-size: 12px; margin: 8px 0; color: var(--muted); }
+.trace-question-panel .tq-limitations > summary { color: var(--amber); }
+.trace-question-panel .tq-limitations li { color: var(--muted); }
+.trace-question-panel .tq-evidence-meta { font-size: 11px; color: var(--muted); margin: 8px 0; }
+.trace-question-panel .tq-source { margin: 8px 0; padding: 10px; background: var(--rail); border-radius: 6px; }
+.trace-question-panel .tq-source > summary { cursor: pointer; overflow-wrap: anywhere; }
+.trace-question-panel .tq-source[open] > summary { margin-bottom: 10px; }
+.trace-question-panel .tq-source .trace-json { margin-top: 10px; }
+.trace-question-panel .tq-composer > label { display: block; color: var(--ink); font-size: 12px; font-weight: 600; margin: 0 0 8px; }
+.trace-question-panel .tq-composer textarea { box-sizing: border-box; max-width: 100%; font-size: 14px; }
+.trace-question-panel .tq-composer .trace-question-actions { margin-top: 12px; }
+.trace-question-panel .tq-composer button[type="submit"] { background: var(--accent); color: var(--canvas); border-color: var(--accent); font-weight: 600; }
+.trace-question-panel .tq-composer button:disabled { opacity: .55; cursor: not-allowed; }
+.trace-question-panel .tq-next-question { margin-top: 24px; }
+.trace-question-panel .tq-next-question > summary { color: var(--ink); font-weight: 550; }
+.trace-question-panel .tq-history .trace-question-history { margin: 0; border: 0; }
+.trace-question-panel .tq-history .tq-history-question { color: inherit; font-size: 12px; }
+.trace-question-panel .tq-history .tq-history-state { flex-shrink: 0; align-self: start; font-size: 11px; }
+.trace-question-panel summary:focus-visible, .trace-question-panel a:focus-visible, .trace-question-panel button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+@media (max-width: 760px) {
+  .trace-questions.trace-question-panel { padding: 18px 16px; }
+  .trace-question-panel .tq-question { padding: 14px; }
+  .trace-question-panel .tq-response { padding-left: 14px; }
+  .trace-question-panel .trace-question-actions { align-items: stretch; flex-direction: column; }
+}

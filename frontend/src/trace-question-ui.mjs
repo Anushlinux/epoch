@@ -96,17 +96,21 @@ export class TraceQuestionPanel {
 
   answerView(record) {
     const snapshot = record.snapshot;
-    const findings = (items, title) => items.length ? `<section class="trace-answer-section"><h4>${title}</h4>${items.map(item => `<p>${escape(item.text)}</p><div class="trace-citations">${this.citations(item.evidence_ids, snapshot)}</div>`).join('')}</section>` : '';
-    return `<article class="trace-answer" aria-label="Saved trace question"><header><h3>${escape(record.question)}</h3><span>${escape(record.model)} · ${escape(new Date(record.created_at).toLocaleString())}</span></header>
-      ${record.state === 'running' ? '<p class="trace-question-status" role="status">Waiting for local Ollama to finish… You can browse other spans while it works.</p>' : ''}
-      ${record.state === 'failed' ? `<p class="trace-question-error" role="alert">${escape(record.error?.message || 'The question could not be completed.')}</p>${record.error?.code ? `<p class="trace-muted">Error code: ${escape(record.error.code)}</p>` : ''}${record.error?.details ? `<details data-key="question-failure-${escape(record.id)}"><summary>Failure details</summary><pre class="trace-json">${escape(JSON.stringify(record.error.details, null, 2))}</pre></details>` : ''}` : ''}
-      ${record.answer ? `${findings(record.answer.answer, 'Answer')}${findings(record.answer.hypotheses, 'Possible explanations')}${record.answer.missing_evidence.length ? `<section class="trace-answer-section"><h4>Missing evidence</h4><ul>${record.answer.missing_evidence.map(item => `<li>${escape(item)}</li>`).join('')}</ul></section>` : ''}<p class="trace-muted">Evidence references were checked. The explanation is model-generated and may need your review.</p>` : ''}
-      <details class="trace-question-evidence" data-key="question-evidence-${record.id}"><summary>Evidence sent to the model · ${snapshot.included_span_count} of ${snapshot.indexed_span_count} indexed spans</summary>
-        <p class="trace-muted">Snapshot saved ${escape(new Date(snapshot.captured_at).toLocaleString())}. Later arrivals do not change this answer.</p>
-        ${snapshot.warnings.map(warning => `<p class="trace-notice">${escape(warning)}</p>`).join('')}
-        ${snapshot.evidence.map(item => `<details data-key="question-source-${record.id}-${item.id}"><summary>${escape(item.id)} · ${escape(item.name)}</summary>${this.citations([item.id], snapshot)}${json(item)}</details>`).join('')}
-      </details>
-      ${snapshot.warnings.length ? `<p class="trace-warning-label">${snapshot.warnings.length} evidence limitation${snapshot.warnings.length === 1 ? '' : 's'} — see the saved snapshot above.</p>` : ''}
+    const missing = record.answer?.missing_evidence || [];
+    const limitations = [...missing, ...snapshot.warnings];
+    const findings = items => items.map(item => `<div class="tq-finding"><p>${escape(item.text)}</p><div class="trace-citations">${this.citations(item.evidence_ids, snapshot)}</div></div>`).join('');
+    return `<article class="trace-answer tq-conversation" aria-label="Saved question and answer">
+      <section class="tq-question" aria-label="Your question"><h3>Your question</h3><p>${escape(record.question)}</p></section>
+      <section class="tq-response" aria-label="Local model answer"><header class="tq-response-heading"><h3>Answer</h3><span>Local model · review required</span></header>
+        ${record.state === 'running' ? '<p class="trace-question-status" role="status">Analyzing this trace…</p>' : ''}
+        ${record.state === 'failed' ? `<p class="trace-question-error" role="alert">${escape(record.error?.message || 'The question could not be completed.')}</p>${record.error?.code || record.error?.details ? `<details class="tq-disclosure" data-key="question-failure-${escape(record.id)}"><summary>Error details</summary>${record.error.code ? `<p>${escape(record.error.code)}</p>` : ''}${record.error.details ? json(record.error.details) : ''}</details>` : ''}` : ''}
+        ${record.answer ? `${findings(record.answer.answer)}${record.answer.hypotheses.length ? `<details class="tq-disclosure" data-key="question-hypotheses-${escape(record.id)}"><summary>Possible explanations · ${record.answer.hypotheses.length}</summary>${findings(record.answer.hypotheses)}</details>` : ''}` : ''}
+        ${limitations.length ? `<details class="tq-disclosure tq-limitations" data-key="question-limitations-${escape(record.id)}"><summary>Evidence is incomplete · ${limitations.length} limitation${limitations.length === 1 ? '' : 's'}</summary>${missing.length ? `<h4>Missing evidence</h4><ul>${missing.map(item => `<li>${escape(item)}</li>`).join('')}</ul>` : ''}${snapshot.warnings.length ? `<h4>Capture and selection limits</h4><ul>${snapshot.warnings.map(warning => `<li>${escape(warning)}</li>`).join('')}</ul>` : ''}</details>` : ''}
+        <details class="tq-disclosure tq-evidence" data-key="question-evidence-${escape(record.id)}"><summary>View evidence · ${snapshot.included_span_count} of ${snapshot.indexed_span_count} steps</summary>
+          <p class="tq-evidence-meta">${escape(record.model)} · ${escape(new Date(record.created_at).toLocaleString())}</p><p class="tq-evidence-meta">Snapshot: ${escape(new Date(snapshot.captured_at).toLocaleString())}. Later trace arrivals are not included.</p>
+          ${snapshot.evidence.map(item => `<details class="tq-source" data-key="question-source-${escape(record.id)}-${escape(item.id)}"><summary>${escape(item.id)} · ${escape(item.name)}</summary>${this.citations([item.id], snapshot)}${json(item)}</details>`).join('')}
+        </details>
+      </section>
     </article>`;
   }
 
@@ -118,19 +122,20 @@ export class TraceQuestionPanel {
     const active = runtime?.active_question_id || history?.items.find(item => item.state === 'running')?.id || runtime?.model_busy;
     const record = question ? selected?.id === question ? selected : null : history?.items[0];
     const draft = this.pending?.question ?? this.drafts.get(this.key) ?? '';
-    return `<section class="trace-questions" id="trace-questions" aria-labelledby="trace-questions-title">
-      <header class="trace-question-heading"><div><p class="trace-eyebrow">LOCAL MODEL</p><h2 id="trace-questions-title">Ask about this trace</h2></div><span>${runtime ? escape(runtime.model) : 'Loading configuration…'}</span></header>
-      <p class="trace-muted">Ask what happened or why a result looks wrong. Selected evidence goes to your local Ollama when you submit.</p>
-      ${runtime ? `<p class="trace-question-scope">${span ? `Focus: span ${escape(span.slice(0, 12))} and related steps` : 'Scope: this trace'} · Ollama connection checked when you ask</p>` : ''}
+    const composer = `<form id="trace-question-form" class="tq-composer"><label for="trace-question-text">${record ? 'Your next question' : 'Your question'}</label><textarea id="trace-question-text" name="trace-question" rows="3" maxlength="2000" required placeholder="What would you like to understand about this run?" ${this.pending || sending ? 'disabled' : ''}>${escape(draft)}</textarea>
+      <div class="trace-question-actions"><span>${active ? 'A local analysis is running…' : span ? `Focused on step ${escape(span.slice(0, 12))}` : 'Uses the recorded trace'}${!active && runtime && !runtime.available ? ' · Local model unavailable' : ''}</span>
+        ${this.pending ? `<button type="button" data-action="retry-trace-question" ${sending ? 'disabled' : ''}>${sending ? 'Submitting…' : 'Check submission'}</button>` : `<button type="submit" ${sending || active || !runtime?.available ? 'disabled' : ''}>${sending ? 'Submitting…' : 'Ask local model'}</button>`}</div>
+      ${this.pending && !sending ? '<p class="tq-evidence-meta">The submission was not confirmed. Check it before sending another question.</p>' : ''}
+    </form>`;
+    return `<section class="trace-questions trace-question-panel" id="trace-questions" aria-labelledby="trace-questions-title">
+      <header class="trace-question-heading"><h2 id="trace-questions-title">${record ? 'Trace explanation' : 'Ask about this trace'}</h2><span>Local Ollama</span></header>
       ${error ? `<p class="trace-question-error" role="alert">${escape(error)}${record ? ' The saved answer remains visible.' : ''}</p>` : ''}
-      ${(runtime?.warnings || []).map(warning => `<p class="trace-notice">${escape(warning)}</p>`).join('')}
-      <form id="trace-question-form"><label for="trace-question-text" class="sr-only">Question about this trace</label><textarea id="trace-question-text" name="trace-question" rows="3" maxlength="2000" required placeholder="Why did this run choose the wrong invoice?" ${this.pending || sending ? 'disabled' : ''}>${escape(draft)}</textarea>
-        <div class="trace-question-actions"><span>${active ? 'A local question is running. It will continue if you leave this page.' : 'One question at a time · no changes to your agent or traces'}</span>
-          ${this.pending ? `<button type="button" data-action="retry-trace-question" ${sending ? 'disabled' : ''}>${sending ? 'Submitting…' : 'Confirm or retry submission'}</button>` : `<button type="submit" ${sending || active || !runtime?.available ? 'disabled' : ''}>Ask local model</button>`}</div>
-      </form>
-      ${history?.items.length ? `<nav class="trace-question-history" aria-label="Saved trace questions">${history.items.map(item => `<a data-route class="${record?.id === item.id ? 'selected' : ''}" href="${escape(this.url({ question: item.id }))}" ${record?.id === item.id ? 'aria-current="true"' : ''}>${escape(item.question)}<span>${escape(item.state)}</span></a>`).join('')}</nav>` : '<p class="trace-muted">No saved questions for this trace yet.</p>'}
-      ${history && (questionOffset || history.total > 5) ? `<nav class="trace-pagination" aria-label="Question pages">${questionOffset ? `<a data-route href="${escape(this.url({ question_offset: Math.max(0, questionOffset - 5), question: '' }))}">Newer questions</a>` : '<span></span>'}<span>${Math.min(questionOffset + 1, history.total)}–${Math.min(questionOffset + 5, history.total)} of ${history.total}</span>${questionOffset + 5 < history.total ? `<a data-route href="${escape(this.url({ question_offset: questionOffset + 5, question: '' }))}">Older questions</a>` : '<span></span>'}</nav>` : ''}
+      ${runtime?.warnings?.length ? `<details class="tq-disclosure tq-limitations" data-key="question-runtime-${escape(trace)}"><summary>Local model notice${runtime.warnings.length === 1 ? '' : 's'} · ${runtime.warnings.length}</summary><ul>${runtime.warnings.map(warning => `<li>${escape(warning)}</li>`).join('')}</ul></details>` : ''}
       ${record ? this.answerView(record) : question ? '<p class="trace-muted">Loading selected answer, or it is unavailable. Refresh to retry.</p>' : ''}
+      ${record ? `<details class="tq-disclosure tq-next-question" data-key="question-composer-${escape(trace)}-${escape(record.id)}" ${this.pending || sending || draft ? 'open' : ''}><summary>Ask another question</summary>${composer}</details>` : composer}
+      ${history && (history.items.length || questionOffset) ? `<details class="tq-disclosure tq-history" data-key="question-history-${escape(trace)}"><summary>Previous questions · ${history.total}</summary><nav class="trace-question-history" aria-label="Saved trace questions">${history.items.map(item => `<a data-route class="${record?.id === item.id ? 'selected' : ''}" href="${escape(this.url({ question: item.id }))}" ${record?.id === item.id ? 'aria-current="true"' : ''}><span class="tq-history-question">${escape(item.question)}</span><span class="tq-history-state">${escape(item.state)}</span></a>`).join('')}</nav>
+        ${history && (questionOffset || history.total > 5) ? `<nav class="trace-pagination" aria-label="Question pages">${questionOffset ? `<a data-route href="${escape(this.url({ question_offset: Math.max(0, questionOffset - 5), question: '' }))}">Newer</a>` : '<span></span>'}<span>${Math.min(questionOffset + 1, history.total)}–${Math.min(questionOffset + 5, history.total)} of ${history.total}</span>${questionOffset + 5 < history.total ? `<a data-route href="${escape(this.url({ question_offset: questionOffset + 5, question: '' }))}">Older</a>` : '<span></span>'}</nav>` : ''}
+      </details>` : ''}
     </section>`;
   }
 }

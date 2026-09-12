@@ -1,5 +1,73 @@
 # Current implementation status
 
+## PDF quote spacing and missing review controls — September 12, 2026
+
+Read-only inspection of saved analysis `6bc7b227-26be-46b5-ab66-1bb67c546785` found the
+proposed source/replacement IDs and supersession quote, but the recorded PDF text joined
+words (`stockallocation`, `date ofissue`) that the model quoted with spaces. Quote
+validation rejected the proposal; the UI therefore correctly withheld Review/Apply.
+
+**Implemented but unverified:** PDF-only layout matching now requires an unchanged
+non-whitespace character sequence in one unique source passage, with digit grouping,
+case, punctuation and omission boundaries preserved. Short/ambiguous fallback matches
+are rejected. Validated proposals retain original source slices, model quotes, offsets
+and matching method. A derived API view rechecks saved proposals against the saved
+evidence and current catalog without rewriting old answers/rejections or calling a
+model. Review/apply uses the same validator and existing source/revision/protection gates.
+
+Normal backend restart and frontend hard refresh are required. No new setting,
+dependency, credential or migration. Static review and diff formatting only; no tests,
+syntax checks, model calls, SDK/Docker probes, servers or browser acceptance. The saved
+failure was inspected, not rerun. See [handoff](../backend/docs/PDF_QUOTE_REVIEW_PLAN.md).
+
+## Specific document exclusions from local analysis — September 12, 2026
+
+The user's review retained all four procurement PDFs because the earlier suggestion
+required version-family metadata. The user requested automatic source identification,
+with review/approval rather than manually annotating each source.
+
+**Implemented but unverified:** investigation now collects operation-scoped list/read
+observations (up to 200 records) and a balanced set of up to 16 PDF texts, distinguishing
+recorded delivery from saved upload inspection. The model can propose specific
+superseded/duplicate source and replacement IDs with exact quotes and citations.
+The host validates exposure, catalog identity/content hash, cited text, protections
+and relationship conflicts. Invalid candidates remain warnings; they cannot be applied.
+This validates supplied evidence, not the model's semantic interpretation or causality.
+
+The UI presents validated suggestions directly, followed by Review affected sources,
+Apply filter and Undo. Applying stores approved content identities in the existing
+policy records; future current retrievals in the same project/Documents scope apply
+them only with a matching retained replacement. Unknown labels no longer prevent a
+specific supported suggestion. Conflicting/protected authority remains a retention
+boundary. Source files, explicit/historical reads, prior answers and original evidence
+remain available. Older analyses are preserved and have an explicit Investigate again
+action. This does not rewrite existing conversation history or automatically rerun tasks.
+
+No new setting, dependency, credential, data directory or database migration. Normal
+backend restart and frontend refresh are required. Tests, syntax/lint checks, model
+requests, SDK/Docker probes, servers and browser acceptance were not run at the user's
+request; only static review and diff formatting. See the
+[manual acceptance guide](../backend/docs/AUTOMATIC_SOURCE_REVIEW_PLAN.md).
+Original direction bytes and its three Markdown hard breaks remain preserved.
+
+## Trace interface cleanup — September 12, 2026
+
+**Implemented but unverified:** chat traces now separate Analysis from Recorded steps.
+Question and response cards use distinct labels and spacing. The primary Documents
+flow is Investigate → Review affected sources → Apply filter, with Undo retained.
+Examples and trial/history instructions are removed from the main flow; source
+metadata, delivered context and existing trial/history controls remain in one secondary
+disclosure. Incomplete-evidence notices, model-review labels, exclusions, replacements
+and project scope remain visible where relevant.
+
+Tool input/output presentation decodes nested JSON strings with bounded parsing,
+preserves JSON numeric lexemes, escapes content, and formats tool descriptions as
+prose plus a parameter table. Original stored spans are unchanged and remain accessible.
+No backend API, authority, model, credential, data-directory or dependency changes.
+Only static review and diff formatting; no tests, syntax/lint checks, browser, server,
+Docker, SDK or model execution. See [handoff and manual checks](TRACE_UI_PLAN.md).
+Original direction bytes and its three Markdown hard breaks remain preserved.
+
 ## PDF batch selection and Docker recovery - September 12, 2026
 
 The user reported a one-file picker and **PDF container cleanup could not be confirmed**

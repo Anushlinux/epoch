@@ -1,5 +1,27 @@
 # Epoch frontend
 
+**PDF quote recovery — implemented but unverified:** the review controls use the
+backend's current validation of saved source suggestions, so PDF word-spacing fixes
+do not require a new investigation. Restart the backend and hard-refresh. Original
+quotes appear with a short spacing note in **Why this source?**. See the
+[handoff](../backend/docs/PDF_QUOTE_REVIEW_PLAN.md).
+
+**Specific source suggestions — September 12, implemented but unverified:** analysis
+can show the exact document to exclude, its retained replacement and supporting quotes.
+Review affected sources → Apply filter; version-label entry is optional. Restart the
+updated backend, hard-refresh the frontend and use **Investigate again** on older
+answers. No setting or dependency changes. See the
+[source suggestion handoff](../backend/docs/AUTOMATIC_SOURCE_REVIEW_PLAN.md).
+
+**Trace interface cleanup — September 12, implemented but unverified:** chat traces
+open in **Analysis**, with separate question and answer cards and one source-review
+path. **Recorded steps** opens the tool inspector. Tool descriptions show readable
+text and a parameter table; nested JSON is decoded for display, with original evidence
+retained. Source metadata, delivered context, trials and history are behind **Manage
+sources and history**. Example walkthroughs are removed from the working trace page.
+Hard-refresh with Ctrl+Shift+R. No backend restart, setting change or migration is
+required. See [manual checks and limits](../docs/TRACE_UI_PLAN.md).
+
 **PDF uploads:** select up to 20 PDFs at once (10 MiB each) through **Upload PDFs**.
 The queue saves into one conversation, shows per-file progress, stops on failure and
 offers explicit retry of remaining files. Completed receipts are preserved. Docker

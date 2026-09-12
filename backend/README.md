@@ -1,5 +1,18 @@
 # Epoch backend
 
+**PDF quote spacing fix — implemented but unverified:** a supported source suggestion
+could be hidden when the model restored spaces lost during PDF extraction. Matching
+now preserves the original source passage while tolerating PDF word spacing. Restart
+normal `serve` and refresh the frontend to recheck the saved analysis without a model
+call. No settings or migration changes. See [details](docs/PDF_QUOTE_REVIEW_PLAN.md).
+
+**Document-specific noise suggestions — September 12, implemented but unverified:**
+local investigation can propose an exact superseded or duplicate PDF and its retained
+replacement from recorded/saved text, without manual version labels. Review affected
+sources, then Apply filter. Restart normal `serve`, refresh the frontend, and explicitly
+rerun an old investigation. No settings or migration changes. See the
+[handoff and manual checks](docs/AUTOMATIC_SOURCE_REVIEW_PLAN.md).
+
 **PDF uploads:** the frontend accepts several PDFs in one selection, with serial
 per-file receipts and progress. Docker readiness is checked before container creation;
 an explicit recovery action handles eligible old cleanup failures. See

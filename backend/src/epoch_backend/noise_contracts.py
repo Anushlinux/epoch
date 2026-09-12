@@ -10,7 +10,7 @@ Label = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, ma
 TraceID = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{32}$")]
 Rule = Literal["deduplicate", "prefer_current_approved", "match_topic"]
 Case = Literal["original", "fresh", "unaffected", "historical"]
-NOISE_SCHEMA_VERSION = "noise-outcome-rules-v1"
+NOISE_SCHEMA_VERSION = "noise-source-actions-v2"
 
 
 class Strict(BaseModel):
@@ -30,12 +30,23 @@ class Finding(Strict):
     confidence: Literal["low", "medium", "high"]
 
 
+class SourceAction(Strict):
+    source_id: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=300)]
+    replacement_id: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=300)]
+    reason: Literal["superseded", "duplicate"]
+    explanation: Text
+    evidence_ids: list[str] = Field(min_length=1, max_length=6)
+    source_quote: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=600)]
+    replacement_quote: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=600)]
+
+
 class NoiseAnswer(Strict):
     outcome: Literal["context_noise", "tool_defect", "insufficient_evidence", "no_issue"]
     summary: Text
     relevant_evidence_ids: list[str] = Field(min_length=1, max_length=12)
     findings: list[Finding] = Field(max_length=10)
     rules: list[Rule] = Field(max_length=3)
+    source_actions: list[SourceAction] = Field(default_factory=list, max_length=8)
     missing_evidence: list[Text] = Field(max_length=8)
 
 
@@ -48,6 +59,10 @@ def noise_response_schema(schema):
     """
     common = deepcopy(schema)
     definitions = common.pop("$defs", {})
+    # Old saved answers may omit this field; new generations must make an explicit
+    # choice, including [] when there is no supported document-specific suggestion.
+    if "source_actions" not in common["required"]:
+        common["required"].append("source_actions")
     context_noise = deepcopy(common)
     context_noise["properties"]["outcome"]["enum"] = ["context_noise"]
     other = deepcopy(common)
@@ -56,6 +71,7 @@ def noise_response_schema(schema):
     ]
     # A literal [] avoids an empty-array repetition rule in the local grammar engine.
     other["properties"]["rules"] = {"type": "array", "const": []}
+    other["properties"]["source_actions"] = {"type": "array", "const": []}
     return {"$defs": definitions, "anyOf": [context_noise, other]}
 
 
@@ -111,7 +127,8 @@ class CleanupReview(Strict):
     analysis_id: UUID
     expected_revision: int = Field(ge=0)
     title: Label
-    rules: list[Rule] = Field(min_length=1, max_length=3)
+    rules: list[Rule] = Field(default_factory=list, max_length=3)
+    source_action_ids: list[Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]] = Field(default_factory=list, max_length=8)
     topic: Label | None = None
 
 

@@ -1,5 +1,13 @@
 # Integration verification and remaining checks
 
+**September 12 source suggestions — implemented but unverified:** local investigation
+now links operation-scoped document exposure and saved text to specific superseded or
+duplicate PDF/replacement proposals. Host validation checks identities, hashes, quotes
+and citations; the user reviews and applies exclusions. Runtime selection retains the
+replacement and records the approved relationship. No model, HTTP, Docker, browser,
+SDK or recurrence acceptance was run. See the
+[handoff](../backend/docs/AUTOMATIC_SOURCE_REVIEW_PLAN.md).
+
 **September 12 PDF uploads - implemented but unverified:** multi-file selection uses
 the existing per-file HTTP API, scoped receipts and new explicit cleanup reconciliation.
 Preflight checks the local Linux Docker engine/image before creation; no live Docker,

@@ -4,6 +4,7 @@ import { TraceAPI } from './trace-api.mjs';
 import { TraceQuestionPanel } from './trace-question-ui.mjs';
 import { NoisePanel } from './noise-ui.mjs';
 import { chatID, tracesURL } from './trace-links.mjs';
+import { renderTraceContent } from './trace-content.mjs';
 
 const root = $('#intake');
 const view = new View(root);
@@ -30,9 +31,10 @@ const selection = () => {
   if (chat) filters.session_id = chat;
   return { chat, trace: p.get('trace') || '', span: p.get('span') || '', offset: pageOffset(p.get('offset')),
     spanOffset: pageOffset(p.get('span_offset')), question: p.get('question') || '',
-    questionOffset: pageOffset(p.get('question_offset')),
+    questionOffset: pageOffset(p.get('question_offset')), panel: p.get('panel') || '',
     filters };
 };
+let filterRouteKey = JSON.stringify(selection().filters);
 const navigate = installNavigation(root, routeChanged, () => location.assign('/chat'));
 const questions = new TraceQuestionPanel(root, () => ({ ...selection(), origin, api }), render, navigate, url);
 const noise = new NoisePanel(root, () => ({ ...selection(), origin, api }), render, url);
@@ -42,6 +44,14 @@ const duration = value => Number.isFinite(value) ? value < 1000 ? `${value.toFix
 const notices = values => [...new Set(values || [])].map(value => `<p class="trace-notice">${icon('info')}${escape(value)}</p>`).join('');
 const badge = (status, count) => `<span class="trace-status ${status === 'recorded_error' ? 'trace-error' : ''}"><i></i>${status === 'recorded_error' ? `${count ?? ''} recorded error${count === 1 ? '' : 's'}` : 'No recorded error'}</span>`;
 const code = value => `<pre class="trace-json" tabindex="0">${escape(JSON.stringify(value, null, 2))}</pre>`;
+const showSteps = () => {
+  const selected = selection();
+  return !selected.chat || selected.panel === 'steps' || (!selected.panel && !!selected.question) || location.hash === '#trace-selected-span';
+};
+const compactNotices = (values, key, label = 'Recording notices') => {
+  const items = [...new Set(values || [])];
+  return items.length ? `<details class="trace-recording-notices" data-key="${escape(key)}"><summary>${escape(label)} · ${items.length}</summary>${notices(items)}</details>` : '';
+};
 
 function url(changes = {}) {
   const p = new URLSearchParams(location.search);
@@ -53,6 +63,7 @@ function url(changes = {}) {
     if (value === '' || value === null || value === undefined || value === 0) p.delete(key);
     else p.set(key, String(value));
   }
+  if (changes.span || changes.question) p.set('panel', 'steps');
   return `/traces${p.size ? `?${p}` : ''}`;
 }
 
@@ -74,7 +85,7 @@ function conversationView() {
   if (operation?.trace_capture === 'recording') notes.push('Hermes is still running. Completed tool steps appear first; the conversation step is stored when this response ends.');
   if (context?.uncaptured_operations) notes.push(`${context.uncaptured_operations} earlier message(s) have no captured trace. New messages are captured automatically; earlier runs are not recreated.`);
   if (context?.requested_trace_id === trace && trace && !context.selected_operation) notes.push('This trace is not linked to a message in this conversation.');
-  return `<section class="trace-conversation" aria-label="Conversation context"><div><p class="trace-eyebrow">CONVERSATION</p><h2>${escape(context?.title || 'Conversation traces')}</h2><p>One trace per Hermes message. Select a run to inspect the recorded steps behind the response.</p></div><div class="trace-inline-actions"><a href="/chat?chat=${encodeURIComponent(chat)}">${icon('back')}Back to conversation</a><a data-route href="/traces">All traces</a></div>${notices(notes)}${state.contextError ? notices([state.contextError]) : ''}</section>`;
+  return `<section class="trace-conversation" aria-label="Conversation context"><div><p class="trace-eyebrow">CONVERSATION</p><h2>${escape(context?.title || 'Conversation traces')}</h2></div><div class="trace-inline-actions"><a href="/chat?chat=${encodeURIComponent(chat)}">${icon('back')}Back to chat</a><a data-route href="/traces">All traces</a></div>${compactNotices(notes, 'conversation-notices')}${state.contextError ? notices([state.contextError]) : ''}</section>`;
 }
 
 function listView() {
@@ -85,7 +96,7 @@ function listView() {
       <div class="trace-run-heading"><strong>${escape(item.name || 'Unnamed execution')}</strong><span>${escape(duration(item.duration_ms))}</span></div>
       <div class="trace-run-meta">${escape(item.workflows.join(', ') || 'Workflow not recorded')} · ${item.span_count} spans</div>
       ${badge(item.status, item.error_count)}<div class="trace-run-meta"><time>${escape(date(item.start_time))}</time><code>${escape(short(item.trace_id))}</code></div>
-      ${item.missing_parent_count ? '<span class="trace-warning-label">Incomplete hierarchy</span>' : ''}</a>`).join('')}</div>` : `<div class="trace-empty">${icon('activity')}<h3>${busy && !list ? 'Loading executions…' : list ? 'No matching traces' : 'Connect your collector'}</h3><p>${list ? 'Send a message to Hermes in Chat. Its recorded steps appear here automatically. If a run is active, wait for a tool or response to finish. You can also adjust the filters or ingest an external SDK trace.' : 'Start the local backend, then connect to browse recorded executions.'}</p>${s.chat ? `<a href="/chat?chat=${encodeURIComponent(s.chat)}">Return to this conversation</a>` : '<a href="/chat">Open Chat</a>'}</div>`}
+      ${item.missing_parent_count ? '<span class="trace-warning-label">Incomplete hierarchy</span>' : ''}</a>`).join('')}</div>` : `<div class="trace-empty">${icon('activity')}<h3>${busy && !list ? 'Loading runs…' : list ? 'No matching traces' : 'Connect your collector'}</h3><p>${list ? 'Completed steps appear after a chat message. Adjust filters to find another run.' : 'Start the local backend and connect.'}</p>${s.chat ? `<a href="/chat?chat=${encodeURIComponent(s.chat)}">Back to chat</a>` : '<a href="/chat">Open Chat</a>'}</div>`}
     ${list ? pagination(list.total, s.offset, 50, 'offset') : ''}</section>`;
 }
 
@@ -121,10 +132,12 @@ function detailView() {
   if (!selected.trace) return `<section class="trace-detail-panel"><div class="trace-empty trace-choose">${icon('pipeline')}<h2>Follow an execution</h2><p>Select a trace to inspect the steps, inputs and outputs that were actually recorded.</p></div></section>`;
   if (!state.detail) return `<section class="trace-detail-panel"><div class="trace-empty"><h2>${state.context?.selected_operation?.trace_capture === 'recording' ? 'Waiting for recorded steps…' : busy ? 'Loading trace…' : 'Trace unavailable'}</h2><p>${escape(selected.trace)}</p><p>A running step is exported when it ends. If capture was interrupted, unfinished steps may be missing.</p></div></section>`;
   const { trace, spans, warnings, total } = state.detail;
-  return `<section class="trace-detail-panel" aria-labelledby="trace-detail-title"><header class="trace-detail-header"><p class="trace-eyebrow">EXECUTION</p><h2 id="trace-detail-title">${escape(trace.name || 'Unnamed execution')}</h2><code class="trace-id">${escape(trace.trace_id)}</code><div class="trace-statline">${badge(trace.status, trace.error_count)}<span>${trace.span_count} spans</span><span>${escape(duration(trace.duration_ms))}</span></div><p class="trace-muted">${escape(trace.project_ids.join(', '))} · ${escape(trace.workflows.join(', ') || 'Workflow not recorded')} · ${escape(date(trace.start_time))}</p>${trace.session_ids.length ? `<p class="trace-muted">Session: ${escape(trace.session_ids.join(', '))}</p>` : ''}</header>
-    ${notices(warnings)}${!selected.chat && chatID(state.span?.attributes?.['epoch.chat_id']) ? `<p class="trace-explanation"><a href="/chat?chat=${encodeURIComponent(state.span.attributes['epoch.chat_id'])}">Back to this conversation</a></p>` : ''}<p class="trace-explanation">A span records one step. No recorded error does not establish that the requested task succeeded.</p>
-    ${questions.view()}
-    <div class="trace-inspection"><section class="trace-tree-panel" aria-label="Recorded span hierarchy"><header class="trace-section-heading"><h3>Recorded steps</h3><span>${spans.length} shown</span></header><details data-key="all-spans-${trace.trace_id}-${noise.latest()?.id || 'none'}" ${noise.latest()?.answer ? '' : 'open'}><summary>All recorded steps remain available</summary>${treeView(spans, trace.trace_id)}</details>${pagination(total, selected.spanOffset, 200, 'span_offset')}</section>${spanView()}</div></section>`;
+  const stepQuestions = questions.view();
+  const questionAttention = !!(selected.question || questions.pending || questions.state.sending || questions.drafts.get(questions.key));
+  return `<section class="trace-detail-panel" aria-labelledby="trace-detail-title"><header class="trace-detail-header"><h2 id="trace-detail-title">${escape(trace.name || 'Unnamed execution')}</h2><div class="trace-statline">${badge(trace.status, trace.error_count)}<span>${trace.span_count} steps</span><span>${escape(duration(trace.duration_ms))}</span><span>${escape(date(trace.start_time))}</span></div><details class="trace-run-info" data-key="run-info-${trace.trace_id}"><summary>Run details</summary>${code({ trace_id: trace.trace_id, projects: trace.project_ids, workflows: trace.workflows, sessions: trace.session_ids })}<p class="trace-muted">No recorded error does not establish task success.</p></details></header>
+    ${compactNotices(warnings, `trace-notices-${trace.trace_id}`)}${!selected.chat && chatID(state.span?.attributes?.['epoch.chat_id']) ? `<p class="trace-explanation"><a href="/chat?chat=${encodeURIComponent(state.span.attributes['epoch.chat_id'])}">Back to this conversation</a></p>` : ''}
+    ${selected.chat ? `<details class="trace-step-question" data-key="${escape(`step-question-${trace.trace_id}-${selected.question}-${questionAttention ? 'active' : 'idle'}`)}" ${questionAttention ? 'open' : ''}><summary>${questions.pending ? 'Question awaiting confirmation' : 'Ask about these steps'}</summary>${stepQuestions}</details>` : stepQuestions}
+    <div class="trace-inspection"><section class="trace-tree-panel" aria-label="Recorded span hierarchy"><header class="trace-section-heading"><h3>Steps</h3><span>${spans.length} shown</span></header>${treeView(spans, trace.trace_id)}${pagination(total, selected.spanOffset, 200, 'span_offset')}</section>${spanView()}</div></section>`;
 }
 
 function spanView() {
@@ -134,31 +147,36 @@ function spanView() {
   if (!span) return `<aside class="trace-span-panel"><div class="trace-empty"><h3>${busy ? 'Loading span…' : 'Span unavailable'}</h3><code>${escape(selected.span)}</code></div></aside>`;
   const rawPath = `/api/telemetry/traces/${encodeURIComponent(selected.trace)}/spans/${encodeURIComponent(selected.span)}`;
   return `<aside class="trace-span-panel" id="trace-selected-span" tabindex="-1" aria-labelledby="trace-span-title"><header class="trace-section-heading"><h3 id="trace-span-title">${escape(span.name || 'Unnamed span')}</h3><span class="trace-kind">${escape(span.kind)}</span></header>
-    <dl class="trace-facts"><dt>Span</dt><dd><code>${escape(span.span_id)}</code></dd><dt>Parent</dt><dd><code>${escape(span.parent_span_id || 'Root')}</code></dd><dt>Duration</dt><dd>${escape(duration(span.duration_ms))}</dd>${span.tool ? `<dt>Tool</dt><dd>${escape(span.tool)}</dd>` : ''}${span.model ? `<dt>Model</dt><dd>${escape(span.model)}</dd>` : ''}</dl>
-    ${notices(span.warnings)}<section class="trace-content"><h4>Input</h4>${span.has_input ? code(span.input) : '<p class="trace-muted">Not captured</p>'}</section><section class="trace-content"><h4>Output</h4>${span.has_output ? code(span.output) : '<p class="trace-muted">Not captured</p>'}</section>
+    <dl class="trace-facts"><dt>Duration</dt><dd>${escape(duration(span.duration_ms))}</dd>${span.tool ? `<dt>Tool</dt><dd>${escape(span.tool)}</dd>` : ''}${span.model ? `<dt>Model</dt><dd>${escape(span.model)}</dd>` : ''}</dl>
+    ${notices(span.warnings)}<section class="trace-content"><h4>Input</h4>${span.has_input ? renderTraceContent(span.input, { key: `input-${span.span_id}` }) : '<p class="trace-muted">Not captured</p>'}</section><section class="trace-content"><h4>Output</h4>${span.has_output ? renderTraceContent(span.output, { key: `output-${span.span_id}` }) : '<p class="trace-muted">Not captured</p>'}</section>
     ${span.status_message ? `<section class="trace-content"><h4>Recorded status</h4><p>${escape(span.status_message)}</p></section>` : ''}
-    <details class="trace-disclosure" data-key="events-${span.span_id}"><summary>Events and exceptions · ${span.events.length}</summary>${code(span.events)}</details>
-    <details class="trace-disclosure" data-key="attributes-${span.span_id}"><summary>Attributes and resource</summary>${code({ span: span.attributes, resource: span.resource_attributes, scope: span.scope })}</details>
-    <details class="trace-disclosure" data-key="links-${span.span_id}"><summary>Links and timing</summary>${code({ links: span.links, start_time_unix_nano: span.start_time_unix_nano, end_time_unix_nano: span.end_time_unix_nano, otlp_kind: span.otlp_kind, status_code: span.status_code })}</details>
-    <details class="trace-disclosure" data-key="original-${span.span_id}"><summary>Original evidence</summary><p>The original OTLP record is retained separately from this searchable view.</p><div class="trace-inline-actions"><button data-action="trace-raw">Load original record</button><a href="${escape(origin + rawPath)}" target="_blank" rel="noopener">Open source ↗</a></div>${state.rawError ? notices([state.rawError]) : ''}${state.raw ? code(state.raw) : ''}</details></aside>`;
+    ${span.events.length ? `<details class="trace-disclosure" data-key="events-${span.span_id}"><summary>Events and exceptions · ${span.events.length}</summary>${renderTraceContent(span.events, { key: `events-${span.span_id}` })}</details>` : ''}
+    <details class="trace-disclosure" data-key="technical-${span.span_id}"><summary>Technical details</summary>${code({ span_id: span.span_id, parent_span_id: span.parent_span_id, attributes: span.attributes, resource: span.resource_attributes, scope: span.scope, links: span.links, start_time_unix_nano: span.start_time_unix_nano, end_time_unix_nano: span.end_time_unix_nano, otlp_kind: span.otlp_kind, status_code: span.status_code })}</details>
+    <details class="trace-disclosure" data-key="original-${span.span_id}"><summary>Original evidence</summary><details data-key="recorded-content-${span.span_id}"><summary>Recorded input and output</summary>${code({ input: span.input, output: span.output })}</details><div class="trace-inline-actions"><button data-action="trace-raw">Load original record</button><a href="${escape(origin + rawPath)}" target="_blank" rel="noopener">Open source ↗</a></div>${state.rawError ? notices([state.rawError]) : ''}${state.raw ? code(state.raw) : ''}</details></aside>`;
 }
 
 function render() {
   const selected = selection(), runtime = state.runtime;
+  questions.sync();
   const index = runtime?.trace_index;
-  const connection = `<details class="trace-connection" data-key="trace-connection" ${!runtime ? 'open' : ''}><summary>${icon('settings')}Workspace connection</summary><form id="trace-connection-form"><label for="trace-origin">Local API origin<input id="trace-origin" name="origin" type="url" required value="${escape(drafts.origin ?? origin)}"></label><button type="submit">Connect</button></form><p>Run <code>epoch-backend --env-file .env serve</code> to use chat, the debugger and traces together. This tab shares its API connection with chat. Built-in chat capture stays local and needs no token; external SDK ingestion uses the server process token.</p></details>`;
-  const content = `<div class="trace-page"><header class="trace-page-header"><div><p class="trace-eyebrow">NEATLOGS / LOCAL EXPLORER</p><h1>Traces</h1><p>See what your agent actually did.</p></div><button data-action="trace-refresh" ${busy ? 'disabled' : ''}>${icon('refresh')}${busy ? 'Refreshing…' : 'Refresh'}</button></header>
-    <div class="trace-runtime" role="status"><span class="${runtime?.local_capture_ready || runtime?.collector_ready ? 'trace-ready' : 'trace-pending'}"><i></i>${runtime ? runtime.local_capture_ready ? 'Local capture ready' : runtime.collector_ready ? 'Collector ready' : 'Capture unavailable' : 'Collector not connected'}</span><span>${index?.ready ? `${index.indexed_spans} indexed spans` : 'Index unavailable'}</span><span>${runtime?.collector_ready ? 'External SDK ingestion ready' : 'External SDK ingestion needs a token'}</span><span>${runtime?.cloud_enabled ? 'External trace cloud forwarding enabled · chat stays local' : runtime ? 'Cloud forwarding disabled' : 'Routing unknown'}</span><span id="trace-updated">${state.updated ? `Updated ${new Date(state.updated).toLocaleTimeString()}` : 'Waiting for connection'}</span></div>
+  const steps = showSteps();
+  const connection = `<details class="trace-connection" data-key="trace-connection" ${!runtime ? 'open' : ''}><summary>${icon('settings')}Connection</summary><form id="trace-connection-form"><label for="trace-origin">Local API origin<input id="trace-origin" name="origin" type="url" required value="${escape(drafts.origin ?? origin)}"></label><button type="submit">Connect</button></form><p>${index?.ready ? `${index.indexed_spans} indexed steps` : 'Index unavailable'} · ${runtime?.collector_ready ? 'External SDK ingestion ready' : 'External SDK ingestion needs a token'}</p><p>${runtime?.cloud_enabled ? 'External trace cloud forwarding enabled; chat capture stays local.' : runtime ? 'Cloud forwarding disabled.' : 'Routing unavailable.'}</p><p>Refreshes every five seconds. Search covers the first 64,000 characters per content field; originals remain available.</p>${!runtime ? '<p>Start the backend with <code>epoch-backend --env-file .env serve</code>.</p>' : ''}</details>`;
+  const filters = `<form id="trace-filter-form" class="trace-filters">${field('q', 'Search runs', 'Search names, inputs or outputs')}<div class="trace-filter-actions"><button type="submit">Search</button><a data-route href="${escape(url({ q: '', project_id: '', workflow: '', session_id: selected.chat || '', started_after: '', started_before: '', trace: '', span: '', offset: 0, span_offset: 0 }))}">Clear</a></div><details class="trace-filter-more" data-key="trace-filters"><summary>More filters</summary><div>${field('project_id', 'Project')}${field('workflow', 'Workflow')}${field('session_id', 'Session')}${field('started_after', 'Started after (ISO time)')}${field('started_before', 'Started before (ISO time)')}</div></details></form>`;
+  const tabs = selected.chat && selected.trace ? `<nav class="trace-view-switch" aria-label="Trace view"><a data-route href="${escape(url({ panel: 'analysis' }))}" ${!steps ? 'aria-current="page"' : ''}>Analysis</a><a data-route href="${escape(url({ panel: 'steps' }))}" ${steps ? 'aria-current="page"' : ''}>Recorded steps${questions.pending ? ' · Pending question' : ''}</a></nav>` : '';
+  const runs = selected.trace ? `<details class="trace-run-picker" data-key="run-picker-${selected.chat}"><summary>Choose another run${state.list ? ` · ${state.list.total}` : ''}</summary>${filters}${listView()}</details>` : filters;
+  const main = selected.trace
+    ? (steps ? detailView() : noise.view())
+    : selected.chat ? `${listView()}${noise.view()}` : `<div class="trace-layout">${listView()}${detailView()}</div>`;
+  const content = `<div class="trace-page ${selected.trace ? 'trace-page-focused' : ''}"><header class="trace-page-header"><div><h1>Traces</h1></div><div class="trace-toolbar"><span class="${runtime?.local_capture_ready || runtime?.collector_ready ? 'trace-ready' : 'trace-pending'}">${runtime ? runtime.local_capture_ready || runtime.collector_ready ? 'Connected' : 'Capture unavailable' : 'Not connected'}</span><button data-action="trace-refresh" ${busy ? 'disabled' : ''}>${icon('refresh')}${busy ? 'Refreshing…' : 'Refresh'}</button></div></header>
     ${state.error ? `<div class="trace-error-banner" role="alert"><strong>${state.updated ? 'Showing saved view — refresh failed' : 'Unable to load traces'}</strong><p>${escape(state.error)}</p></div>` : ''}
-    ${connection}${conversationView()}${notices([...(runtime?.warnings || []), ...(state.list?.warnings || [])])}
-    <form id="trace-filter-form" class="trace-filters">${field('q', 'Search captured content', 'Invoice ID, tool name, input or output…')}<div class="trace-filter-actions"><button type="submit">Search</button><a data-route href="/traces">Clear</a></div><details class="trace-filter-more" data-key="trace-filters"><summary>Filter by workflow, project, session or time</summary><div>${field('project_id', 'Project', 'All projects')}${field('workflow', 'Workflow', 'All workflows')}${field('session_id', 'Session', 'All sessions')}${field('started_after', 'Started after (ISO time)', '2026-09-10T00:00:00Z')}${field('started_before', 'Started before (ISO time)', '2026-09-11T00:00:00Z')}</div></details></form>
-    ${noise.evidence()}<div class="trace-layout">${listView()}${detailView()}</div>${noise.view()}<p class="trace-footnote">Refreshes every five seconds while this page is visible. Search indexes the first 64,000 characters of each content field; the original source remains available.</p></div>`;
-  const renderKey = `traces:${origin}:${selected.trace}:${selected.span}`;
-  const scrolls = new Map(previousRenderKey === renderKey ? [...root.querySelectorAll('.trace-json, .trace-run-list')].map((el, i) => [i, [el.scrollTop, el.scrollLeft]]) : []);
-  view.render(shell({ page: 'traces', title: 'Trace explorer', sessionsLabel: 'TRACE EXPLORER', nav: '<p class="trace-nav-note">Local execution evidence.<br>Capture, browse and search.</p>', content,
+    <div class="trace-utility-row">${connection}<span id="trace-updated">${state.updated ? `Updated ${new Date(state.updated).toLocaleTimeString()}` : 'Waiting for connection'}</span></div>
+    ${compactNotices([...(runtime?.warnings || []), ...(state.list?.warnings || []), ...(runtime && !index?.ready ? ['Trace indexing is incomplete or unavailable.'] : [])], 'index-notices', 'Indexing notices')}${conversationView()}${runs}${tabs}${main}</div>`;
+  const renderKey = `traces:${origin}:${selected.trace}:${steps ? 'steps' : 'analysis'}:${steps ? selected.span : ''}`;
+  const scrolls = new Map(previousRenderKey === renderKey ? [...root.querySelectorAll('.trace-json, .trace-readable-json, .trace-run-list')].map((el, i) => [i, [el.scrollTop, el.scrollLeft]]) : []);
+  view.render(shell({ page: 'traces', title: 'Trace explorer', sessionsLabel: 'WORKSPACE', nav: selected.chat ? `<a class="nav-item" href="/chat?chat=${encodeURIComponent(selected.chat)}">${icon('back')}Back to chat</a>` : '', content,
     debuggerChatId: selected.chat, tracesHref: tracesURL(selected.chat),
     status: '<span class="trace-header-label">Local trace workspace</span>' }), renderKey);
-  root.querySelectorAll('.trace-json, .trace-run-list').forEach((el, i) => { const pos = scrolls.get(i); if (pos) [el.scrollTop, el.scrollLeft] = pos; });
+  root.querySelectorAll('.trace-json, .trace-readable-json, .trace-run-list').forEach((el, i) => { const pos = scrolls.get(i); if (pos) [el.scrollTop, el.scrollLeft] = pos; });
   previousRenderKey = renderKey;
   document.title = 'Epoch · Traces';
 }
@@ -226,7 +244,9 @@ async function routeChanged() {
   state.raw = null;
   state.rawError = '';
   state.error = '';
-  for (const name of filterNames) delete drafts[name];
+  const nextFilterKey = JSON.stringify(selected.filters);
+  if (nextFilterKey !== filterRouteKey) for (const name of filterNames) delete drafts[name];
+  filterRouteKey = nextFilterKey;
   render();
   const routeGeneration = generation;
   await refresh();

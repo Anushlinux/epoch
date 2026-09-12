@@ -509,7 +509,8 @@ class PdfRegistry:
                     from epoch_backend.context_policy import select_sources, source_catalog, record_selection
                     pin = sandbox.metadata().get("context_policy", {})
                     sources = source_catalog(sandbox, "pdf_workshop")
-                    selected = select_sources(sources, pin.get("rules", []), pin.get("labels", {}), **args)
+                    selected = select_sources(sources, pin.get("rules", []), pin.get("labels", {}),
+                        reviewed_exclusions=pin.get("source_exclusions", []), **args)
                     result = [
                             {**{k: a[k] for k in ("id", "name", "kind", "size")},
                              "source_metadata": pin.get("labels", {}).get(a["id"], {}), "sha256": a["sha256"]}

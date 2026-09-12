@@ -178,3 +178,58 @@
 .noise-panel .noise-apply { background: var(--accent); color: var(--canvas); border-color: var(--accent); font-weight: 600; }
 .noise-panel button:disabled { opacity: .5; cursor: not-allowed; }
 .noise-source-table:focus-visible, .noise-panel button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* The primary task and the step inspector occupy separate, URL-addressable views. */
+.trace-page { font-size: 14px; line-height: 1.6; }
+.trace-page-focused { max-width: 1280px; }
+.trace-page-header { margin-bottom: 8px; }
+.trace-page-header h1 { font-size: 26px; margin: 0; }
+.trace-toolbar, .trace-utility-row { display: flex; align-items: center; gap: 16px; }
+.trace-toolbar > span, .trace-utility-row { font-size: 12px; }
+.trace-utility-row { justify-content: space-between; color: var(--muted); margin-bottom: 18px; }
+.trace-utility-row .trace-connection { margin: 0; flex: 1; }
+.trace-utility-row > span { align-self: start; padding-top: 3px; white-space: nowrap; }
+.trace-connection p { max-width: 70ch; margin: 8px 0; }
+.trace-conversation { margin: 12px 0 18px; padding: 0 0 16px; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; }
+.trace-conversation h2 { font-size: 16px; line-height: 1.55; max-width: 90ch; }
+.trace-conversation .trace-inline-actions { font-size: 12px; margin-bottom: 0; }
+.trace-recording-notices { font-size: 12px; color: var(--amber); margin: 10px 0; padding-inline: 2px; }
+.trace-recording-notices > summary, .trace-run-info > summary { cursor: pointer; }
+.trace-detail-panel > .trace-recording-notices { padding-inline: 22px; }
+.trace-run-picker { border: 1px solid var(--line); border-radius: 8px; margin: 16px 0; padding: 10px 14px; }
+.trace-run-picker > summary { cursor: pointer; color: var(--muted); font-size: 13px; padding: 3px 0; }
+.trace-run-picker .trace-run-panel { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.trace-run-picker .trace-run-list { max-height: 360px; overflow: auto; }
+.trace-view-switch { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin: 24px 0; }
+.trace-view-switch a { padding: 10px 16px; color: var(--muted); border-bottom: 2px solid transparent; font-size: 14px; }
+.trace-view-switch a[aria-current] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+.trace-page-focused > .trace-detail-panel { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.trace-detail-header h2 { font-size: 16px; line-height: 1.6; }
+.trace-run-info { margin-top: 10px; color: var(--muted); font-size: 12px; }
+.trace-run-info[open] > summary { margin-bottom: 10px; }
+.trace-step-question { border-bottom: 1px solid var(--line); }
+.trace-step-question > summary { padding: 12px 22px; cursor: pointer; color: var(--accent); font-size: 13px; }
+.trace-inspection { grid-template-columns: minmax(190px, 260px) minmax(0, 1fr); }
+.trace-tree-panel { border-right: 1px solid var(--line); border-bottom: 0; }
+.trace-span-panel { scroll-margin-top: 16px; }
+.trace-content { padding: 16px 20px; }
+.trace-content h4 { font-size: 13px; margin-bottom: 10px; }
+.trace-json { font-size: 12px; line-height: 1.65; }
+.trace-facts { font-size: 12px; margin: 16px 20px 8px; }
+.trace-page summary:focus-visible, .trace-page a:focus-visible, .trace-page button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.trace-page input, .trace-page textarea, .trace-page select { box-sizing: border-box; }
+@media (hover: hover) and (pointer: fine) {
+  .trace-view-switch a:hover { color: var(--ink); background: var(--surface); }
+}
+@media (max-width: 1050px) {
+  .trace-inspection { grid-template-columns: minmax(0, 1fr); }
+  .trace-tree-panel { border-right: 0; border-bottom: 1px solid var(--line); }
+}
+@media (max-width: 600px) {
+  .trace-toolbar { gap: 10px; }
+  .trace-toolbar > span { display: none; }
+  .trace-utility-row { flex-wrap: wrap; gap: 8px; }
+  .trace-utility-row > span { white-space: normal; }
+  .trace-content { padding: 14px; }
+  .trace-view-switch a { flex: 1; padding-inline: 8px; text-align: center; }
+}

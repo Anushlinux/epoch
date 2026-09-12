@@ -3,6 +3,8 @@ import { escape } from './ui.mjs';
 const ruleNames = { deduplicate: 'Consolidate exact duplicates', prefer_current_approved: 'Prefer approved current versions', match_topic: 'Match the requested topic' };
 const cases = ['original', 'fresh', 'unaffected', 'historical'];
 const json = value => `<pre class="trace-json">${escape(JSON.stringify(value, null, 2))}</pre>`;
+const outcomeNames = { context_noise: 'Possible context noise', tool_defect: 'Possible tool issue', insufficient_evidence: 'More evidence needed', no_issue: 'No issue established' };
+const paragraphs = text => String(text || '').split(/\n\s*\n/).filter(Boolean).map(part => `<p>${escape(part)}</p>`).join('');
 
 export class NoisePanel {
   constructor(root, context, render, url) {
@@ -22,6 +24,11 @@ export class NoisePanel {
       if (!event.target.matches('form[data-noise]')) return;
       event.preventDefault(); void this.submit(event.target);
     });
+    root.addEventListener('invalid', event => {
+      if (!event.target.closest('form[data-noise]')) return;
+      // A renamed filter can be invalid while its optional name control is closed.
+      for (let detail = event.target.closest('details'); detail && root.contains(detail); detail = detail.parentElement?.closest('details')) detail.open = true;
+    }, true);
     root.addEventListener('click', event => {
       const button = event.target.closest('[data-noise-action]');
       if (!button || button.disabled) return;
@@ -75,7 +82,7 @@ export class NoisePanel {
       this.clearPending();
       if (body.kind === 'activation' && body.review_id) this.notice = 'Filter applied. New current document retrievals will use it.';
       if (body.kind === 'rollback') this.notice = 'Filter undone. New retrievals will use the previous policy, or no filter if none was active.';
-      if (body.kind === 'cleanup_review') this.notice = body.ready ? 'Review ready. Inspect the sources below before applying.' : 'Review saved. Address the notices below; no filter has been applied.';
+      if (body.kind === 'cleanup_review') this.notice = body.ready ? 'Review ready. Check the affected sources before applying.' : 'Review needs attention. No filter has been applied.';
       if (formId) { this.values.delete(`${key}:${formId}`); this.revisions.delete(`${key}:${formId}`); }
       await this.refresh(true);
     } catch (error) {
@@ -91,8 +98,9 @@ export class NoisePanel {
     const val = name => String(f.get(name) || '').trim();
     const revision = this.revisions.get(`${this.key}:${form.id}`) ?? this.data.revision;
     const policy = form.dataset.policy;
-    if (['draft', 'cleanup-review'].includes(action) && !f.getAll('rules').length) {
-      this.error = 'Select at least one suggested rule to continue.'; this.render(); return;
+    if ((action === 'draft' && !f.getAll('rules').length)
+      || (action === 'cleanup-review' && !f.getAll('rules').length && !f.getAll('source_action_ids').length)) {
+      this.error = 'Select at least one suggested change to continue.'; this.render(); return;
     }
     if (action === 'analyze') return this.write(this.base + '/analyses', { trace_id: this.context().trace, issue: val('issue') }, form.id);
     if (action === 'metadata') {
@@ -104,7 +112,7 @@ export class NoisePanel {
     if (action === 'draft') return this.write(this.base + '/policies', { analysis_id: form.dataset.analysis, title: val('title'), rules: f.getAll('rules') }, form.id);
     if (action === 'cleanup-review') return this.write(this.base + '/cleanup-reviews', {
       analysis_id: form.dataset.analysis, expected_revision: this.data.revision, title: val('title'),
-      rules: f.getAll('rules'), topic: val('topic') || null }, form.id);
+      rules: f.getAll('rules'), ...(this.data.source_action_support ? { source_action_ids: f.getAll('source_action_ids') } : {}), topic: val('topic') || null }, form.id);
     if (action === 'preview') return this.write(`${this.base}/policies/${policy}/previews`, {
       case: val('case'), purpose: val('purpose'), version: val('version') || null, topic: val('topic') || null,
       required_ids: f.getAll('required_ids') }, form.id);
@@ -128,7 +136,7 @@ export class NoisePanel {
     if (this.pending || this.busy) return;
     if (button.dataset.noiseAction === 'retry-analysis') {
       const analysis = this.records('analysis').find(a => a.id === button.dataset.analysis);
-      if (!analysis || analysis.state !== 'failed' || analysis.request.trace_id !== this.context().trace || this.data.model_busy) return;
+      if (!analysis || !['failed', 'answered'].includes(analysis.state) || analysis.request.trace_id !== this.context().trace || this.data.model_busy) return;
       return this.write(this.base + '/analyses', { trace_id: analysis.request.trace_id, issue: analysis.request.issue });
     }
     if (button.dataset.noiseAction === 'activate') {
@@ -172,15 +180,15 @@ export class NoisePanel {
   }
 
   metadataView() {
-    return `<details class="noise-sources" data-key="noise-sources"><summary>Source versions and approvals · ${this.data.sources.length} sources</summary>
-      <p class="trace-muted">These are your annotations, not model guesses. Original files stay unchanged. Editing metadata deactivates the current policy until reviewed again. Matching source hashes can reuse annotations in the same project and environment.</p>
+    return `<details class="noise-sources" data-key="noise-sources"><summary>Sources <span class="noise-count">${this.data.sources.length}</span></summary>
+      <p class="trace-muted">Optional source annotations. Saving a change deactivates the current filter until reviewed again.</p>
       ${this.data.sources.map(source => {
         const fid = `noise-source-${source.id}`, label = this.data.labels[source.id] || {};
         return `<details data-key="noise-source-${escape(source.id)}"><summary>${escape(source.name)} · ${escape(label.status || 'unknown')}</summary>
           <form id="${escape(fid)}" data-noise="metadata" data-source="${escape(source.id)}"><fieldset ${this.busy || this.pending || this.data.busy ? 'disabled' : ''}>
           <div class="noise-fields">${this.input(fid, 'family', 'Version family', label.family)}${this.input(fid, 'version', 'Version', label.version)}${this.select(fid, 'status', 'Status', ['unknown','current','superseded'].map(v => [v,v]), label.status || 'unknown')}${this.input(fid, 'topics', 'Topics (comma separated)', (label.topics || []).join(', '))}</div>
           ${this.toggle(fid, 'approved', 'on', 'Approved by me', !!label.approved)}${this.toggle(fid, 'protected', 'on', 'Always retain this source', !!label.protected)}<button>Save source metadata</button></fieldset></form>
-          <small>Source ${escape(source.id)} · ${escape(source.sha256)}</small></details>`;
+          <details data-key="noise-source-identity-${escape(source.id)}"><summary>Source identity</summary><small>ID ${escape(source.id)}<br>SHA-256 ${escape(source.sha256)}</small></details></details>`;
       }).join('')}</details>`;
   }
 
@@ -192,7 +200,7 @@ export class NoisePanel {
     const active = this.data.active_id === policy.id;
     const activation = this.data.active_activation?.policy_id === policy.id ? this.data.active_activation : this.records('activation').find(a => a.policy_id === policy.id && a.revision === this.data.revision);
     return `<details class="noise-policy" data-key="noise-policy-${policy.id}"><summary>${escape(policy.title)} · ${active ? (activation?.acceptance === 'user_approved_filter' ? 'Active · applied after user review' : 'Active policy') : 'Inactive policy'}</summary>
-      <p>${policy.rules.map(r => escape(ruleNames[r])).join(' · ')}</p><small>Policy ${escape(policy.id)} · project ${escape(policy.project)}</small>
+      <p>${[...policy.rules.map(r => escape(ruleNames[r])), ...(policy.source_exclusions?.length ? [`${policy.source_exclusions.length} reviewed document exclusion${policy.source_exclusions.length === 1 ? '' : 's'}`] : [])].join(' · ')}</p><small>Policy ${escape(policy.id)} · project ${escape(policy.project)}</small>
       <form id="${fid}" data-noise="preview" data-policy="${policy.id}"><fieldset ${this.busy || this.pending || this.data.busy ? 'disabled' : ''}><legend>Preview a case before trial</legend>
       <div class="noise-fields">${this.select(fid,'case','Case',cases.map(v => [v,v]),'original')}${this.select(fid,'purpose','Request purpose',['current','historical','all'].filter(v => this.data.environment === 'pdf_workshop' || v !== 'all').map(v => [v,v]),'current')}${this.input(fid,'version','Explicit version (optional)')}${this.data.environment === 'pdf_workshop' ? this.input(fid,'topic','Requested topic (optional)') : ''}</div>
       <p>Select the sources this case must retain:</p><div class="noise-required">${this.data.sources.map(s => this.toggle(fid,'required_ids',s.id,s.name)).join('')}</div><button>Create preview</button></fieldset></form>
@@ -216,21 +224,68 @@ export class NoisePanel {
       || signature(review.snapshot.sources) !== signature(this.data.sources);
   }
 
+  sourceProposals(analysis) {
+    const proposals = analysis?.source_validation ? analysis.source_validation.proposals : analysis?.source_proposals;
+    return Array.isArray(proposals) ? proposals : [];
+  }
+
+  sourceProposalWarnings(analysis) {
+    const warnings = analysis?.source_validation ? analysis.source_validation.warnings : analysis?.proposal_warnings;
+    return Array.isArray(warnings) ? warnings : [];
+  }
+
+  legacySourceAnalysis(analysis) {
+    return this.data.source_action_support && analysis?.answer && !analysis.source_validation && !Array.isArray(analysis.answer.source_actions);
+  }
+
+  sourceQuoteView(proposal, key, analysis) {
+    return `<details class="noise-source-evidence" data-key="${escape(key)}"><summary>Why this source?</summary>
+      ${proposal.source_quote ? `<p class="noise-quote-label">${escape(proposal.source_name || 'Source to exclude')}</p><blockquote>${escape(proposal.source_quote)}</blockquote>` : ''}
+      ${proposal.replacement_quote ? `<p class="noise-quote-label">${escape(proposal.replacement_name || 'Source to keep')}</p><blockquote>${escape(proposal.replacement_quote)}</blockquote>` : ''}
+      ${[proposal.quote_matches?.source, proposal.quote_matches?.replacement].some(match => match?.method === 'pdf_layout') ? '<p class="trace-muted">Matched across PDF spacing differences. Quotes show the original source text.</p>' : ''}
+      ${analysis && proposal.evidence_ids?.length ? `<div class="trace-citations">${this.evidenceLinks(analysis, proposal.evidence_ids)}</div>` : ''}
+      <small>Source ID ${escape(proposal.source_id)}<br>Replacement ID ${escape(proposal.replacement_id)}</small>
+      </details>`;
+  }
+
+  sourceProposalView(proposal, analysis, form) {
+    return `<section class="noise-source-proposal">
+      ${this.toggle(form, 'source_action_ids', proposal.id, `Exclude ${proposal.source_name || proposal.source_id}`, true)}
+      <p class="noise-proposal-replacement"><span>Keep instead</span> ${escape(proposal.replacement_name || proposal.replacement_id)}</p>
+      <div class="noise-proposal-reason">${paragraphs(proposal.explanation)}</div>
+      ${this.sourceQuoteView(proposal, `noise-proposal-${analysis.id}-${proposal.id}`, analysis)}
+      </section>`;
+  }
+
+  rerunSourceAnalysisView(analysis) {
+    return `<div class="noise-analysis-update"><p>This saved analysis predates document suggestions. Investigate again to identify specific sources.</p>
+      <button class="noise-primary" type="button" data-noise-action="retry-analysis" data-analysis="${escape(analysis.id)}" ${this.busy || this.pending || this.data.model_busy ? 'disabled' : ''}>Investigate again</button></div>`;
+  }
+
   cleanupFormView(analysis) {
     const direct = this.data.supports_cleanup_review, fid = `noise-cleanup-${analysis.id}`;
-    const draftId = `noise-draft-${analysis.id}`;
-    const draft = `<form id="${draftId}" data-noise="draft" data-analysis="${analysis.id}"><fieldset ${this.busy || this.pending ? 'disabled' : ''}>${this.input(draftId,'title','Policy name')}${analysis.answer.rules.map(r => this.toggle(draftId,'rules',r,ruleNames[r],true)).join('')}<button>Save selected rules as draft</button></fieldset></form>`;
-    if (!direct) return draft;
+    if (!direct) return '<p class="noise-next-note">This environment requires trial review before activation. Open Manage sources and history to create a draft.</p>';
     const review = this.records('cleanup_review').find(r => r.analysis_id === analysis.id);
-    return `<form id="${fid}" data-noise="cleanup-review" data-analysis="${analysis.id}"><fieldset ${this.busy || this.pending || this.data.busy ? 'disabled' : ''}><legend>Review suggested cleanup</legend>
-      <p>Choose which suggestions to review. Nothing changes until you press Apply filter.</p>
-      ${this.input(fid,'title','Filter name','Reviewed document cleanup')}
-      ${analysis.answer.rules.map(r => this.toggle(fid,'rules',r,ruleNames[r],true)).join('')}
-      ${analysis.answer.rules.includes('match_topic') ? this.input(fid,'topic','Requested topic (needed when reviewing topic matching)') : ''}
-      <button>${review ? 'Create new cleanup review' : 'Review cleanup'}</button>
-      <small>Existing active rules are carried forward. Version/topic filters retain sources with unknown metadata. Protected sources stay.</small>
-      </fieldset></form>${review ? this.cleanupReviewView(review) : ''}
-      <details data-key="noise-trial-option-${analysis.id}"><summary>Optional: evaluate a draft with four trial runs first</summary>${draft}</details>`;
+    if (this.legacySourceAnalysis(analysis)) return `${review && this.data.active_activation?.review_id === review.id ? `<details class="noise-disclosure" data-key="noise-applied-review-${review.id}"><summary>View applied source review</summary>${this.cleanupReviewView(review)}</details>` : ''}${this.rerunSourceAnalysisView(analysis)}`;
+    const proposals = this.sourceProposals(analysis), rules = analysis.answer.rules || [];
+    const ruleControls = `${rules.map(r => this.toggle(fid,'rules',r,ruleNames[r],!proposals.length)).join('')}${rules.includes('match_topic') ? this.input(fid,'topic','Topic to match') : ''}`;
+    const form = `<form class="noise-cleanup-form" id="${fid}" data-noise="cleanup-review" data-analysis="${analysis.id}"><fieldset ${this.busy || this.pending || this.data.busy ? 'disabled' : ''}><legend>${proposals.length ? 'Suggested source exclusions' : 'Suggested filter'}</legend>
+      ${proposals.map(proposal => this.sourceProposalView(proposal, analysis, fid)).join('')}
+      ${proposals.length && rules.length ? `<details class="noise-additional-rules" data-key="noise-additional-rules-${analysis.id}"><summary>Additional filter rules</summary>${ruleControls}</details>` : ruleControls}
+      <details class="noise-filter-name" data-key="noise-filter-name-${analysis.id}"><summary>Filter name</summary>${this.input(fid,'title','Name','Reviewed document cleanup')}</details>
+      <div class="noise-action-row"><button class="noise-primary">${review ? 'Update source review' : 'Review affected sources'}</button><span>No changes until you apply.</span></div>
+      </fieldset></form>`;
+    if (!review) return form;
+    if (this.data.active_activation?.review_id === review.id) return `<details class="noise-disclosure" data-key="noise-applied-review-${review.id}"><summary>View applied source review</summary>${this.cleanupReviewView(review)}<details class="noise-edit-filter" data-key="noise-edit-filter-${review.id}"><summary>Change suggested filter</summary>${form}</details></details>`;
+    return `${this.cleanupReviewView(review)}<details class="noise-edit-filter" data-key="noise-edit-filter-${review.id}" ${this.reviewStale(review) && this.data.active_activation?.review_id !== review.id ? 'open' : ''}><summary>Change suggested filter</summary>${form}</details>`;
+  }
+
+  draftFormView(analysis) {
+    if (!analysis?.answer?.rules?.length || analysis.answer.outcome !== 'context_noise') return '';
+    const fid = `noise-draft-${analysis.id}`;
+    return `<details data-key="noise-trial-option-${analysis.id}"><summary>Create a trial draft</summary>
+      <p class="trace-muted">This separate path requires four recorded trial assessments before activation.</p>
+      <form id="${fid}" data-noise="draft" data-analysis="${analysis.id}"><fieldset ${this.busy || this.pending || this.data.busy ? 'disabled' : ''}>${this.input(fid,'title','Policy name')}${analysis.answer.rules.map(r => this.toggle(fid,'rules',r,ruleNames[r],true)).join('')}<button>Save trial draft</button></fieldset></form></details>`;
   }
 
   cleanupReviewView(review) {
@@ -238,63 +293,114 @@ export class NoisePanel {
     const stale = !applied && this.reviewStale(review);
     const sources = new Map(review.snapshot.sources.map(s => [s.id, s]));
     const newlyExcluded = new Set(review.newly_excluded_ids);
+    const proposals = review.proposed_source_actions || [];
+    const inheritedProposals = review.inherited_source_exclusions || [];
+    const analysis = this.records('analysis').find(item => item.id === review.analysis_id);
     const decisions = [...review.selection.decisions].sort((a, b) => Number(newlyExcluded.has(b.source_id)) - Number(newlyExcluded.has(a.source_id)));
-    return `<section class="noise-cleanup-review" aria-labelledby="cleanup-heading-${review.id}"><h3 id="cleanup-heading-${review.id}">${escape(review.title)}</h3>
-      <p><strong>${review.newly_excluded_ids.length} additional source${review.newly_excluded_ids.length === 1 ? '' : 's'} ${applied ? 'excluded' : 'to exclude'}</strong> · ${review.selection.retained_ids.length} of ${review.snapshot.sources.length} retained in this preview.</p>
-      <p class="trace-muted">Scope: project ${escape(review.project)} · Documents. Applies to future current retrievals in all conversations in this scope.${review.query.topic ? ` Preview topic: ${escape(review.query.topic)}. Future topic matching uses each tool request’s topic.` : ''}</p>
-      <p>${review.rules.map(r => escape(ruleNames[r])).join(' · ')}</p>
+    return `<section class="noise-cleanup-review" aria-labelledby="cleanup-heading-${review.id}"><p class="noise-role-label">${applied ? 'Applied filter' : 'Review before applying'}</p><h3 id="cleanup-heading-${review.id}">${escape(review.title)}</h3>
+      <p class="noise-review-count"><strong>${review.newly_excluded_ids.length} source${review.newly_excluded_ids.length === 1 ? '' : 's'} ${applied ? 'newly excluded' : 'to exclude'}</strong><span>${review.selection.retained_ids.length} of ${review.snapshot.sources.length} kept</span></p>
+      <p class="noise-scope">Project <strong>${escape(review.project)}</strong> · Documents · Future current retrievals across this project.${review.query.topic ? ` Preview topic: ${escape(review.query.topic)}. Future matching uses the requested topic.` : ''}</p>
+      ${review.rules.length ? `<p>${review.rules.map(r => escape(ruleNames[r])).join(' · ')}</p>` : ''}
       ${review.inherited_rules.length ? `<small>Carried forward from the active filter: ${review.inherited_rules.map(r => escape(ruleNames[r])).join(' · ')}.</small>` : ''}
       <div class="noise-source-table" tabindex="0" role="region" aria-label="Reviewed source selection"><table><thead><tr><th scope="col">Source</th><th scope="col">After applying</th><th scope="col">Reason and retained replacement</th></tr></thead><tbody>
-      ${decisions.map(d => { const source = sources.get(d.source_id), replacement = sources.get(d.replacement_id); return `<tr><td>${escape(source?.name || d.source_id)}<small>ID ${escape(d.source_id)}</small><details data-key="cleanup-source-${review.id}-${escape(d.source_id)}"><summary>Content hash</summary><small>${escape(d.sha256)}</small></details></td><td>${d.retained ? 'Retained' : newlyExcluded.has(d.source_id) ? 'Excluded from current retrieval' : 'Already excluded'}</td><td>${escape(d.reason.replaceAll('_',' '))}${replacement ? `<small>Retained equivalent/current source: ${escape(replacement.name)} · ${escape(replacement.id)}</small>` : ''}</td></tr>`; }).join('')}
+      ${decisions.map(d => {
+        const source = sources.get(d.source_id), replacement = sources.get(d.replacement_id);
+        const proposed = proposals.find(item => item.source_id === d.source_id);
+        const proposal = proposed || inheritedProposals.find(item => item.source_sha256 && item.source_sha256 === d.sha256);
+        return `<tr><td>${escape(source?.name || d.source_id)}<details data-key="cleanup-source-${review.id}-${escape(d.source_id)}"><summary>Source identity</summary><small>ID ${escape(d.source_id)}<br>SHA-256 ${escape(d.sha256)}</small></details></td><td><span class="noise-selection ${d.retained ? 'noise-selection-keep' : 'noise-selection-exclude'}">${d.retained ? 'Keep' : newlyExcluded.has(d.source_id) ? 'Exclude' : 'Already excluded'}</span></td><td>${proposal && !d.retained ? `<div class="noise-review-explanation">${paragraphs(proposal.explanation)}</div>` : escape(d.reason.replaceAll('_',' '))}${replacement ? `<small>Keep instead: ${escape(replacement.name)}</small>` : ''}${proposal ? this.sourceQuoteView(proposal, `cleanup-evidence-${review.id}-${d.source_id}`, proposed ? analysis : null) : ''}</td></tr>`;
+      }).join('')}
       </tbody></table></div>
       ${[...review.blocked, ...review.selection.warnings].map(w => `<p class="trace-notice">${escape(w)}</p>`).join('')}
-      <p>Original files, direct source reads, historical retrievals and saved messages remain available. This filters future context; it does not erase data or repair tools.</p>
-      ${applied ? '<p class="trace-ready">Applied after your review. Use Undo filter above to restore the previous policy.</p>' : `${stale ? '<p class="trace-notice">The sources, metadata or active filter have changed. Create a new cleanup review before applying.</p>' : ''}
+      <p class="noise-review-note">Original files and history stay available. This filter changes future context; it does not repair tools or guarantee an outcome.</p>
+      ${applied ? '<p class="trace-ready">Applied. Future current retrievals use this filter.</p>' : `${stale ? '<p class="trace-notice">Sources or settings changed. Update the source review before applying.</p>' : ''}
       <button class="noise-apply" type="button" data-noise-action="apply-cleanup" data-review="${review.id}" ${!review.ready || stale || this.busy || this.pending || this.data.busy ? 'disabled' : ''}>${this.busy && this.pending?.path.endsWith(`/${review.id}/apply`) ? 'Applying…' : 'Apply filter'}</button>
-      <small>Pressing Apply filter approves the reviewed rules. Trial runs are optional for this Documents action; it does not establish that the task will succeed.</small>`}
+      `}
       </section>`;
   }
 
   activeFilterView() {
     if (!this.data.active_id) return '';
     const policy = this.records('policy').find(p => p.id === this.data.active_id), activation = this.data.active_activation;
-    return `<section class="noise-active-filter" aria-label="Active context filter"><h3>Filter active${policy ? `: ${escape(policy.title)}` : ''}</h3>
-      <p>New current retrievals use this filter in project ${escape(this.data.project)} · ${this.data.environment === 'pdf_workshop' ? 'Documents' : escape(this.data.environment)}. Original documents and logs are preserved.</p>
-      ${activation?.acceptance === 'user_approved_filter' ? '<small>Applied after user review. This approval does not establish task success.</small>' : activation?.acceptance === 'manual_trials_recorded' ? '<small>Four user-assessed trial runs were recorded for this activation.</small>' : '<small>Policy restored or active; inspect its recorded history for approval details.</small>'}
-      ${activation ? `<button type="button" data-noise-action="rollback" data-activation="${activation.id}" ${this.busy || this.pending || this.data.busy ? 'disabled' : ''}>Undo filter</button><small>Restores the previous policy, or no filter if none was active.</small>` : ''}</section>`;
+    return `<section class="noise-active-filter" aria-label="Active context filter"><div><h3>Filter active${policy ? `: ${escape(policy.title)}` : ''}</h3>
+      <p>Future current retrievals · ${escape(this.data.project)} · ${this.data.environment === 'pdf_workshop' ? 'Documents' : escape(this.data.environment)}</p></div>
+      ${activation ? `<button type="button" data-noise-action="rollback" data-activation="${activation.id}" ${this.busy || this.pending || this.data.busy ? 'disabled' : ''}>Undo filter</button>` : ''}</section>`;
   }
 
   nextStepView(answer) {
     if (answer.outcome === 'tool_defect') {
       const pdf = this.data.environment === 'pdf_workshop';
       const href = `/debugger?chat=${encodeURIComponent(this.context().chat)}`;
-      return `<p class="trace-notice">The model identified a possible tool defect. Review the cited evidence; context filtering does not repair a faulty tool.</p><a class="trace-citation" href="${escape(href)}">${pdf ? 'Open PDF debugger' : 'Open conversation debugger'}</a><p class="trace-muted">Opens this conversation’s saved evidence. Review the available tool repair options there. Repair requires a separate explicit action.</p>`;
+      return `<div class="noise-next-action"><p>Review this possible tool issue in the debugger.</p><a class="noise-primary" href="${escape(href)}">${pdf ? 'Open PDF debugger' : 'Open conversation debugger'}</a></div>`;
     }
-    if (answer.outcome === 'insufficient_evidence') return '<p class="trace-notice">The captured evidence is insufficient to propose a fix. Review the missing evidence above and capture the missing steps before investigating again.</p>';
-    if (answer.outcome === 'no_issue') return '<p class="trace-notice">No issue was established from this evidence. This does not prove the task succeeded.</p>';
-    return '<p class="trace-notice">No supported context filter was proposed. Review the findings and source metadata before deciding on a change.</p>';
+    if (answer.outcome === 'insufficient_evidence') return '<p class="noise-next-note">Review the missing evidence before investigating again.</p>';
+    if (answer.outcome === 'no_issue') return '<p class="noise-next-note">No filter suggested. Review the result against your original task.</p>';
+    return '<p class="noise-next-note">No source exclusion could be confirmed from this analysis.</p>';
+  }
+
+  analysisFormView(trace) {
+    const fid = `noise-analysis-${trace}`;
+    const pendingIssue = this.pending?.path === this.base + '/analyses' && this.pending.payload.trace_id === trace ? this.pending.payload.issue : '';
+    return `<form class="noise-composer" id="${fid}" data-noise="analyze"><fieldset ${this.busy || this.pending || this.data.model_busy ? 'disabled' : ''}>
+      ${this.input(fid,'issue','What would you like to investigate?',pendingIssue, 'textarea')}
+      <div class="noise-action-row"><button class="noise-primary">${this.busy && this.pending?.path.endsWith('/analyses') ? 'Starting…' : 'Investigate'}</button><span>Local model · Ollama</span></div>
+      </fieldset></form>`;
+  }
+
+  evidenceLinks(analysis, ids) {
+    return ids.map(id => {
+      const evidence = analysis.snapshot.evidence.find(item => item.id === id);
+      return evidence?.span_id ? `<a data-route class="trace-citation" href="${escape(this.url({span:evidence.span_id}) + '#trace-selected-span')}">${escape(id)} · ${escape(evidence.name)}</a>` : '';
+    }).join('');
+  }
+
+  analysisView(analysis) {
+    const answer = analysis.answer, warnings = [...new Set([...(answer?.missing_evidence || []), ...(analysis.snapshot?.warnings || [])])];
+    const proposalWarnings = this.sourceProposalWarnings(analysis);
+    const hasSuggestions = answer?.outcome === 'context_noise' && (answer.rules.length || this.sourceProposals(analysis).length);
+    const heading = `noise-answer-heading-${analysis.id}`;
+    const question = `<section class="noise-question-card" aria-label="Your question"><p class="noise-role-label">Your question</p><div class="noise-question-text">${paragraphs(analysis.request.issue)}</div></section>`;
+    let content;
+    if (analysis.state === 'running') content = '<p class="noise-running" role="status">Investigating with your local model…</p>';
+    else if (analysis.error) content = `<p class="trace-question-error" role="alert">${escape(analysis.error)}</p>
+      ${analysis.error_code || analysis.error_details ? `<details class="noise-disclosure" data-key="noise-failure-${escape(analysis.id)}"><summary>Failure details</summary>${analysis.error_code ? `<p>Error code: ${escape(analysis.error_code)}</p>` : ''}${analysis.error_details ? json(analysis.error_details) : ''}</details>` : ''}
+      <button class="noise-primary" type="button" data-noise-action="retry-analysis" data-analysis="${escape(analysis.id)}" ${this.busy || this.pending || this.data.model_busy ? 'disabled' : ''}>Retry investigation</button>`;
+    else if (!answer) content = '<p class="trace-notice">Analysis is not available yet.</p>';
+    else content = `<div class="noise-answer-summary">${paragraphs(answer.summary)}</div>
+      <p class="noise-review-caution">Model assessment · Review the evidence before making changes.</p>
+      ${proposalWarnings.length ? `<details class="noise-evidence-warning" data-key="noise-proposal-warning-${analysis.id}"><summary>Some suggestions could not be confirmed <span class="noise-count">${proposalWarnings.length}</span></summary><ul>${proposalWarnings.map(warning => `<li>${escape(warning)}</li>`).join('')}</ul></details>` : ''}
+      ${warnings.length ? `<details class="noise-evidence-warning" data-key="noise-warning-${analysis.id}"><summary>Evidence is incomplete <span class="noise-count">${warnings.length}</span></summary><ul>${warnings.map(warning => `<li>${escape(warning)}</li>`).join('')}</ul></details>` : ''}
+      ${hasSuggestions ? this.cleanupFormView(analysis) : this.legacySourceAnalysis(analysis) ? this.rerunSourceAnalysisView(analysis) : this.nextStepView(answer)}
+      <details class="noise-disclosure noise-findings" data-key="noise-evidence-${analysis.id}"><summary>Evidence <span class="noise-count">${answer.findings.length} finding${answer.findings.length === 1 ? '' : 's'}</span></summary>
+      ${answer.findings.map(finding => `<section class="noise-finding"><header><h4>${escape(finding.kind.replaceAll('_',' '))}</h4><span>${escape(finding.confidence)} confidence</span></header><div>${paragraphs(finding.explanation)}</div><div class="trace-citations">${this.evidenceLinks(analysis, finding.evidence_ids)}</div></section>`).join('')}
+      ${answer.relevant_evidence_ids?.length ? `<div class="noise-relevant-evidence"><h4>Referenced steps</h4><div class="trace-citations">${this.evidenceLinks(analysis, answer.relevant_evidence_ids)}</div></div>` : ''}</details>`;
+    return `${question}<article class="noise-answer-card" aria-labelledby="${escape(heading)}"><header class="noise-answer-heading"><h3 id="${escape(heading)}">Analysis</h3>${answer ? `<span class="noise-outcome">${escape(outcomeNames[answer.outcome] || answer.outcome.replaceAll('_',' '))}</span>` : ''}</header>${content}</article>`;
+  }
+
+  advancedView(analysis) {
+    return `<details class="noise-advanced" data-key="noise-advanced"><summary>Manage sources and history</summary><div class="noise-advanced-body">
+      ${this.metadataView()}
+      <details data-key="noise-decisions"><summary>Delivered context</summary>${this.data.decisions.length ? this.data.decisions.map(d => `<details data-key="noise-decision-${d.id}"><summary>${escape(d.tool)} · ${escape(d.created_at)}</summary>${this.loadedDecisions.has(d.id) ? json(this.loadedDecisions.get(d.id)) : `<button type="button" data-noise-action="decision" data-decision="${d.id}">Load recorded context</button>${json(d)}`}</details>`).join('') : '<p class="trace-muted">No context selections recorded yet.</p>'}</details>
+      <details data-key="noise-policies"><summary>Filters and trials</summary>${this.draftFormView(analysis)}${this.records('policy').slice(0,10).map(p => this.policyView(p)).join('') || '<p class="trace-muted">No filters saved.</p>'}</details>
+      <details data-key="noise-history"><summary>History</summary>${this.data.records.map(r => `<details data-key="noise-record-${r.id}"><summary>${escape(r.kind.replaceAll('_',' '))} · ${escape(r.title || r.request?.issue || r.created_at)}</summary>${json(r)}</details>`).join('') || '<p class="trace-muted">No investigations yet.</p>'}</details>
+      <details data-key="noise-workspace-info"><summary>Workspace details</summary><dl class="noise-workspace-facts"><dt>Project</dt><dd>${escape(this.data.project)}</dd><dt>Revision</dt><dd>${this.data.revision}</dd><dt>Environment</dt><dd>${escape(this.data.environment)}</dd><dt>Local model</dt><dd>${escape(this.data.model)}</dd><dt>History</dt><dd>Latest ${this.data.history_limit} records</dd></dl><p class="trace-muted">Protected sources remain available. Version and topic rules retain sources with unknown metadata; reviewed source exclusions use matching document content. Source annotations can be reused for matching files in this project and environment.</p></details>
+      </div></details>`;
   }
 
   view() {
     this.sync();
     const { chat, trace } = this.context();
-    if (!chat) return '<p class="trace-notice">Open traces from a conversation to investigate noise and manage its context policy.</p>';
-    const analysis = this.latest(), fid = `noise-analysis-${trace}`;
-    return `<section class="trace-questions noise-panel" id="noise-workspace"><header class="trace-question-heading"><div><p class="trace-eyebrow">CONTEXT QUALITY</p><h2>Investigate noise and prevent recurrence</h2></div><button type="button" data-noise-action="refresh">Refresh</button></header>
-      <p class="trace-muted">Investigate the evidence, review a suggested filter, then choose whether to apply it. Original traces and sources remain available.</p>
-      ${this.notice ? `<p class="trace-ready" role="status">${escape(this.notice)}</p>` : ''}
-      ${this.error ? `<p class="trace-question-error" role="alert">${escape(this.error)}</p>` : ''}${this.data?.warning ? `<p class="trace-question-error" role="alert">${escape(this.data.warning)}</p>` : ''}${this.pending ? `<p class="trace-notice">Submission acknowledgement pending. <button type="button" data-noise-action="retry" ${this.busy ? 'disabled' : ''}>Confirm or retry exact action</button></p>` : ''}
-      ${!this.data ? '<p>Loading noise workspace…</p>' : `<p>Project ${escape(this.data.project)} · revision ${this.data.revision} · ${this.data.active_id ? 'A context policy is active' : 'No active context policy'}</p>
-      ${this.activeFilterView()}
-      ${trace ? `<form id="${fid}" data-noise="analyze"><fieldset ${this.busy || this.pending || this.data.model_busy ? 'disabled' : ''}>${this.input(fid,'issue','What went wrong?','', 'textarea')}<button>Investigate with local model</button><small>Uses ${escape(this.data.model)} through local Ollama.</small></fieldset></form>` : '<p>Select a trace to report an issue.</p>'}
-      ${analysis ? `<article class="trace-answer"><h3>${escape(analysis.request.issue)}</h3>${analysis.state === 'running' ? '<p role="status">Local model is investigating…</p>' : analysis.error ? `<p class="trace-question-error" role="alert">${escape(analysis.error)}</p>${analysis.error_code ? `<p class="trace-muted">Error code: ${escape(analysis.error_code)}</p>` : ''}${analysis.error_details ? `<details data-key="noise-failure-${escape(analysis.id)}"><summary>Failure details</summary>${json(analysis.error_details)}</details>` : ''}<button type="button" data-noise-action="retry-analysis" data-analysis="${escape(analysis.id)}" ${this.busy || this.pending || this.data.model_busy ? 'disabled' : ''}>Try investigation again</button><p class="trace-muted">Runs a new local analysis of this trace with the same issue. The failed attempt stays in history.</p>` : `<p>${escape(analysis.answer.summary)}</p><p>Finding: ${escape(analysis.answer.outcome.replaceAll('_',' '))}. Model conclusions require review.</p>
-      ${analysis.answer.findings.map(f => `<p><strong>${escape(f.kind)} · ${escape(f.confidence)} confidence</strong> ${escape(f.explanation)}</p><div>${f.evidence_ids.map(id => { const e = analysis.snapshot.evidence.find(v => v.id === id); return e ? `<a data-route class="trace-citation" href="${escape(this.url({span:e.span_id}) + '#trace-selected-span')}">${escape(id)} · ${escape(e.name)}</a>` : ''; }).join('')}</div>`).join('')}
-      ${[...analysis.answer.missing_evidence, ...analysis.snapshot.warnings].map(w => `<p class="trace-notice">${escape(w)}</p>`).join('')}
-      ${analysis.answer.outcome === 'context_noise' && analysis.answer.rules.length ? this.cleanupFormView(analysis) : this.nextStepView(analysis.answer)}`}</article>` : ''}
-      ${this.data.supports_cleanup_review ? '<details data-key="noise-demo-help"><summary>Try a data-noise example</summary><p>Upload the exact same PDF twice. Ask Hermes to list current documents and read both copies, then investigate whether identical content was supplied twice. A duplicate finding can suggest consolidation without changing the PDF tool.</p><p>After applying, ask for a new current document list and inspect Actual context delivered below. One equivalent copy should remain. Historical retrieval still exposes both copies.</p></details>' : ''}
-      ${this.metadataView()}<details data-key="noise-policies"><summary>Policies and optional trial workflow</summary>${this.records('policy').slice(0,10).map(p => this.policyView(p)).join('') || '<p>No policies saved yet.</p>'}</details>
-      <details data-key="noise-decisions"><summary>Actual context delivered · recent decisions</summary>${this.data.decisions.length ? this.data.decisions.map(d => `<details data-key="noise-decision-${d.id}"><summary>${escape(d.tool)} · ${escape(d.created_at)} · ${escape(d.policy_id || 'no policy')}</summary>${this.loadedDecisions.has(d.id) ? json(this.loadedDecisions.get(d.id)) : `<button type="button" data-noise-action="decision" data-decision="${d.id}">Load supplied context and selection</button>${json(d)}`}</details>`).join('') : '<p>No recorded context selection yet. New document reads create evidence here.</p>'}</details>
-      <details data-key="noise-history"><summary>Recent investigation and policy history (up to ${this.data.history_limit})</summary>${this.data.records.map(r => `<details data-key="noise-record-${r.id}"><summary>${escape(r.kind)} · ${escape(r.title || r.request.issue || r.created_at)}</summary>${json(r)}</details>`).join('')}</details>`}
+    if (!chat) return '<p class="trace-notice">Open a conversation’s traces to investigate an issue.</p>';
+    const analysis = this.latest();
+    const pendingAnalysis = this.pending?.path === this.base + '/analyses' && this.pending.payload.trace_id === trace;
+    const hasDraft = Boolean(this.value(`noise-analysis-${trace}`, 'issue').trim() || pendingAnalysis);
+    return `<section class="trace-questions noise-panel" id="noise-workspace"><header class="trace-question-heading"><div><h2>Investigate this trace</h2>${this.data ? `<p class="noise-workspace-label">${escape(this.data.project)}${this.data.active_id ? '' : ' · No active filter'}</p>` : ''}</div></header>
+      ${this.notice ? `<p class="trace-ready noise-notification" role="status">${escape(this.notice)}</p>` : ''}
+      ${this.error ? `<p class="trace-question-error" role="alert">${escape(this.error)}</p>` : ''}${this.data?.warning ? `<p class="trace-question-error" role="alert">${escape(this.data.warning)}</p>` : ''}
+      ${this.pending ? `<div class="trace-notice noise-pending"><p>Waiting for confirmation.</p><button type="button" data-noise-action="retry" ${this.busy ? 'disabled' : ''}>Confirm or retry exact action</button></div>` : ''}
+      ${!this.data ? '<p role="status">Loading investigation…</p>' : `${this.activeFilterView()}
+      ${analysis ? this.analysisView(analysis) : trace ? this.analysisFormView(trace) : '<p class="trace-muted">Select a trace to investigate.</p>'}
+      ${analysis && trace ? `<details class="noise-ask-another" data-key="noise-ask-${analysis.id}-${hasDraft ? 'draft' : 'empty'}" ${hasDraft ? 'open' : ''}><summary>${hasDraft ? 'Your next question · Draft' : 'Ask another question'}</summary>${this.analysisFormView(trace)}</details>` : ''}
+      ${this.advancedView(analysis)}`}
     </section>`;
   }
 }
